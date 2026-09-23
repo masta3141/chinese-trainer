@@ -569,6 +569,36 @@
   }
   .icon-btn:hover { border-color: var(--ink-faint); color: var(--ink); }
 
+  .lang-popover {
+    position: fixed;
+    top: calc(58px + env(safe-area-inset-top, 0px));
+    right: 20px;
+    background: var(--paper-raised);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px var(--shadow);
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 30;
+    min-width: 150px;
+  }
+  .lang-popover.show { display: flex; }
+  .lang-option {
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 9px 10px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13.5px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .lang-option:hover { background: var(--paper); }
+  .lang-option.active { font-weight: 700; color: var(--seal); }
+
   .stats-strip {
     display: flex;
     gap: 18px;
@@ -931,15 +961,23 @@
       <h1>HSK Vokabeltrainer</h1>
     </div>
     <div class="top-actions">
+      <button class="icon-btn" id="btnLang" title="Language / Sprache" style="font-size:16px;">🇩🇪</button>
       <button class="icon-btn" id="btnSettings" title="Einstellungen">⚙</button>
     </div>
   </header>
 
+  <div class="lang-popover" id="langPopover">
+    <button class="lang-option" data-lang="de">🇩🇪 Deutsch</button>
+    <button class="lang-option" data-lang="en">🇬🇧 English</button>
+    <button class="lang-option" data-lang="fr">🇫🇷 Français</button>
+    <button class="lang-option" data-lang="es">🇪🇸 Español</button>
+  </div>
+
   <div class="view-tabs">
-    <button class="tab-btn" id="tabGrid" data-view="grid">Vokabeln</button>
-    <button class="tab-btn active" id="tabCards" data-view="cards">Karten</button>
-    <button class="tab-btn" id="tabStories" data-view="stories">Geschichten</button>
-    <button class="tab-btn" id="tabStats" data-view="stats">Statistiken</button>
+    <button class="tab-btn" id="tabGrid" data-view="grid" data-i18n="tabGrid">Vokabeln</button>
+    <button class="tab-btn active" id="tabCards" data-view="cards" data-i18n="tabCards">Karten</button>
+    <button class="tab-btn" id="tabStories" data-view="stories" data-i18n="tabStories">Geschichten</button>
+    <button class="tab-btn" id="tabStats" data-view="stats" data-i18n="tabStats">Statistiken</button>
   </div>
   <div class="swipe-dots" id="swipeDots">
     <span class="sdot" data-dot="0"></span>
@@ -967,80 +1005,80 @@
 <div class="overlay" id="overlay"></div>
 
 <div class="drawer" id="drawer">
-  <h2>Einstellungen</h2>
+  <h2 data-i18n="settingsHeading">Einstellungen</h2>
 
   <div class="field">
-    <label for="inpStandard">HSK-Standard</label>
+    <label for="inpStandard" data-i18n="standardLabel">HSK-Standard</label>
     <select id="inpStandard">
-      <option value="hsk2">HSK 2.0 — 6 Stufen, 5000 Wörter</option>
-      <option value="hsk3">HSK 3.0 — 7 Stufen (inkl. 7–9), 9226 Wörter</option>
+      <option value="hsk2" data-i18n="standardOptHsk2">HSK 2.0 — 6 Stufen, 5000 Wörter</option>
+      <option value="hsk3" data-i18n="standardOptHsk3">HSK 3.0 — 7 Stufen (inkl. 7–9), 9226 Wörter</option>
     </select>
   </div>
   <div class="field">
-    <label for="inpPool">Pool-Größe (aktive Wörter insgesamt)</label>
+    <label for="inpPool" data-i18n="poolLabel">Pool-Größe (aktive Wörter insgesamt)</label>
     <input type="number" id="inpPool" min="10" max="10000" step="10">
   </div>
   <div class="field">
-    <label for="inpSession">Wörter pro Runde</label>
+    <label for="inpSession" data-i18n="sessionLabel">Wörter pro Runde</label>
     <input type="number" id="inpSession" min="4" max="200" step="1">
   </div>
   <div class="field">
     <label class="hsk-check" style="width:100%;justify-content:flex-start;">
       <input type="checkbox" id="inpAutoSpeak">
-      Bei Bewertung automatisch vorlesen
+      <span data-i18n="autoSpeakLabel">Bei Bewertung automatisch vorlesen</span>
     </label>
   </div>
   <div class="field">
-    <label for="inpVoice">Stimme (Sprachausgabe)</label>
+    <label for="inpVoice" data-i18n="voiceLabel">Stimme (Sprachausgabe)</label>
     <select id="inpVoice"></select>
     <p class="drawer-note" id="voiceNote"></p>
   </div>
 
 
   <div class="field">
-    <label for="inpFontFamily">Schriftart (Hanzi)</label>
+    <label for="inpFontFamily" data-i18n="fontFamilyLabel">Schriftart (Hanzi)</label>
     <select id="inpFontFamily">
-      <option value="serif">Noto Serif SC (Standard)</option>
-      <option value="sans">Noto Sans SC</option>
-      <option value="brush">Ma Shan Zheng (Pinsel-Stil)</option>
-      <option value="system">Systemschrift</option>
+      <option value="serif" data-i18n="fontSerif">Noto Serif SC (Standard)</option>
+      <option value="sans" data-i18n="fontSans">Noto Sans SC</option>
+      <option value="brush" data-i18n="fontBrush">Ma Shan Zheng (Pinsel-Stil)</option>
+      <option value="system" data-i18n="fontSystem">Systemschrift</option>
     </select>
   </div>
   <div class="field">
-    <label for="inpHanziSize">Schriftgröße Hauptfeld <span id="hanziSizeVal" class="size-val"></span></label>
+    <label for="inpHanziSize"><span data-i18n="hanziSizeLabel">Schriftgröße Hauptfeld</span> <span id="hanziSizeVal" class="size-val"></span></label>
     <input type="range" id="inpHanziSize" min="36" max="140" step="2">
   </div>
   <div class="field">
-    <label for="inpExampleSize">Schriftgröße Beispielsätze <span id="exampleSizeVal" class="size-val"></span></label>
+    <label for="inpExampleSize"><span data-i18n="exampleSizeLabel">Schriftgröße Beispielsätze</span> <span id="exampleSizeVal" class="size-val"></span></label>
     <input type="range" id="inpExampleSize" min="12" max="32" step="1">
   </div>
 
   <div class="drawer-actions">
-    <button class="btn-secondary" id="btnApplySettings">Übernehmen &amp; Runde neu starten</button>
-    <button class="danger-btn" id="btnReset">Fortschritt zurücksetzen</button>
-    <p class="drawer-note">Dein Fortschritt wird nur lokal in diesem Browser gespeichert (localStorage). "Fortschritt zurücksetzen" löscht ihn vollständig.</p>
+    <button class="btn-secondary" id="btnApplySettings" data-i18n="applyBtn">Übernehmen &amp; Runde neu starten</button>
+    <button class="danger-btn" id="btnReset" data-i18n="resetBtn">Fortschritt zurücksetzen</button>
+    <p class="drawer-note" data-i18n="resetNote">Dein Fortschritt wird nur lokal in diesem Browser gespeichert (localStorage). "Fortschritt zurücksetzen" löscht ihn vollständig.</p>
   </div>
 
   <div class="drawer-actions">
-    <h2 style="margin-top:0;">Daten sichern</h2>
-    <button class="btn-secondary" id="btnExportData">⬇ Exportieren (JSON)</button>
-    <button class="btn-secondary" id="btnImportData">⬆ Importieren (JSON)</button>
+    <h2 style="margin-top:0;" data-i18n="exportHeading">Daten sichern</h2>
+    <button class="btn-secondary" id="btnExportData" data-i18n="exportBtn">⬇ Exportieren (JSON)</button>
+    <button class="btn-secondary" id="btnImportData" data-i18n="importBtn">⬆ Importieren (JSON)</button>
     <input type="file" id="inpImportFile" accept="application/json,.json" style="display:none;">
-    <p class="drawer-note">Exportiert Fortschritt, generierte Beispielsätze und Geschichten als eine Datei — zum Sichern oder Übertragen auf ein anderes Gerät. Import ersetzt die aktuellen Daten in diesem Browser komplett.</p>
+    <p class="drawer-note" data-i18n="exportNote">Exportiert Fortschritt, generierte Beispielsätze und Geschichten als eine Datei — zum Sichern oder Übertragen auf ein anderes Gerät. Import ersetzt die aktuellen Daten in diesem Browser komplett.</p>
   </div>
 
   <div class="drawer-actions">
-    <h2 style="margin-top:0;">Beispielsätze generieren (Gemini)</h2>
+    <h2 style="margin-top:0;" data-i18n="geminiHeading">Beispielsätze generieren (Gemini)</h2>
     <div class="field" style="margin-bottom:14px;">
-      <label for="inpGeminiKey">Gemini API-Key</label>
+      <label for="inpGeminiKey" data-i18n="geminiKeyLabel">Gemini API-Key</label>
       <input type="password" id="inpGeminiKey" placeholder="AIza…" autocomplete="off">
     </div>
     <div class="field" style="margin-bottom:0;">
-      <label for="inpGeminiModel">Modell</label>
+      <label for="inpGeminiModel" data-i18n="geminiModelLabel">Modell</label>
       <input type="text" id="inpGeminiModel" placeholder="gemini-3.5-flash-lite">
     </div>
-    <button class="btn-secondary" id="btnSaveGeminiKey" style="margin-top:14px;">Key speichern</button>
-    <p class="drawer-note">Der Key verlässt diesen Browser nie außer in direkten Anfragen an Google — er wird nur lokal gespeichert, nicht in dieser Datei oder irgendwo sonst.</p>
+    <button class="btn-secondary" id="btnSaveGeminiKey" style="margin-top:14px;" data-i18n="geminiSaveBtn">Key speichern</button>
+    <p class="drawer-note" data-i18n="geminiKeyNote">Der Key verlässt diesen Browser nie außer in direkten Anfragen an Google — er wird nur lokal gespeichert, nicht in dieser Datei oder irgendwo sonst.</p>
   </div>
 </div>
 
@@ -1118,7 +1156,526 @@
   }
   var DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
-  var DEFAULT_SETTINGS = { standard: 'hsk2', pool: 300, sessionSize: 20, speak: true, autoSpeak: true, voiceName: '' };
+  var DEFAULT_SETTINGS = { standard: 'hsk2', pool: 300, sessionSize: 20, speak: true, autoSpeak: true, voiceName: '', lang: 'de' };
+
+  // ---------- i18n ----------
+  var LANG_FLAGS = { de: '🇩🇪', en: '🇬🇧', fr: '🇫🇷', es: '🇪🇸' };
+  var I18N = {
+    de: {
+      appTitle: 'HSK Vokabeltrainer',
+      tabGrid: 'Vokabeln', tabCards: 'Karten', tabStories: 'Geschichten', tabStats: 'Statistiken',
+      settingsTitle: 'Sprache / Language',
+      statsInPool: 'im Pool', statsMastered: 'gut gelernt (Level ≥ 40)', statsPerRound: 'Wörter pro Runde',
+      readyTitle: 'Bereit für eine Runde?',
+      readyDesc: 'Du übst mit Karten aus deinem aktuellen Wort-Pool. Neue Wörter werden automatisch nachgeladen, sobald im Pool Platz ist.',
+      startBtn: 'Runde starten',
+      finishedTitle: 'Runde geschafft 🎉',
+      finishedDesc: 'Alle Wörter dieser Runde hast du oft genug richtig beantwortet.',
+      newRoundBtn: 'Neue Runde starten',
+      pinyinShow: 'Pinyin zeigen', pinyinHide: 'Pinyin ausblenden',
+      translationBtn: 'Übersetzung', examplesBtn: 'Beispiele', readBtn: '🔊 Vorlesen',
+      generatingExamples: 'Beispielsätze werden generiert …',
+      noExamples: 'Für dieses Wort sind noch keine Beispielsätze hinterlegt.',
+      generateExamplesBtn: '✨ Beispielsätze generieren',
+      translationInExamples: 'Übersetzung in Beispielen',
+      savedToast: 'Gespeichert — nächste Karte kommt gleich.',
+      sentenceSpeak: 'Satz vorlesen', speakTitle: 'Zum Vorlesen antippen',
+      sessionBar: '{0} gemeistert · {1} im Fokus · {2} in dieser Runde',
+      rateNochmal: 'Nochmal', rateSchwer: 'Schwer', rateGut: 'Gut', rateLeicht: 'Leicht',
+      errorPrefix: 'Fehler: ',
+      // settings drawer
+      settingsHeading: 'Einstellungen',
+      standardLabel: 'HSK-Standard',
+      standardOptHsk2: 'HSK 2.0 — 6 Stufen, 5000 Wörter',
+      standardOptHsk3: 'HSK 3.0 — 7 Stufen (inkl. 7–9), 9226 Wörter',
+      poolLabel: 'Pool-Größe (aktive Wörter insgesamt)',
+      sessionLabel: 'Wörter pro Runde',
+      autoSpeakLabel: 'Bei Bewertung automatisch vorlesen',
+      voiceLabel: 'Stimme (Sprachausgabe)',
+      voiceNoneFound: 'Keine Stimmen gefunden',
+      voiceNoneFoundNote: 'Dein Browser meldet noch keine Stimmen. Einstellungen kurz schließen und neu öffnen, oder Seite neu laden.',
+      voiceSystemDefault: 'Systemstandard (zh-CN)',
+      voiceFoundNote: 'Gefunden: {0} chinesische Stimme(n) auf diesem Gerät.',
+      voiceNoneChineseNote: 'Keine chinesischen Stimmen gefunden — hier stehen alle verfügbaren Stimmen, unabhängig von der Sprache.',
+      fontFamilyLabel: 'Schriftart (Hanzi)',
+      fontSerif: 'Noto Serif SC (Standard)', fontSans: 'Noto Sans SC', fontBrush: 'Ma Shan Zheng (Pinsel-Stil)', fontSystem: 'Systemschrift',
+      hanziSizeLabel: 'Schriftgröße Hauptfeld',
+      exampleSizeLabel: 'Schriftgröße Beispielsätze',
+      applyBtn: 'Übernehmen & Runde neu starten',
+      resetBtn: 'Fortschritt zurücksetzen',
+      resetNote: 'Dein Fortschritt wird nur lokal in diesem Browser gespeichert (localStorage). "Fortschritt zurücksetzen" löscht ihn vollständig.',
+      resetConfirm: 'Wirklich den gesamten Lernfortschritt komplett löschen? Alle Wörter starten danach wieder bei Level 0.',
+      exportHeading: 'Daten sichern',
+      exportBtn: '⬇ Exportieren (JSON)',
+      importBtn: '⬆ Importieren (JSON)',
+      exportNote: 'Exportiert Fortschritt, generierte Beispielsätze und Geschichten als eine Datei — zum Sichern oder Übertragen auf ein anderes Gerät. Import ersetzt die aktuellen Daten in diesem Browser komplett.',
+      importInvalidJson: 'Diese Datei ist kein gültiges JSON.',
+      importInvalidFormat: 'Diese Datei sieht nicht wie ein Export dieser App aus (fehlendes "progress"-Feld).',
+      importConfirm: 'Import ersetzt deinen kompletten aktuellen Fortschritt, alle generierten Beispielsätze und alle Geschichten in diesem Browser. Fortfahren?',
+      importDone: 'Import abgeschlossen.',
+      geminiHeading: 'Beispielsätze generieren (Gemini)',
+      geminiKeyLabel: 'Gemini API-Key',
+      geminiModelLabel: 'Modell',
+      geminiKeyNote: 'Der Key verlässt diesen Browser nie außer in direkten Anfragen an Google — er wird nur lokal gespeichert, nicht in dieser Datei oder irgendwo sonst.',
+      geminiSaveBtn: 'Key speichern', geminiSavedToast: 'Gespeichert ✓', geminiKeyMissing: 'Bitte zuerst deinen Gemini API-Key in den Einstellungen speichern.',
+      standardSwitchConfirm: 'Zum {0}-Wortschatz wechseln? Die aktuelle Runde wird neu gestartet. Dein Fortschritt bleibt für beide Standards getrennt erhalten.',
+      // pool
+      poolAriaLabel: 'Fortschritt aller Wörter', notLearned: 'noch nicht gelernt',
+      // stories
+      storiesLibraryTitle: 'Meine Geschichten',
+      storiesNewBtn: '+ Neue Geschichte',
+      storiesEmpty: 'Noch keine Geschichten gespeichert.',
+      storiesNotStarted: 'Noch nicht begonnen',
+      storiesFinishedLabel: 'Fertig gelesen ✓',
+      storiesContinueAt: 'Weiter bei Satz {0} von {1}',
+      storiesSentencesCount: '{0} Sätze',
+      storiesRestartConfirm: 'Diese Geschichte wirklich von vorne beginnen? Dein Bewertungsfortschritt bei den Vokabeln bleibt erhalten, nur die Leseposition wird zurückgesetzt.',
+      storiesGenTitle: 'Neue Geschichte',
+      storiesBackToLibrary: '← Zur Bibliothek',
+      storiesCountLabel: 'Anzahl Sätze',
+      storiesHskLabel: 'HSK-Wortschatz',
+      storiesTopicLabel: 'Worum soll es gehen?',
+      storiesTopicPlaceholder: 'z. B. ein Wochenende auf dem Land mit Freunden',
+      storiesGenerateBtn: 'Geschichte generieren',
+      storiesGeneratingBtn: 'Wird erzeugt …',
+      storiesAdoptBtn: 'Übernehmen', storiesDiscardBtn: 'Verwerfen',
+      storiesDeleteBtn: 'Löschen',
+      storiesDeleteConfirm: 'Diese Geschichte wirklich löschen?',
+      storiesFinishedTitle: 'Geschichte fertig gelesen 🎉',
+      storiesFinishedDesc: 'Alle Sätze von "{0}" bewertet.',
+      storiesRestartBtn: 'Nochmal von vorne',
+      storiesSentenceOf: 'Satz {0} von {1}',
+      storiesRepetition: ' (Wiederholung)',
+      storiesRatingOnlyCurrent: 'Bewertung nur für den aktuellen Satz möglich.',
+      storiesPrev: '← Zurück', storiesNext: 'Weiter →',
+      storiesUnderstandNo: 'Verstehe nicht', storiesUnderstandHalf: 'Halbwegs', storiesUnderstandYes: 'Gut',
+      storiesPinyinShow: 'Pinyin zeigen', storiesPinyinHide: 'Pinyin ausblenden',
+      storiesTranslationShow: 'Übersetzung zeigen', storiesTranslationHide: 'Übersetzung ausblenden',
+      storiesErrorPrefix: 'Fehler beim Anzeigen der Geschichten:',
+      storiesErrorNote: 'Bitte Claude den genauen Text dieser Meldung schicken.',
+      // stats
+      statsTitle: 'Statistiken',
+      motivationNone: 'Noch nichts gelernt — starte jetzt deine erste Runde!',
+      motivationStreak7: '🔥 {0} Tage in Folge! Starke Serie, mach weiter so.',
+      motivationStreak2: 'Dran bleiben: {0} Tage in Folge gelernt.',
+      motivationPct75: 'Fast geschafft — du hast schon {0}% deines Pools gelernt!',
+      motivationPct25: 'Guter Fortschritt: {0}% deines Pools schon gelernt.',
+      motivationDefault: 'Jeder Tag zählt — mach eine kurze Runde und starte deine Serie.',
+      streakLabel: 'Tage', streakSub: 'Lern-Streak 🔥',
+      learnedOf: '{0} von {1} gelernt',
+      masteredLabel: 'gut gelernt (Level ≥ 40)',
+      totalRatingsLabelLocal: 'Karten & Sätze insgesamt beantwortet',
+      totalRatingsLabelPub: 'Karten insgesamt beantwortet',
+      distributionTitle: 'Fortschrittsverteilung',
+      bandNotStarted: 'Nicht begonnen', bandStarted: 'Angefangen', bandOngoing: 'Im Gange', bandAdvanced: 'Fortgeschritten', bandMastered: 'Gemeistert',
+      hskProgressTitle: 'Fortschritt je HSK-Stufe',
+      freqSectionTitle: 'Wort-Häufigkeit (SUBTLEX-CH-Korpus)',
+      freqCoverageWords: 'Abdeckung gesprochenes Chinesisch (Wörter)',
+      freqCoverageChars: 'Abdeckung nach Zeichen',
+      freqNote: 'Basierend auf SUBTLEX-CH, einem Häufigkeits-Korpus aus chinesischen Filmuntertiteln — zeigt ungefähr, welchen Anteil du im echten gesprochenen Chinesisch schon erkennen kannst.',
+      nextWordsTitle: 'Sinnvolle nächste Wörter',
+      nextWordsDesc: 'Die häufigsten Wörter in deinem aktuellen Deck, die du noch nicht gelernt hast.',
+      nextWordsEmpty: 'Alle häufigen Wörter in diesem Deck sind schon gelernt 🎉',
+      storiesStatsTitle: 'Geschichten',
+      storiesSavedLabel: 'Geschichten gespeichert',
+      storiesCompletedLabel: 'komplett gelesen',
+      statsErrorPrefix: 'Fehler beim Anzeigen der Statistiken:'
+    },
+    en: {
+      appTitle: 'HSK Flashcards',
+      tabGrid: 'Vocabulary', tabCards: 'Cards', tabStories: 'Stories', tabStats: 'Stats',
+      settingsTitle: 'Language / Sprache',
+      statsInPool: 'in pool', statsMastered: 'well learned (level ≥ 40)', statsPerRound: 'words per round',
+      readyTitle: 'Ready for a round?',
+      readyDesc: 'You practice with cards from your current word pool. New words are added automatically once there\'s room in the pool.',
+      startBtn: 'Start round',
+      finishedTitle: 'Round complete 🎉',
+      finishedDesc: 'You answered every word in this round enough times.',
+      newRoundBtn: 'Start new round',
+      pinyinShow: 'Show pinyin', pinyinHide: 'Hide pinyin',
+      translationBtn: 'Translation', examplesBtn: 'Examples', readBtn: '🔊 Read aloud',
+      generatingExamples: 'Generating example sentences …',
+      noExamples: 'No example sentences for this word yet.',
+      generateExamplesBtn: '✨ Generate example sentences',
+      translationInExamples: 'Translation in examples',
+      savedToast: 'Saved — next card coming up.',
+      sentenceSpeak: 'Read sentence aloud', speakTitle: 'Tap to hear it read aloud',
+      sessionBar: '{0} mastered · {1} in focus · {2} in this round',
+      rateNochmal: 'Again', rateSchwer: 'Hard', rateGut: 'Good', rateLeicht: 'Easy',
+      errorPrefix: 'Error: ',
+      settingsHeading: 'Settings',
+      standardLabel: 'HSK standard',
+      standardOptHsk2: 'HSK 2.0 — 6 levels, 5000 words',
+      standardOptHsk3: 'HSK 3.0 — 7 levels (incl. 7–9), 9226 words',
+      poolLabel: 'Pool size (total active words)',
+      sessionLabel: 'Words per round',
+      autoSpeakLabel: 'Automatically read aloud when rating',
+      voiceLabel: 'Voice (text-to-speech)',
+      voiceNoneFound: 'No voices found',
+      voiceNoneFoundNote: 'Your browser hasn\'t reported any voices yet. Try closing and reopening settings, or reload the page.',
+      voiceSystemDefault: 'System default (zh-CN)',
+      voiceFoundNote: 'Found {0} Chinese voice(s) on this device.',
+      voiceNoneChineseNote: 'No Chinese voices found — showing all available voices regardless of language.',
+      fontFamilyLabel: 'Font (Hanzi)',
+      fontSerif: 'Noto Serif SC (default)', fontSans: 'Noto Sans SC', fontBrush: 'Ma Shan Zheng (brush style)', fontSystem: 'System font',
+      hanziSizeLabel: 'Main field font size',
+      exampleSizeLabel: 'Example sentence font size',
+      applyBtn: 'Apply & restart round',
+      resetBtn: 'Reset progress',
+      resetNote: 'Your progress is only stored locally in this browser (localStorage). "Reset progress" deletes it completely.',
+      resetConfirm: 'Really delete all learning progress completely? All words will start again at level 0.',
+      exportHeading: 'Back up data',
+      exportBtn: '⬇ Export (JSON)',
+      importBtn: '⬆ Import (JSON)',
+      exportNote: 'Exports progress, generated example sentences and stories as one file — for backup or transferring to another device. Importing completely replaces the current data in this browser.',
+      importInvalidJson: 'This file is not valid JSON.',
+      importInvalidFormat: 'This file doesn\'t look like an export from this app (missing "progress" field).',
+      importConfirm: 'Importing will replace your entire current progress, all generated example sentences and all stories in this browser. Continue?',
+      importDone: 'Import complete.',
+      geminiHeading: 'Generate example sentences (Gemini)',
+      geminiKeyLabel: 'Gemini API key',
+      geminiModelLabel: 'Model',
+      geminiKeyNote: 'The key never leaves this browser except in direct requests to Google — it\'s only stored locally, not in this file or anywhere else.',
+      geminiSaveBtn: 'Save key', geminiSavedToast: 'Saved ✓', geminiKeyMissing: 'Please save your Gemini API key in settings first.',
+      standardSwitchConfirm: 'Switch to the {0} vocabulary? The current round will restart. Your progress stays separate for both standards.',
+      poolAriaLabel: 'Progress of all words', notLearned: 'not learned yet',
+      storiesLibraryTitle: 'My Stories',
+      storiesNewBtn: '+ New Story',
+      storiesEmpty: 'No stories saved yet.',
+      storiesNotStarted: 'Not started yet',
+      storiesFinishedLabel: 'Finished reading ✓',
+      storiesContinueAt: 'Continue at sentence {0} of {1}',
+      storiesSentencesCount: '{0} sentences',
+      storiesRestartConfirm: 'Really restart this story from the beginning? Your vocabulary rating progress stays intact — only the reading position resets.',
+      storiesGenTitle: 'New Story',
+      storiesBackToLibrary: '← Back to library',
+      storiesCountLabel: 'Number of sentences',
+      storiesHskLabel: 'HSK vocabulary',
+      storiesTopicLabel: 'What should it be about?',
+      storiesTopicPlaceholder: 'e.g. a weekend in the countryside with friends',
+      storiesGenerateBtn: 'Generate story',
+      storiesGeneratingBtn: 'Generating …',
+      storiesAdoptBtn: 'Keep', storiesDiscardBtn: 'Discard',
+      storiesDeleteBtn: 'Delete',
+      storiesDeleteConfirm: 'Really delete this story?',
+      storiesFinishedTitle: 'Story finished 🎉',
+      storiesFinishedDesc: 'You rated every sentence in "{0}".',
+      storiesRestartBtn: 'Start over',
+      storiesSentenceOf: 'Sentence {0} of {1}',
+      storiesRepetition: ' (review)',
+      storiesRatingOnlyCurrent: 'You can only rate the current sentence.',
+      storiesPrev: '← Back', storiesNext: 'Next →',
+      storiesUnderstandNo: 'Don\'t understand', storiesUnderstandHalf: 'Partly', storiesUnderstandYes: 'Understand',
+      storiesPinyinShow: 'Show pinyin', storiesPinyinHide: 'Hide pinyin',
+      storiesTranslationShow: 'Show translation', storiesTranslationHide: 'Hide translation',
+      storiesErrorPrefix: 'Error displaying stories:',
+      storiesErrorNote: 'Please send Claude the exact text of this message.',
+      statsTitle: 'Statistics',
+      motivationNone: 'Nothing learned yet — start your first round now!',
+      motivationStreak7: '🔥 {0} days in a row! Great streak, keep it up.',
+      motivationStreak2: 'Keep it up: {0} days in a row.',
+      motivationPct75: 'Almost there — you\'ve already learned {0}% of your pool!',
+      motivationPct25: 'Good progress: {0}% of your pool learned already.',
+      motivationDefault: 'Every day counts — do a quick round and start your streak.',
+      streakLabel: 'days', streakSub: 'Learning streak 🔥',
+      learnedOf: '{0} of {1} learned',
+      masteredLabel: 'well learned (level ≥ 40)',
+      totalRatingsLabelLocal: 'Cards & sentences answered in total',
+      totalRatingsLabelPub: 'Cards answered in total',
+      distributionTitle: 'Progress distribution',
+      bandNotStarted: 'Not started', bandStarted: 'Started', bandOngoing: 'In progress', bandAdvanced: 'Advanced', bandMastered: 'Mastered',
+      hskProgressTitle: 'Progress by HSK level',
+      freqSectionTitle: 'Word frequency (SUBTLEX-CH corpus)',
+      freqCoverageWords: 'Coverage of spoken Chinese (words)',
+      freqCoverageChars: 'Coverage by characters',
+      freqNote: 'Based on SUBTLEX-CH, a frequency corpus from Chinese film subtitles — shows roughly what share of real spoken Chinese you can already recognize.',
+      nextWordsTitle: 'Worthwhile next words',
+      nextWordsDesc: 'The most frequent words in your current deck that you haven\'t learned yet.',
+      nextWordsEmpty: 'All frequent words in this deck are already learned 🎉',
+      storiesStatsTitle: 'Stories',
+      storiesSavedLabel: 'stories saved',
+      storiesCompletedLabel: 'fully read',
+      statsErrorPrefix: 'Error displaying statistics:'
+    },
+    fr: {
+      appTitle: 'Cartes HSK',
+      tabGrid: 'Vocabulaire', tabCards: 'Cartes', tabStories: 'Histoires', tabStats: 'Statistiques',
+      settingsTitle: 'Langue / Language',
+      statsInPool: 'dans le pool', statsMastered: 'bien appris (niveau ≥ 40)', statsPerRound: 'mots par série',
+      readyTitle: 'Prêt pour une série ?',
+      readyDesc: 'Tu t\'entraînes avec des cartes de ton pool de mots actuel. De nouveaux mots sont ajoutés automatiquement dès qu\'il y a de la place.',
+      startBtn: 'Démarrer la série',
+      finishedTitle: 'Série terminée 🎉',
+      finishedDesc: 'Tu as répondu correctement assez de fois à tous les mots de cette série.',
+      newRoundBtn: 'Nouvelle série',
+      pinyinShow: 'Afficher le pinyin', pinyinHide: 'Masquer le pinyin',
+      translationBtn: 'Traduction', examplesBtn: 'Exemples', readBtn: '🔊 Lire à voix haute',
+      generatingExamples: 'Génération des phrases d\'exemple …',
+      noExamples: 'Pas encore de phrases d\'exemple pour ce mot.',
+      generateExamplesBtn: '✨ Générer des phrases d\'exemple',
+      translationInExamples: 'Traduction dans les exemples',
+      savedToast: 'Enregistré — carte suivante dans un instant.',
+      sentenceSpeak: 'Lire la phrase', speakTitle: 'Appuyer pour écouter',
+      sessionBar: '{0} maîtrisés · {1} en cours · {2} dans cette série',
+      rateNochmal: 'Encore', rateSchwer: 'Difficile', rateGut: 'Bien', rateLeicht: 'Facile',
+      errorPrefix: 'Erreur : ',
+      settingsHeading: 'Paramètres',
+      standardLabel: 'Norme HSK',
+      standardOptHsk2: 'HSK 2.0 — 6 niveaux, 5000 mots',
+      standardOptHsk3: 'HSK 3.0 — 7 niveaux (dont 7–9), 9226 mots',
+      poolLabel: 'Taille du pool (mots actifs au total)',
+      sessionLabel: 'Mots par série',
+      autoSpeakLabel: 'Lire automatiquement à voix haute lors de l\'évaluation',
+      voiceLabel: 'Voix (synthèse vocale)',
+      voiceNoneFound: 'Aucune voix trouvée',
+      voiceNoneFoundNote: 'Ton navigateur n\'a signalé aucune voix pour l\'instant. Ferme et rouvre les paramètres, ou recharge la page.',
+      voiceSystemDefault: 'Voix système par défaut (zh-CN)',
+      voiceFoundNote: '{0} voix chinoise(s) trouvée(s) sur cet appareil.',
+      voiceNoneChineseNote: 'Aucune voix chinoise trouvée — voici toutes les voix disponibles, quelle que soit la langue.',
+      fontFamilyLabel: 'Police (Hanzi)',
+      fontSerif: 'Noto Serif SC (par défaut)', fontSans: 'Noto Sans SC', fontBrush: 'Ma Shan Zheng (style pinceau)', fontSystem: 'Police système',
+      hanziSizeLabel: 'Taille de police du champ principal',
+      exampleSizeLabel: 'Taille de police des phrases d\'exemple',
+      applyBtn: 'Appliquer et redémarrer la série',
+      resetBtn: 'Réinitialiser la progression',
+      resetNote: 'Ta progression n\'est stockée que localement dans ce navigateur (localStorage). "Réinitialiser la progression" la supprime complètement.',
+      resetConfirm: 'Vraiment supprimer toute la progression d\'apprentissage ? Tous les mots repartiront au niveau 0.',
+      exportHeading: 'Sauvegarder les données',
+      exportBtn: '⬇ Exporter (JSON)',
+      importBtn: '⬆ Importer (JSON)',
+      exportNote: 'Exporte la progression, les phrases d\'exemple générées et les histoires en un seul fichier — pour sauvegarder ou transférer sur un autre appareil. L\'import remplace entièrement les données actuelles de ce navigateur.',
+      importInvalidJson: 'Ce fichier n\'est pas un JSON valide.',
+      importInvalidFormat: 'Ce fichier ne ressemble pas à un export de cette application (champ "progress" manquant).',
+      importConfirm: 'L\'import remplacera toute ta progression actuelle, toutes les phrases d\'exemple générées et toutes les histoires dans ce navigateur. Continuer ?',
+      importDone: 'Import terminé.',
+      geminiHeading: 'Générer des phrases d\'exemple (Gemini)',
+      geminiKeyLabel: 'Clé API Gemini',
+      geminiModelLabel: 'Modèle',
+      geminiKeyNote: 'La clé ne quitte jamais ce navigateur, sauf pour les requêtes directes à Google — elle n\'est stockée que localement, pas dans ce fichier ni ailleurs.',
+      geminiSaveBtn: 'Enregistrer la clé', geminiSavedToast: 'Enregistré ✓', geminiKeyMissing: 'Enregistre d\'abord ta clé API Gemini dans les paramètres.',
+      standardSwitchConfirm: 'Passer au vocabulaire {0} ? La série en cours redémarrera. Ta progression reste séparée pour les deux normes.',
+      poolAriaLabel: 'Progression de tous les mots', notLearned: 'pas encore appris',
+      storiesLibraryTitle: 'Mes histoires',
+      storiesNewBtn: '+ Nouvelle histoire',
+      storiesEmpty: 'Aucune histoire enregistrée pour l\'instant.',
+      storiesNotStarted: 'Pas encore commencé',
+      storiesFinishedLabel: 'Lecture terminée ✓',
+      storiesContinueAt: 'Continuer à la phrase {0} sur {1}',
+      storiesSentencesCount: '{0} phrases',
+      storiesRestartConfirm: 'Vraiment recommencer cette histoire depuis le début ? Ta progression d\'évaluation du vocabulaire est conservée, seule la position de lecture est réinitialisée.',
+      storiesGenTitle: 'Nouvelle histoire',
+      storiesBackToLibrary: '← Retour à la bibliothèque',
+      storiesCountLabel: 'Nombre de phrases',
+      storiesHskLabel: 'Vocabulaire HSK',
+      storiesTopicLabel: 'De quoi doit-elle parler ?',
+      storiesTopicPlaceholder: 'p. ex. un week-end à la campagne entre amis',
+      storiesGenerateBtn: 'Générer l\'histoire',
+      storiesGeneratingBtn: 'Génération …',
+      storiesAdoptBtn: 'Garder', storiesDiscardBtn: 'Rejeter',
+      storiesDeleteBtn: 'Supprimer',
+      storiesDeleteConfirm: 'Vraiment supprimer cette histoire ?',
+      storiesFinishedTitle: 'Histoire terminée 🎉',
+      storiesFinishedDesc: 'Toutes les phrases de "{0}" ont été évaluées.',
+      storiesRestartBtn: 'Recommencer',
+      storiesSentenceOf: 'Phrase {0} sur {1}',
+      storiesRepetition: ' (révision)',
+      storiesRatingOnlyCurrent: 'Seule la phrase actuelle peut être évaluée.',
+      storiesPrev: '← Précédent', storiesNext: 'Suivant →',
+      storiesUnderstandNo: 'Je ne comprends pas', storiesUnderstandHalf: 'Partiellement', storiesUnderstandYes: 'Je comprends',
+      storiesPinyinShow: 'Afficher le pinyin', storiesPinyinHide: 'Masquer le pinyin',
+      storiesTranslationShow: 'Afficher la traduction', storiesTranslationHide: 'Masquer la traduction',
+      storiesErrorPrefix: 'Erreur lors de l\'affichage des histoires :',
+      storiesErrorNote: 'Merci d\'envoyer à Claude le texte exact de ce message.',
+      statsTitle: 'Statistiques',
+      motivationNone: 'Rien appris pour l\'instant — commence ta première série maintenant !',
+      motivationStreak7: '🔥 {0} jours d\'affilée ! Belle série, continue comme ça.',
+      motivationStreak2: 'Continue : {0} jours d\'affilée.',
+      motivationPct75: 'Presque au bout — tu as déjà appris {0}% de ton pool !',
+      motivationPct25: 'Bonne progression : {0}% de ton pool déjà appris.',
+      motivationDefault: 'Chaque jour compte — fais une petite série et démarre ta série de jours.',
+      streakLabel: 'jours', streakSub: 'Série d\'apprentissage 🔥',
+      learnedOf: '{0} sur {1} appris',
+      masteredLabel: 'bien appris (niveau ≥ 40)',
+      totalRatingsLabelLocal: 'Cartes et phrases répondues au total',
+      totalRatingsLabelPub: 'Cartes répondues au total',
+      distributionTitle: 'Répartition de la progression',
+      bandNotStarted: 'Pas commencé', bandStarted: 'Commencé', bandOngoing: 'En cours', bandAdvanced: 'Avancé', bandMastered: 'Maîtrisé',
+      hskProgressTitle: 'Progression par niveau HSK',
+      freqSectionTitle: 'Fréquence des mots (corpus SUBTLEX-CH)',
+      freqCoverageWords: 'Couverture du chinois parlé (mots)',
+      freqCoverageChars: 'Couverture par caractères',
+      freqNote: 'Basé sur SUBTLEX-CH, un corpus de fréquence issu de sous-titres de films chinois — indique approximativement quelle part du chinois parlé réel tu peux déjà reconnaître.',
+      nextWordsTitle: 'Prochains mots utiles',
+      nextWordsDesc: 'Les mots les plus fréquents de ton deck actuel que tu n\'as pas encore appris.',
+      nextWordsEmpty: 'Tous les mots fréquents de ce deck sont déjà appris 🎉',
+      storiesStatsTitle: 'Histoires',
+      storiesSavedLabel: 'histoires enregistrées',
+      storiesCompletedLabel: 'entièrement lues',
+      statsErrorPrefix: 'Erreur lors de l\'affichage des statistiques :'
+    },
+    es: {
+      appTitle: 'Tarjetas HSK',
+      tabGrid: 'Vocabulario', tabCards: 'Tarjetas', tabStories: 'Historias', tabStats: 'Estadísticas',
+      settingsTitle: 'Idioma / Language',
+      statsInPool: 'en el pool', statsMastered: 'bien aprendido (nivel ≥ 40)', statsPerRound: 'palabras por ronda',
+      readyTitle: '¿Listo para una ronda?',
+      readyDesc: 'Practicas con tarjetas de tu pool de palabras actual. Se añaden nuevas palabras automáticamente en cuanto hay espacio.',
+      startBtn: 'Empezar ronda',
+      finishedTitle: 'Ronda completada 🎉',
+      finishedDesc: 'Respondiste correctamente todas las palabras de esta ronda las veces suficientes.',
+      newRoundBtn: 'Empezar nueva ronda',
+      pinyinShow: 'Mostrar pinyin', pinyinHide: 'Ocultar pinyin',
+      translationBtn: 'Traducción', examplesBtn: 'Ejemplos', readBtn: '🔊 Leer en voz alta',
+      generatingExamples: 'Generando frases de ejemplo …',
+      noExamples: 'Aún no hay frases de ejemplo para esta palabra.',
+      generateExamplesBtn: '✨ Generar frases de ejemplo',
+      translationInExamples: 'Traducción en los ejemplos',
+      savedToast: 'Guardado — la siguiente tarjeta llega enseguida.',
+      sentenceSpeak: 'Leer frase en voz alta', speakTitle: 'Toca para escuchar',
+      sessionBar: '{0} dominadas · {1} en foco · {2} en esta ronda',
+      rateNochmal: 'De nuevo', rateSchwer: 'Difícil', rateGut: 'Bien', rateLeicht: 'Fácil',
+      errorPrefix: 'Error: ',
+      settingsHeading: 'Ajustes',
+      standardLabel: 'Estándar HSK',
+      standardOptHsk2: 'HSK 2.0 — 6 niveles, 5000 palabras',
+      standardOptHsk3: 'HSK 3.0 — 7 niveles (incl. 7–9), 9226 palabras',
+      poolLabel: 'Tamaño del pool (palabras activas en total)',
+      sessionLabel: 'Palabras por ronda',
+      autoSpeakLabel: 'Leer automáticamente en voz alta al evaluar',
+      voiceLabel: 'Voz (texto a voz)',
+      voiceNoneFound: 'No se encontraron voces',
+      voiceNoneFoundNote: 'Tu navegador aún no ha reportado ninguna voz. Cierra y vuelve a abrir los ajustes, o recarga la página.',
+      voiceSystemDefault: 'Predeterminada del sistema (zh-CN)',
+      voiceFoundNote: 'Se encontraron {0} voz(ces) china(s) en este dispositivo.',
+      voiceNoneChineseNote: 'No se encontraron voces chinas — se muestran todas las voces disponibles, sea cual sea el idioma.',
+      fontFamilyLabel: 'Tipo de letra (Hanzi)',
+      fontSerif: 'Noto Serif SC (predeterminado)', fontSans: 'Noto Sans SC', fontBrush: 'Ma Shan Zheng (estilo pincel)', fontSystem: 'Tipo de letra del sistema',
+      hanziSizeLabel: 'Tamaño de letra del campo principal',
+      exampleSizeLabel: 'Tamaño de letra de las frases de ejemplo',
+      applyBtn: 'Aplicar y reiniciar ronda',
+      resetBtn: 'Restablecer progreso',
+      resetNote: 'Tu progreso solo se guarda localmente en este navegador (localStorage). "Restablecer progreso" lo elimina por completo.',
+      resetConfirm: '¿Seguro que quieres borrar todo el progreso de aprendizaje? Todas las palabras volverán a empezar en el nivel 0.',
+      exportHeading: 'Respaldar datos',
+      exportBtn: '⬇ Exportar (JSON)',
+      importBtn: '⬆ Importar (JSON)',
+      exportNote: 'Exporta el progreso, las frases de ejemplo generadas y las historias en un solo archivo — para respaldar o transferir a otro dispositivo. Importar reemplaza por completo los datos actuales en este navegador.',
+      importInvalidJson: 'Este archivo no es un JSON válido.',
+      importInvalidFormat: 'Este archivo no parece una exportación de esta app (falta el campo "progress").',
+      importConfirm: 'Importar reemplazará todo tu progreso actual, todas las frases de ejemplo generadas y todas las historias en este navegador. ¿Continuar?',
+      importDone: 'Importación completada.',
+      geminiHeading: 'Generar frases de ejemplo (Gemini)',
+      geminiKeyLabel: 'Clave API de Gemini',
+      geminiModelLabel: 'Modelo',
+      geminiKeyNote: 'La clave nunca sale de este navegador salvo en solicitudes directas a Google — solo se guarda localmente, no en este archivo ni en ningún otro lugar.',
+      geminiSaveBtn: 'Guardar clave', geminiSavedToast: 'Guardado ✓', geminiKeyMissing: 'Primero guarda tu clave API de Gemini en los ajustes.',
+      standardSwitchConfirm: '¿Cambiar al vocabulario {0}? La ronda actual se reiniciará. Tu progreso se mantiene por separado para ambos estándares.',
+      poolAriaLabel: 'Progreso de todas las palabras', notLearned: 'aún no aprendida',
+      storiesLibraryTitle: 'Mis historias',
+      storiesNewBtn: '+ Nueva historia',
+      storiesEmpty: 'Aún no hay historias guardadas.',
+      storiesNotStarted: 'Aún no iniciada',
+      storiesFinishedLabel: 'Lectura terminada ✓',
+      storiesContinueAt: 'Continuar en la frase {0} de {1}',
+      storiesSentencesCount: '{0} frases',
+      storiesRestartConfirm: '¿Seguro que quieres reiniciar esta historia desde el principio? Tu progreso de evaluación de vocabulario se conserva, solo se reinicia la posición de lectura.',
+      storiesGenTitle: 'Nueva historia',
+      storiesBackToLibrary: '← Volver a la biblioteca',
+      storiesCountLabel: 'Número de frases',
+      storiesHskLabel: 'Vocabulario HSK',
+      storiesTopicLabel: '¿De qué debería tratar?',
+      storiesTopicPlaceholder: 'p. ej. un fin de semana en el campo con amigos',
+      storiesGenerateBtn: 'Generar historia',
+      storiesGeneratingBtn: 'Generando …',
+      storiesAdoptBtn: 'Guardar', storiesDiscardBtn: 'Descartar',
+      storiesDeleteBtn: 'Eliminar',
+      storiesDeleteConfirm: '¿Seguro que quieres eliminar esta historia?',
+      storiesFinishedTitle: 'Historia terminada 🎉',
+      storiesFinishedDesc: 'Evaluaste todas las frases de "{0}".',
+      storiesRestartBtn: 'Empezar de nuevo',
+      storiesSentenceOf: 'Frase {0} de {1}',
+      storiesRepetition: ' (repaso)',
+      storiesRatingOnlyCurrent: 'Solo puedes evaluar la frase actual.',
+      storiesPrev: '← Atrás', storiesNext: 'Siguiente →',
+      storiesUnderstandNo: 'No entiendo', storiesUnderstandHalf: 'Más o menos', storiesUnderstandYes: 'Entiendo',
+      storiesPinyinShow: 'Mostrar pinyin', storiesPinyinHide: 'Ocultar pinyin',
+      storiesTranslationShow: 'Mostrar traducción', storiesTranslationHide: 'Ocultar traducción',
+      storiesErrorPrefix: 'Error al mostrar las historias:',
+      storiesErrorNote: 'Por favor, envía a Claude el texto exacto de este mensaje.',
+      statsTitle: 'Estadísticas',
+      motivationNone: '¡Aún no has aprendido nada — empieza tu primera ronda ahora!',
+      motivationStreak7: '🔥 ¡{0} días seguidos! Buena racha, sigue así.',
+      motivationStreak2: 'Sigue así: {0} días seguidos.',
+      motivationPct75: 'Ya casi — ¡ya has aprendido el {0}% de tu pool!',
+      motivationPct25: 'Buen progreso: {0}% de tu pool ya aprendido.',
+      motivationDefault: 'Cada día cuenta — haz una ronda rápida y empieza tu racha.',
+      streakLabel: 'días', streakSub: 'Racha de aprendizaje 🔥',
+      learnedOf: '{0} de {1} aprendidas',
+      masteredLabel: 'bien aprendido (nivel ≥ 40)',
+      totalRatingsLabelLocal: 'Tarjetas y frases respondidas en total',
+      totalRatingsLabelPub: 'Tarjetas respondidas en total',
+      distributionTitle: 'Distribución del progreso',
+      bandNotStarted: 'Sin empezar', bandStarted: 'Empezado', bandOngoing: 'En curso', bandAdvanced: 'Avanzado', bandMastered: 'Dominado',
+      hskProgressTitle: 'Progreso por nivel HSK',
+      freqSectionTitle: 'Frecuencia de palabras (corpus SUBTLEX-CH)',
+      freqCoverageWords: 'Cobertura del chino hablado (palabras)',
+      freqCoverageChars: 'Cobertura por caracteres',
+      freqNote: 'Basado en SUBTLEX-CH, un corpus de frecuencia de subtítulos de películas chinas — muestra aproximadamente qué proporción del chino hablado real ya puedes reconocer.',
+      nextWordsTitle: 'Próximas palabras útiles',
+      nextWordsDesc: 'Las palabras más frecuentes de tu mazo actual que aún no has aprendido.',
+      nextWordsEmpty: 'Ya has aprendido todas las palabras frecuentes de este mazo 🎉',
+      storiesStatsTitle: 'Historias',
+      storiesSavedLabel: 'historias guardadas',
+      storiesCompletedLabel: 'leídas por completo',
+      statsErrorPrefix: 'Error al mostrar las estadísticas:'
+    }
+  };
+  function t(key){
+    var lang = (settings && settings.lang) || 'de';
+    return (I18N[lang] && I18N[lang][key] !== undefined) ? I18N[lang][key] : (I18N.de[key] !== undefined ? I18N.de[key] : key);
+  }
+  function tf(key){
+    var str = t(key);
+    var args = Array.prototype.slice.call(arguments, 1);
+    return str.replace(/\{(\d+)\}/g, function(m, i){ return args[i] !== undefined ? args[i] : m; });
+  }
+
+  function applyStaticTranslations(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function(el){
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-placeholder]'), function(el){
+      el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-title]'), function(el){
+      el.title = t(el.getAttribute('data-i18n-title'));
+    });
+    document.documentElement.lang = settings.lang || 'de';
+    var btnLangEl = document.getElementById('btnLang');
+    if (btnLangEl) btnLangEl.textContent = LANG_FLAGS[settings.lang || 'de'];
+    Array.prototype.forEach.call(document.querySelectorAll('.lang-option'), function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-lang') === (settings.lang || 'de'));
+    });
+  }
+
+  function setLanguage(lang){
+    if (!I18N[lang]) return;
+    settings.lang = lang;
+    saveSettings(settings);
+    applyStaticTranslations();
+    buildPoolLegend();
+    buildPoolPanel();
+    if (typeof storiesState !== 'undefined') {
+      // re-render whichever tab is currently active, so dynamic content re-translates too
+      if (storiesState.view) { /* stories module loaded further down; safe to call once defined */ }
+    }
+    render();
+    var statsView = document.getElementById('statsPageView');
+    if (statsView && statsView.style.display !== 'none') { try { renderStatsTab(); } catch(e){} }
+    var storiesView = document.getElementById('storiesView');
+    if (storiesView && storiesView.style.display !== 'none') { try { renderStories(); } catch(e){} }
+  }
+
 
   function loadGeneratedExamples(){
     try {
@@ -1399,7 +1956,7 @@
       openDrawer();
       var f = document.getElementById('inpGeminiKey');
       if (f) f.focus();
-      alert('Bitte zuerst deinen Gemini API-Key in den Einstellungen speichern.');
+      alert(t('geminiKeyMissing'));
       return Promise.reject(new Error('no-key'));
     }
     var model = loadGeminiModel();
@@ -1558,8 +2115,8 @@
       renderStories();
     } catch (e) {
       document.getElementById('storiesView').innerHTML =
-        '<div class="stories-wrap"><div class="empty-note">Fehler beim Anzeigen der Geschichten:<br>' +
-        esc(e.message) + '<br><br>Bitte Claude den genauen Text dieser Meldung schicken.</div></div>';
+        '<div class="stories-wrap"><div class="empty-note">' + esc(t('storiesErrorPrefix')) + '<br>' +
+        esc(e.message) + '<br><br>' + esc(t('storiesErrorNote')) + '</div></div>';
     }
   }
   function safeRenderStatsTab(){
@@ -1567,8 +2124,8 @@
       renderStatsTab();
     } catch (e) {
       document.getElementById('statsPageView').innerHTML =
-        '<div class="stats-wrap"><div class="empty-note">Fehler beim Anzeigen der Statistiken:<br>' +
-        esc(e.message) + '<br><br>Bitte Claude den genauen Text dieser Meldung schicken.</div></div>';
+        '<div class="stats-wrap"><div class="empty-note">' + esc(t('statsErrorPrefix')) + '<br>' +
+        esc(e.message) + '<br><br>' + esc(t('storiesErrorNote')) + '</div></div>';
     }
   }
 
@@ -1699,14 +2256,14 @@
   applyCarouselTransform();
 
   function storyMeta(s){
-    return (s.hsk ? hskLabel(s.hsk) : 'HSK') + ' · ' + s.count + ' Sätze';
+    return (s.hsk ? hskLabel(s.hsk) : 'HSK') + ' · ' + tf('storiesSentencesCount', s.count);
   }
 
   function storyProgressLabel(s){
     var cur = s.currentIdx || 0;
-    if (cur >= s.sentences.length) return 'Fertig gelesen ✓';
-    if (cur === 0) return 'Noch nicht begonnen';
-    return 'Weiter bei Satz ' + (cur + 1) + ' von ' + s.sentences.length;
+    if (cur >= s.sentences.length) return t('storiesFinishedLabel');
+    if (cur === 0) return t('storiesNotStarted');
+    return tf('storiesContinueAt', cur + 1, s.sentences.length);
   }
 
   function renderStories(){
@@ -1720,15 +2277,15 @@
               '<div><div class="story-title">' + esc(s.title.h) + '</div><div class="story-title-en">' + esc(s.title.e) + '</div>' +
               '<div class="story-meta">' + esc(storyMeta(s)) + ' · ' + esc(storyProgressLabel(s)) + '</div></div>' +
               '<div style="display:flex;align-items:center;gap:10px;">' +
-                '<button class="hint-btn" data-restart-id="' + s.id + '" title="Von vorne beginnen">↺</button>' +
+                '<button class="hint-btn" data-restart-id="' + s.id + '" title="' + esc(t('storiesRestartBtn')) + '">↺</button>' +
                 '<span class="story-arrow">→</span>' +
               '</div></div>';
           }).join('')
-        : '<div class="empty-note">Noch keine Geschichten gespeichert.</div>';
+        : '<div class="empty-note">' + esc(t('storiesEmpty')) + '</div>';
       root.innerHTML =
         '<div class="stories-wrap">' +
-          '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">Meine Geschichten</h2>' +
-            '<button class="btn-primary" id="btnNewStory" style="padding:9px 18px;font-size:13.5px;">+ Neue Geschichte</button></div>' +
+          '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">' + esc(t('storiesLibraryTitle')) + '</h2>' +
+            '<button class="btn-primary" id="btnNewStory" style="padding:9px 18px;font-size:13.5px;">' + esc(t('storiesNewBtn')) + '</button></div>' +
           listHtml +
         '</div>';
       var btnNew = document.getElementById('btnNewStory');
@@ -1739,7 +2296,7 @@
           var id = btn.getAttribute('data-restart-id');
           var s = stories.filter(function(x){ return x.id === id; })[0];
           if (!s) return;
-          if (!confirm('Diese Geschichte wirklich von vorne beginnen? Dein Bewertungsfortschritt bei den Vokabeln bleibt erhalten, nur die Leseposition wird zurückgesetzt.')) return;
+          if (!confirm(t('storiesRestartConfirm'))) return;
           s.currentIdx = 0;
           saveStories(stories);
           renderStories();
@@ -1766,18 +2323,18 @@
     if (st.view === 'generate') {
       root.innerHTML =
         '<div class="stories-wrap">' +
-          '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">Neue Geschichte</h2>' +
-            '<button class="hint-btn" id="btnBackToLibrary">← Zur Bibliothek</button></div>' +
+          '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">' + esc(t('storiesGenTitle')) + '</h2>' +
+            '<button class="hint-btn" id="btnBackToLibrary">' + esc(t('storiesBackToLibrary')) + '</button></div>' +
           '<div class="story-form">' +
-            '<div class="field"><label for="stCount">Anzahl Sätze</label>' +
+            '<div class="field"><label for="stCount">' + esc(t('storiesCountLabel')) + '</label>' +
               '<input type="number" id="stCount" min="2" max="30" step="1" value="' + st.form.count + '"></div>' +
-            '<div class="field"><label for="stHsk">HSK-Wortschatz</label>' +
+            '<div class="field"><label for="stHsk">' + esc(t('storiesHskLabel')) + '</label>' +
               '<select id="stHsk">' +
                 HSK_ORDER.map(function(h){ return '<option value="' + h + '"' + (h === st.form.hsk ? ' selected' : '') + '>' + esc(hskLabel(h)) + '</option>'; }).join('') +
               '</select></div>' +
-            '<div class="field"><label for="stTopic">Worum soll es gehen?</label>' +
-              '<textarea id="stTopic" placeholder="z. B. ein Wochenende auf dem Land mit Freunden">' + esc(st.form.topic) + '</textarea></div>' +
-            '<button class="btn-primary" id="btnGenStory"' + (st.generating ? ' disabled' : '') + '>' + (st.generating ? 'Wird erzeugt …' : 'Geschichte generieren') + '</button>' +
+            '<div class="field"><label for="stTopic">' + esc(t('storiesTopicLabel')) + '</label>' +
+              '<textarea id="stTopic" placeholder="' + esc(t('storiesTopicPlaceholder')) + '">' + esc(st.form.topic) + '</textarea></div>' +
+            '<button class="btn-primary" id="btnGenStory"' + (st.generating ? ' disabled' : '') + '>' + esc(st.generating ? t('storiesGeneratingBtn') : t('storiesGenerateBtn')) + '</button>' +
             (st.generateError ? '<div class="ex-e" style="margin-top:10px;color:var(--seal);">' + esc(st.generateError) + '</div>' : '') +
           '</div>' +
         '</div>';
@@ -1796,7 +2353,7 @@
           renderStories();
         }).catch(function(err){
           st.generating = false;
-          if (err.message !== 'no-key') st.generateError = 'Fehler: ' + err.message;
+          if (err.message !== 'no-key') st.generateError = t('errorPrefix') + err.message;
           renderStories();
         });
       };
@@ -1820,8 +2377,8 @@
             '</div>';
           }).join('') +
           '<div class="story-btn-row">' +
-            '<button class="btn-primary" id="btnAdoptStory">Übernehmen</button>' +
-            '<button class="btn-secondary" id="btnDiscardStory">Verwerfen</button>' +
+            '<button class="btn-primary" id="btnAdoptStory">' + esc(t('storiesAdoptBtn')) + '</button>' +
+            '<button class="btn-secondary" id="btnDiscardStory">' + esc(t('storiesDiscardBtn')) + '</button>' +
           '</div>' +
         '</div>';
       Array.prototype.forEach.call(root.querySelectorAll('[data-speak-idx]'), function(btn){
@@ -1867,15 +2424,15 @@
       if (st.readFinished) {
         root.innerHTML =
           '<div class="stories-wrap">' +
-            '<div class="story-toprow"><button class="hint-btn" id="btnBackToLibrary2">← Zur Bibliothek</button>' +
-              '<button class="hint-btn" id="btnDeleteStory" style="color:var(--seal);">Löschen</button></div>' +
-            '<div class="panel"><h2>Geschichte fertig gelesen 🎉</h2>' +
-              '<p>Alle Sätze von "' + esc(story.title.h) + '" bewertet.</p>' +
-              '<button class="btn-primary" id="btnReadAgain">Nochmal von vorne</button></div>' +
+            '<div class="story-toprow"><button class="hint-btn" id="btnBackToLibrary2">' + esc(t('storiesBackToLibrary')) + '</button>' +
+              '<button class="hint-btn" id="btnDeleteStory" style="color:var(--seal);">' + esc(t('storiesDeleteBtn')) + '</button></div>' +
+            '<div class="panel"><h2>' + esc(t('storiesFinishedTitle')) + '</h2>' +
+              '<p>' + esc(tf('storiesFinishedDesc', story.title.h)) + '</p>' +
+              '<button class="btn-primary" id="btnReadAgain">' + esc(t('storiesRestartBtn')) + '</button></div>' +
           '</div>';
         document.getElementById('btnBackToLibrary2').onclick = function(){ st.view = 'library'; renderStories(); };
         document.getElementById('btnDeleteStory').onclick = function(){
-          if (!confirm('Diese Geschichte wirklich löschen?')) return;
+          if (!confirm(t('storiesDeleteConfirm'))) return;
           stories = stories.filter(function(s){ return s.id !== story.id; });
           saveStories(stories);
           st.view = 'library';
@@ -1907,39 +2464,39 @@
 
       root.innerHTML =
         '<div class="stories-wrap">' +
-          '<div class="story-toprow"><button class="hint-btn" id="btnBackToLibrary2">← Zur Bibliothek</button>' +
-            '<button class="hint-btn" id="btnDeleteStory" style="color:var(--seal);">Löschen</button></div>' +
+          '<div class="story-toprow"><button class="hint-btn" id="btnBackToLibrary2">' + esc(t('storiesBackToLibrary')) + '</button>' +
+            '<button class="hint-btn" id="btnDeleteStory" style="color:var(--seal);">' + esc(t('storiesDeleteBtn')) + '</button></div>' +
           '<div class="story-title-block" style="margin-bottom:14px;padding-bottom:12px;">' +
             '<div class="t-h" style="font-size:18px;">' + esc(story.title.h) + '</div>' +
             '<div class="t-e" style="margin-top:2px;">' + esc(story.title.e) + '</div>' +
           '</div>' +
-          '<div class="session-bar"><span>Satz ' + (idx + 1) + ' von ' + story.sentences.length + (isCurrent ? '' : ' (Wiederholung)') + '</span>' +
+          '<div class="session-bar"><span>' + esc(tf('storiesSentenceOf', idx + 1, story.sentences.length)) + (isCurrent ? '' : esc(t('storiesRepetition'))) + '</span>' +
             '<span class="dots">' + dotsHtml + '</span></div>' +
           '<div class="card" style="margin-top:10px;">' +
             '<div class="nav-row">' +
-              '<button class="hint-btn" id="btnPrevSent"' + (idx === 0 ? ' disabled' : '') + '>← Zurück</button>' +
-              '<button class="hint-btn" id="btnNextSent"' + (idx === story.sentences.length - 1 ? ' disabled' : '') + '>Weiter →</button>' +
+              '<button class="hint-btn" id="btnPrevSent"' + (idx === 0 ? ' disabled' : '') + '>' + esc(t('storiesPrev')) + '</button>' +
+              '<button class="hint-btn" id="btnNextSent"' + (idx === story.sentences.length - 1 ? ' disabled' : '') + '>' + esc(t('storiesNext')) + '</button>' +
             '</div>' +
-            '<div class="hanzi" id="sentHanzi" style="font-size:clamp(28px,7vw,38px);line-height:1.5;cursor:pointer;margin-top:8px;" title="Zum Vorlesen antippen">' + esc(sent.h) + '</div>' +
+            '<div class="hanzi" id="sentHanzi" style="font-size:clamp(28px,7vw,38px);line-height:1.5;cursor:pointer;margin-top:8px;" title="' + esc(t('speakTitle')) + '">' + esc(sent.h) + '</div>' +
             '<div class="pinyin-line">' + (st.readShowPinyin ? esc(sent.p) : '') + '</div>' +
             '<div class="hint-row">' +
-              '<button class="hint-btn' + (st.readShowPinyin ? ' on' : '') + '" id="btnToggleReadPinyin">Pinyin ' + (st.readShowPinyin ? 'ausblenden' : 'zeigen') + '</button>' +
-              '<button class="hint-btn' + (st.readShowTranslation ? ' on' : '') + '" id="btnToggleReadTranslation">Übersetzung ' + (st.readShowTranslation ? 'ausblenden' : 'zeigen') + '</button>' +
-              '<button class="hint-btn" id="btnReadSpeak">🔊 Vorlesen</button>' +
+              '<button class="hint-btn' + (st.readShowPinyin ? ' on' : '') + '" id="btnToggleReadPinyin">' + esc(st.readShowPinyin ? t('storiesPinyinHide') : t('storiesPinyinShow')) + '</button>' +
+              '<button class="hint-btn' + (st.readShowTranslation ? ' on' : '') + '" id="btnToggleReadTranslation">' + esc(st.readShowTranslation ? t('storiesTranslationHide') : t('storiesTranslationShow')) + '</button>' +
+              '<button class="hint-btn" id="btnReadSpeak">' + esc(t('readBtn')) + '</button>' +
             '</div>' +
             '<div class="solution-line">' + (st.readShowTranslation ? esc(sent.e) : '') + '</div>' +
-            (isCurrent ? '' : '<div class="empty-note" style="padding:8px 0;">Bewertung nur für den aktuellen Satz möglich.</div>') +
+            (isCurrent ? '' : '<div class="empty-note" style="padding:8px 0;">' + esc(t('storiesRatingOnlyCurrent')) + '</div>') +
             '<div class="rate-row" style="grid-template-columns:repeat(3,1fr);">' +
-              '<button class="rate-btn' + (isCurrent ? '' : ' disabled') + '" style="background:' + levelToColor(4) + '" data-val="0"' + (isCurrent ? '' : ' disabled') + '>Verstehe nicht<span class="val">+0</span></button>' +
-              '<button class="rate-btn' + (isCurrent ? '' : ' disabled') + '" style="background:' + levelToColor(35) + '" data-val="1"' + (isCurrent ? '' : ' disabled') + '>Halbwegs<span class="val">+1</span></button>' +
-              '<button class="rate-btn' + (isCurrent ? '' : ' disabled') + '" style="background:' + levelToColor(90) + '" data-val="2"' + (isCurrent ? '' : ' disabled') + '>Gut<span class="val">+2</span></button>' +
+              '<button class="rate-btn' + (isCurrent ? '' : ' disabled') + '" style="background:' + levelToColor(4) + '" data-val="0"' + (isCurrent ? '' : ' disabled') + '>' + esc(t('storiesUnderstandNo')) + '<span class="val">+0</span></button>' +
+              '<button class="rate-btn' + (isCurrent ? '' : ' disabled') + '" style="background:' + levelToColor(35) + '" data-val="1"' + (isCurrent ? '' : ' disabled') + '>' + esc(t('storiesUnderstandHalf')) + '<span class="val">+1</span></button>' +
+              '<button class="rate-btn' + (isCurrent ? '' : ' disabled') + '" style="background:' + levelToColor(90) + '" data-val="2"' + (isCurrent ? '' : ' disabled') + '>' + esc(t('storiesUnderstandYes')) + '<span class="val">+2</span></button>' +
             '</div>' +
           '</div>' +
         '</div>';
 
       document.getElementById('btnBackToLibrary2').onclick = function(){ st.view = 'library'; renderStories(); };
       document.getElementById('btnDeleteStory').onclick = function(){
-        if (!confirm('Diese Geschichte wirklich löschen?')) return;
+        if (!confirm(t('storiesDeleteConfirm'))) return;
         stories = stories.filter(function(s){ return s.id !== story.id; });
         saveStories(stories);
         st.view = 'library';
@@ -2197,18 +2754,18 @@
     var fw = filteredWords();
     var mastered = fw.filter(function(w){ return progress[w.id] && progress[w.id].lvl >= 40; }).length;
     statsStrip.innerHTML =
-      '<span><b>' + settings.pool + '</b> / ' + WORDS.length + ' im Pool</span>' +
-      '<span><b>' + mastered + '</b> gut gelernt (Level ≥ 40)</span>' +
-      '<span><b>' + settings.sessionSize + '</b> Wörter pro Runde</span>';
+      '<span><b>' + settings.pool + '</b> / ' + WORDS.length + ' ' + esc(t('statsInPool')) + '</span>' +
+      '<span><b>' + mastered + '</b> ' + esc(t('statsMastered')) + '</span>' +
+      '<span><b>' + settings.sessionSize + '</b> ' + esc(t('statsPerRound')) + '</span>';
   }
 
   function pickMotivationMessage(streak, pct, learned){
-    if (learned === 0) return 'Noch nichts gelernt — starte jetzt deine erste Runde!';
-    if (streak >= 7) return '🔥 ' + streak + ' Tage in Folge! Starke Serie, mach weiter so.';
-    if (streak >= 2) return 'Dran bleiben: ' + streak + ' Tage in Folge gelernt.';
-    if (pct >= 75) return 'Fast geschafft — du hast schon ' + pct + '% deines Pools gelernt!';
-    if (pct >= 25) return 'Guter Fortschritt: ' + pct + '% deines Pools schon gelernt.';
-    return 'Jeder Tag zählt — mach eine kurze Runde und starte deine Serie.';
+    if (learned === 0) return t('motivationNone');
+    if (streak >= 7) return tf('motivationStreak7', streak);
+    if (streak >= 2) return tf('motivationStreak2', streak);
+    if (pct >= 75) return tf('motivationPct75', pct);
+    if (pct >= 25) return tf('motivationPct25', pct);
+    return t('motivationDefault');
   }
 
   function renderStatsTab(){
@@ -2223,11 +2780,11 @@
     var learnedPct = total ? Math.round(learned / total * 100) : 0;
 
     var bands = [
-      { label: 'Nicht begonnen', min: 0, max: 0, color: 'var(--hairline)' },
-      { label: 'Angefangen', min: 1, max: 24, color: levelToColor(12) },
-      { label: 'Im Gange', min: 25, max: 49, color: levelToColor(37) },
-      { label: 'Fortgeschritten', min: 50, max: 74, color: levelToColor(62) },
-      { label: 'Gemeistert', min: 75, max: 100, color: levelToColor(90) }
+      { label: t('bandNotStarted'), min: 0, max: 0, color: 'var(--hairline)' },
+      { label: t('bandStarted'), min: 1, max: 24, color: levelToColor(12) },
+      { label: t('bandOngoing'), min: 25, max: 49, color: levelToColor(37) },
+      { label: t('bandAdvanced'), min: 50, max: 74, color: levelToColor(62) },
+      { label: t('bandMastered'), min: 75, max: 100, color: levelToColor(90) }
     ];
     var counts = bands.map(function(b){
       return fw.filter(function(w){
@@ -2308,43 +2865,43 @@
             '<span class="freq-word-e">' + esc(w.e) + '</span>' +
           '</div>';
         }).join('')
-      : '<div class="empty-note" style="padding:12px 0;">Alle häufigen Wörter in diesem Deck sind schon gelernt 🎉</div>';
+      : '<div class="empty-note" style="padding:12px 0;">' + esc(t('nextWordsEmpty')) + '</div>';
 
     var freqHtml =
-      '<div class="stats-section-title">Wort-Häufigkeit (SUBTLEX-CH-Korpus)</div>' +
+      '<div class="stats-section-title">' + esc(t('freqSectionTitle')) + '</div>' +
       '<div class="stat-cards">' +
-        '<div class="stat-card"><div class="stat-value">' + wordCoveragePct.toFixed(1) + '<span class="unit">%</span></div><div class="stat-label">Abdeckung gesprochenes Chinesisch (Wörter)</div></div>' +
-        '<div class="stat-card"><div class="stat-value">' + charCoveragePct.toFixed(1) + '<span class="unit">%</span></div><div class="stat-label">Abdeckung nach Zeichen</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + wordCoveragePct.toFixed(1) + '<span class="unit">%</span></div><div class="stat-label">' + esc(t('freqCoverageWords')) + '</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + charCoveragePct.toFixed(1) + '<span class="unit">%</span></div><div class="stat-label">' + esc(t('freqCoverageChars')) + '</div></div>' +
       '</div>' +
-      '<p class="drawer-note" style="margin:-10px 0 16px;">Basierend auf SUBTLEX-CH, einem Häufigkeits-Korpus aus chinesischen Filmuntertiteln — zeigt ungefähr, welchen Anteil du im echten gesprochenen Chinesisch schon erkennen kannst.</p>' +
-      '<div class="stats-section-title">Sinnvolle nächste Wörter</div>' +
-      '<p style="font-size:12px;color:var(--ink-faint);margin:0 0 10px;">Die häufigsten Wörter in deinem aktuellen Deck, die du noch nicht gelernt hast.</p>' +
+      '<p class="drawer-note" style="margin:-10px 0 16px;">' + esc(t('freqNote')) + '</p>' +
+      '<div class="stats-section-title">' + esc(t('nextWordsTitle')) + '</div>' +
+      '<p style="font-size:12px;color:var(--ink-faint);margin:0 0 10px;">' + esc(t('nextWordsDesc')) + '</p>' +
       nextWordsHtml;
 
     var storiesCompleted = stories.filter(function(s){ return (s.currentIdx || 0) >= s.sentences.length; }).length;
     var storiesHtml =
-      '<div class="stats-section-title">Geschichten</div>' +
+      '<div class="stats-section-title">' + esc(t('storiesStatsTitle')) + '</div>' +
       '<div class="stat-cards">' +
-        '<div class="stat-card"><div class="stat-value">' + stories.length + '</div><div class="stat-label">Geschichten gespeichert</div></div>' +
-        '<div class="stat-card"><div class="stat-value">' + storiesCompleted + '</div><div class="stat-label">komplett gelesen</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + stories.length + '</div><div class="stat-label">' + esc(t('storiesSavedLabel')) + '</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + storiesCompleted + '</div><div class="stat-label">' + esc(t('storiesCompletedLabel')) + '</div></div>' +
       '</div>';
 
     var motivation = pickMotivationMessage(streak, learnedPct, learned);
 
     root.innerHTML =
       '<div class="stats-wrap">' +
-        '<h2 style="margin:0 0 14px;font-size:16px;">Statistiken</h2>' +
+        '<h2 style="margin:0 0 14px;font-size:16px;">' + esc(t('statsTitle')) + '</h2>' +
         '<div class="stats-motivation">' + esc(motivation) + '</div>' +
         '<div class="stat-cards">' +
-          '<div class="stat-card streak"><div class="stat-value">' + streak + '<span class="unit">Tage</span></div><div class="stat-label">Lern-Streak 🔥</div></div>' +
-          '<div class="stat-card"><div class="stat-value">' + learnedPct + '<span class="unit">%</span></div><div class="stat-label">' + learned + ' von ' + total + ' gelernt</div></div>' +
-          '<div class="stat-card"><div class="stat-value">' + mastered + '</div><div class="stat-label">gut gelernt (Level ≥ 40)</div></div>' +
-          '<div class="stat-card"><div class="stat-value">' + totalRatings + '</div><div class="stat-label">Karten &amp; Sätze insgesamt beantwortet</div></div>' +
+          '<div class="stat-card streak"><div class="stat-value">' + streak + '<span class="unit">' + esc(t('streakLabel')) + '</span></div><div class="stat-label">' + esc(t('streakSub')) + '</div></div>' +
+          '<div class="stat-card"><div class="stat-value">' + learnedPct + '<span class="unit">%</span></div><div class="stat-label">' + esc(tf('learnedOf', learned, total)) + '</div></div>' +
+          '<div class="stat-card"><div class="stat-value">' + mastered + '</div><div class="stat-label">' + esc(t('masteredLabel')) + '</div></div>' +
+          '<div class="stat-card"><div class="stat-value">' + totalRatings + '</div><div class="stat-label">' + esc(t('totalRatingsLabelLocal')) + '</div></div>' +
         '</div>' +
-        '<div class="stats-section-title">Fortschrittsverteilung</div>' +
+        '<div class="stats-section-title">' + esc(t('distributionTitle')) + '</div>' +
         '<div class="level-dist-bar">' + barHtml + '</div>' +
         '<div class="level-dist-legend">' + legendHtml + '</div>' +
-        '<div class="stats-section-title">Fortschritt je HSK-Stufe</div>' +
+        '<div class="stats-section-title">' + esc(t('hskProgressTitle')) + '</div>' +
         hskRowsHtml +
         freqHtml +
         storiesHtml +
@@ -2363,9 +2920,9 @@
     if (!session) {
       main.innerHTML =
         '<div class="panel">' +
-          '<h2>Bereit für eine Runde?</h2>' +
-          '<p>Du übst mit Karten aus deinem aktuellen Wort-Pool. Neue Wörter werden automatisch nachgeladen, sobald im Pool Platz ist.</p>' +
-          '<button class="btn-primary" id="btnStart">Runde starten</button>' +
+          '<h2>' + esc(t('readyTitle')) + '</h2>' +
+          '<p>' + esc(t('readyDesc')) + '</p>' +
+          '<button class="btn-primary" id="btnStart">' + esc(t('startBtn')) + '</button>' +
         '</div>';
       document.getElementById('btnStart').onclick = startSession;
       return;
@@ -2374,9 +2931,9 @@
     if (session.finished) {
       main.innerHTML =
         '<div class="panel">' +
-          '<h2>Runde geschafft 🎉</h2>' +
-          '<p>Alle Wörter dieser Runde hast du oft genug richtig beantwortet.</p>' +
-          '<button class="btn-primary" id="btnAgain">Neue Runde starten</button>' +
+          '<h2>' + esc(t('finishedTitle')) + '</h2>' +
+          '<p>' + esc(t('finishedDesc')) + '</p>' +
+          '<button class="btn-primary" id="btnAgain">' + esc(t('newRoundBtn')) + '</button>' +
         '</div>';
       document.getElementById('btnAgain').onclick = startSession;
       return;
@@ -2397,7 +2954,7 @@
     if (examples.length) {
       exHtml = examples.slice(0,6).map(function(ex, i){
         var row = '<div class="ex-row"><div class="ex-h">' +
-          '<button class="ex-speak-btn" data-ex-idx="' + i + '" title="Satz vorlesen">🔊</button> ' +
+          '<button class="ex-speak-btn" data-ex-idx="' + i + '" title="' + esc(t('sentenceSpeak')) + '">🔊</button> ' +
           esc(ex.h) + '</div>';
         if (session.showTranslationInExamples || session.showPinyin) {
           row += '<div class="ex-p">' + esc(ex.p) + '</div>';
@@ -2409,40 +2966,40 @@
         return row;
       }).join('');
     } else if (session.generating) {
-      exHtml = '<div class="ex-e">Beispielsätze werden generiert …</div>';
+      exHtml = '<div class="ex-e">' + esc(t('generatingExamples')) + '</div>';
     } else {
-      exHtml = '<div class="ex-e" style="margin-bottom:10px;">Für dieses Wort sind noch keine Beispielsätze hinterlegt.</div>' +
-        '<button class="hint-btn" id="btnGenExamples">✨ Beispielsätze generieren</button>' +
+      exHtml = '<div class="ex-e" style="margin-bottom:10px;">' + esc(t('noExamples')) + '</div>' +
+        '<button class="hint-btn" id="btnGenExamples">' + esc(t('generateExamplesBtn')) + '</button>' +
         (session.generateError ? '<div class="ex-e" style="margin-top:8px;color:var(--seal);">' + esc(session.generateError) + '</div>' : '');
     }
 
     main.innerHTML =
       '<div class="session-bar">' +
-        '<span>' + win.prog + ' gemeistert · ' + win.dictPart.length + ' im Fokus · ' + session.ids.length + ' in dieser Runde</span>' +
+        '<span>' + esc(tf('sessionBar', win.prog, win.dictPart.length, session.ids.length)) + '</span>' +
         '<span class="dots">' + dotsHtml + '</span>' +
       '</div>' +
       '<div class="card">' +
         '<span class="hsk-badge">' + w.hsk.replace('hsk','HSK ') + '</span>' +
         '<span class="rank-note">#' + w.id + '</span>' +
-        '<div class="hanzi" id="hanziText" title="Zum Vorlesen antippen">' + esc(w.h) + '</div>' +
+        '<div class="hanzi" id="hanziText" title="' + esc(t('speakTitle')) + '">' + esc(w.h) + '</div>' +
         '<div class="pinyin-line">' + (session.showPinyin ? esc(w.p) : '') + '</div>' +
         '<div class="hint-row">' +
-          '<button class="hint-btn' + (session.showPinyin ? ' on' : '') + '" id="btnTogglePinyin">Pinyin ' + (session.showPinyin ? 'ausblenden' : 'zeigen') + '</button>' +
-          '<button class="hint-btn' + (session.showSolution ? ' on' : '') + '" id="btnSolution">Übersetzung</button>' +
-          '<button class="hint-btn' + (session.showExamples ? ' on' : '') + '" id="btnExamples">Beispiele</button>' +
-          '<button class="hint-btn" id="btnRead">🔊 Vorlesen</button>' +
+          '<button class="hint-btn' + (session.showPinyin ? ' on' : '') + '" id="btnTogglePinyin">' + esc(session.showPinyin ? t('pinyinHide') : t('pinyinShow')) + '</button>' +
+          '<button class="hint-btn' + (session.showSolution ? ' on' : '') + '" id="btnSolution">' + esc(t('translationBtn')) + '</button>' +
+          '<button class="hint-btn' + (session.showExamples ? ' on' : '') + '" id="btnExamples">' + esc(t('examplesBtn')) + '</button>' +
+          '<button class="hint-btn" id="btnRead">' + esc(t('readBtn')) + '</button>' +
         '</div>' +
         '<div class="solution-line">' + (session.showSolution ? esc(w.e) : '') + '</div>' +
         '<div class="examples-box' + (session.showExamples ? ' show' : '') + '">' +
-          (examples.length ? '<label class="hint-btn' + (session.showTranslationInExamples ? ' on' : '') + '" id="btnExTranslation" style="margin-bottom:10px;">Übersetzung in Beispielen</label>' : '') +
+          (examples.length ? '<label class="hint-btn' + (session.showTranslationInExamples ? ' on' : '') + '" id="btnExTranslation" style="margin-bottom:10px;">' + esc(t('translationInExamples')) + '</label>' : '') +
           exHtml +
         '</div>' +
-        '<div class="feedback-toast">' + (justAnswered ? 'Gespeichert — nächste Karte kommt gleich.' : '') + '</div>' +
+        '<div class="feedback-toast">' + (justAnswered ? esc(t('savedToast')) : '') + '</div>' +
         '<div class="rate-row">' +
-          '<button class="rate-btn" style="background:' + levelToColor(4) + '" data-val="0">Nochmal<span class="val">+0</span></button>' +
-          '<button class="rate-btn" style="background:' + levelToColor(28) + '" data-val="1">Schwer<span class="val">+1</span></button>' +
-          '<button class="rate-btn" style="background:' + levelToColor(58) + '" data-val="2">Gut<span class="val">+2</span></button>' +
-          '<button class="rate-btn" style="background:' + levelToColor(92) + '" data-val="5">Leicht<span class="val">+5</span></button>' +
+          '<button class="rate-btn" style="background:' + levelToColor(4) + '" data-val="0">' + esc(t('rateNochmal')) + '<span class="val">+0</span></button>' +
+          '<button class="rate-btn" style="background:' + levelToColor(28) + '" data-val="1">' + esc(t('rateSchwer')) + '<span class="val">+1</span></button>' +
+          '<button class="rate-btn" style="background:' + levelToColor(58) + '" data-val="2">' + esc(t('rateGut')) + '<span class="val">+2</span></button>' +
+          '<button class="rate-btn" style="background:' + levelToColor(92) + '" data-val="5">' + esc(t('rateLeicht')) + '<span class="val">+5</span></button>' +
         '</div>' +
       '</div>';
 
@@ -2486,7 +3043,7 @@
       }).catch(function(err){
         session.generating = false;
         if (err.message !== 'no-key') {
-          session.generateError = 'Fehler: ' + err.message;
+          session.generateError = t('errorPrefix') + err.message;
         }
         render();
       });
@@ -2508,17 +3065,17 @@
     var zh = chineseVoices();
     var list = zh.length ? zh : cachedVoices;
     if (list.length === 0) {
-      sel.innerHTML = '<option value="">Keine Stimmen gefunden</option>';
-      note.textContent = 'Dein Browser meldet noch keine Stimmen. Einstellungen kurz schließen und neu öffnen, oder Seite neu laden.';
+      sel.innerHTML = '<option value="">' + esc(t('voiceNoneFound')) + '</option>';
+      note.textContent = t('voiceNoneFoundNote');
       return;
     }
-    sel.innerHTML = '<option value="">Systemstandard (zh-CN)</option>' + list.map(function(v){
+    sel.innerHTML = '<option value="">' + esc(t('voiceSystemDefault')) + '</option>' + list.map(function(v){
       var selected = v.name === settings.voiceName ? ' selected' : '';
       return '<option value="' + esc(v.name) + '"' + selected + '>' + esc(v.name) + ' (' + esc(v.lang) + ')</option>';
     }).join('');
     note.textContent = zh.length
-      ? 'Gefunden: ' + zh.length + ' chinesische Stimme(n) auf diesem Gerät.'
-      : 'Keine chinesischen Stimmen gefunden — hier stehen alle verfügbaren Stimmen, unabhängig von der Sprache.';
+      ? tf('voiceFoundNote', zh.length)
+      : t('voiceNoneChineseNote');
   }
 
   function openDrawer(){
@@ -2559,13 +3116,12 @@
     saveGeminiKey(document.getElementById('inpGeminiKey').value.trim());
     saveGeminiModel(document.getElementById('inpGeminiModel').value.trim());
     var btn = document.getElementById('btnSaveGeminiKey');
-    var orig = btn.textContent;
-    btn.textContent = 'Gespeichert ✓';
-    setTimeout(function(){ btn.textContent = orig; }, 1500);
+    btn.textContent = t('geminiSavedToast');
+    setTimeout(function(){ btn.textContent = t('geminiSaveBtn'); }, 1500);
   };
 
   document.getElementById('btnReset').onclick = function(){
-    if (!confirm('Wirklich den gesamten Lernfortschritt komplett löschen? Alle Wörter starten danach wieder bei Level 0.')) return;
+    if (!confirm(t('resetConfirm'))) return;
     var empty = {};
     ALL_WORDS.forEach(function(w){
       empty[w.id] = { lvl: 0, lr: null, seen: false };
@@ -2611,16 +3167,16 @@
       try {
         data = JSON.parse(reader.result);
       } catch(err) {
-        alert('Diese Datei ist kein gültiges JSON.');
+        alert(t('importInvalidJson'));
         e.target.value = '';
         return;
       }
       if (!data || typeof data !== 'object' || typeof data.progress !== 'object') {
-        alert('Diese Datei sieht nicht wie ein Export dieser App aus (fehlendes "progress"-Feld).');
+        alert(t('importInvalidFormat'));
         e.target.value = '';
         return;
       }
-      if (!confirm('Import ersetzt deinen kompletten aktuellen Fortschritt, alle generierten Beispielsätze und alle Geschichten in diesem Browser. Fortfahren?')) {
+      if (!confirm(t('importConfirm'))) {
         e.target.value = '';
         return;
       }
@@ -2636,7 +3192,7 @@
       closeDrawer();
       buildPoolPanel();
       render();
-      alert('Import abgeschlossen.');
+      alert(t('importDone'));
     };
     reader.readAsText(file);
   };
@@ -2656,7 +3212,7 @@
     var newStd = e.target.value;
     if (newStd === settings.standard) return;
     var label = newStd === 'hsk3' ? 'HSK 3.0' : 'HSK 2.0';
-    if (!confirm('Zum ' + label + '-Wortschatz wechseln? Die aktuelle Runde wird neu gestartet. Dein Fortschritt bleibt für beide Standards getrennt erhalten.')) {
+    if (!confirm(tf('standardSwitchConfirm', label))) {
       e.target.value = settings.standard;
       return;
     }
@@ -2692,7 +3248,27 @@
     navigator.serviceWorker.register('sw.js').catch(function(){});
   }
 
+  // ---------- language switcher ----------
+  var btnLang = document.getElementById('btnLang');
+  var langPopover = document.getElementById('langPopover');
+  if (btnLang) btnLang.onclick = function(e){
+    e.stopPropagation();
+    langPopover.classList.toggle('show');
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('.lang-option'), function(btn){
+    btn.onclick = function(){
+      setLanguage(btn.getAttribute('data-lang'));
+      langPopover.classList.remove('show');
+    };
+  });
+  document.addEventListener('click', function(e){
+    if (langPopover && langPopover.classList.contains('show') && !langPopover.contains(e.target) && e.target !== btnLang) {
+      langPopover.classList.remove('show');
+    }
+  });
+
   // ---------- init ----------
+  applyStaticTranslations();
   buildPoolLegend();
   buildPoolPanel();
   render();
