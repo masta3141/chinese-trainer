@@ -2579,6 +2579,15 @@
     applyFonts();
   };
 
+  // Register the service worker if one is deployed alongside this file (e.g. on
+  // GitHub Pages). This has no effect on claude.ai artifacts or local file://
+  // pages — registration just fails silently there, which is fine. Its only
+  // purpose is to satisfy Chrome's Android install criteria for a proper
+  // WebAPK-style home-screen icon instead of a browser-badged shortcut.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  }
+
   // ---------- init ----------
   buildPoolLegend();
   buildPoolPanel();
