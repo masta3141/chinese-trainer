@@ -203,6 +203,30 @@
     font-weight: 700;
     color: #000;
   }
+  .pool-cell { cursor: pointer; }
+  .grid-info-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(8px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: var(--hanzi-font), 'Work Sans', sans-serif;
+    max-width: min(90vw, 380px);
+    text-align: center;
+    z-index: 40;
+    box-shadow: 0 6px 20px var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s, transform .15s;
+  }
+  .grid-info-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
   main#main {
     min-width: 0;
   }
@@ -522,6 +546,22 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .export-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .export-row-label {
+    flex: 1;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .export-row .btn-secondary {
+    padding: 7px 14px;
+    font-size: 14px;
+    min-width: 40px;
   }
   header.top {
     padding-top: calc(20px + env(safe-area-inset-top, 0px));
@@ -990,6 +1030,7 @@
     <aside class="pool-panel" aria-label="Fortschritt aller Wörter">
       <div class="pool-legend" id="poolLegend"></div>
       <div class="pool-grid" id="poolPanel"></div>
+      <div class="grid-info-toast" id="gridInfoToast"></div>
     </aside>
     <div class="content-col">
       <div id="cardsView">
@@ -1061,14 +1102,27 @@
 
   <div class="drawer-actions">
     <h2 style="margin-top:0;" data-i18n="exportHeading">Daten sichern</h2>
-    <button class="btn-secondary" id="btnExportData" data-i18n="exportBtn">⬇ Exportieren (JSON)</button>
-    <button class="btn-secondary" id="btnImportData" data-i18n="importBtn">⬆ Importieren (JSON)</button>
+    <div class="export-row">
+      <span class="export-row-label" data-i18n="exportProgressLabel">Fortschritt</span>
+      <button class="btn-secondary" id="btnExportProgress" data-i18n="exportBtn">⬇</button>
+      <button class="btn-secondary" id="btnImportProgress" data-i18n="importBtn">⬆</button>
+    </div>
+    <div class="export-row">
+      <span class="export-row-label" data-i18n="exportExamplesLabel">Beispielsätze</span>
+      <button class="btn-secondary" id="btnExportExamples" data-i18n="exportBtn">⬇</button>
+      <button class="btn-secondary" id="btnImportExamples" data-i18n="importBtn">⬆</button>
+    </div>
+    <div class="export-row">
+      <span class="export-row-label" data-i18n="exportStoriesLabel">Geschichten</span>
+      <button class="btn-secondary" id="btnExportStories" data-i18n="exportBtn">⬇</button>
+      <button class="btn-secondary" id="btnImportStories" data-i18n="importBtn">⬆</button>
+    </div>
     <input type="file" id="inpImportFile" accept="application/json,.json" style="display:none;">
-    <p class="drawer-note" data-i18n="exportNote">Exportiert Fortschritt, generierte Beispielsätze und Geschichten als eine Datei — zum Sichern oder Übertragen auf ein anderes Gerät. Import ersetzt die aktuellen Daten in diesem Browser komplett.</p>
+    <p class="drawer-note" data-i18n="exportNote">Jede Kategorie wird als eigene JSON-Datei exportiert bzw. importiert — zum Sichern oder Übertragen auf ein anderes Gerät. Import ersetzt die jeweilige Kategorie in diesem Browser komplett.</p>
   </div>
 
   <div class="drawer-actions">
-    <h2 style="margin-top:0;" data-i18n="geminiHeading">Beispielsätze generieren (Gemini)</h2>
+    <h2 style="margin-top:0;" data-i18n="geminiHeading">Gemini API-Key (Beispielsätze &amp; Geschichten)</h2>
     <div class="field" style="margin-bottom:14px;">
       <label for="inpGeminiKey" data-i18n="geminiKeyLabel">Gemini API-Key</label>
       <input type="password" id="inpGeminiKey" placeholder="AIza…" autocomplete="off">
@@ -1206,21 +1260,25 @@
       resetNote: 'Dein Fortschritt wird nur lokal in diesem Browser gespeichert (localStorage). "Fortschritt zurücksetzen" löscht ihn vollständig.',
       resetConfirm: 'Wirklich den gesamten Lernfortschritt komplett löschen? Alle Wörter starten danach wieder bei Level 0.',
       exportHeading: 'Daten sichern',
-      exportBtn: '⬇ Exportieren (JSON)',
-      importBtn: '⬆ Importieren (JSON)',
-      exportNote: 'Exportiert Fortschritt, generierte Beispielsätze und Geschichten als eine Datei — zum Sichern oder Übertragen auf ein anderes Gerät. Import ersetzt die aktuellen Daten in diesem Browser komplett.',
+      exportBtn: '⬇',
+      importBtn: '⬆',
+      exportProgressLabel: 'Fortschritt', exportExamplesLabel: 'Beispielsätze', exportStoriesLabel: 'Geschichten',
+      exportNote: 'Jede Kategorie wird als eigene JSON-Datei exportiert bzw. importiert — zum Sichern oder Übertragen auf ein anderes Gerät. Import ersetzt die jeweilige Kategorie in diesem Browser komplett.',
+      importConfirmProgress: 'Import ersetzt deinen kompletten aktuellen Fortschritt in diesem Browser. Fortfahren?',
+      importConfirmExamples: 'Import ersetzt alle generierten Beispielsätze in diesem Browser. Fortfahren?',
+      importConfirmStories: 'Import ersetzt alle Geschichten in diesem Browser. Fortfahren?',
       importInvalidJson: 'Diese Datei ist kein gültiges JSON.',
       importInvalidFormat: 'Diese Datei sieht nicht wie ein Export dieser App aus (fehlendes "progress"-Feld).',
       importConfirm: 'Import ersetzt deinen kompletten aktuellen Fortschritt, alle generierten Beispielsätze und alle Geschichten in diesem Browser. Fortfahren?',
       importDone: 'Import abgeschlossen.',
-      geminiHeading: 'Beispielsätze generieren (Gemini)',
+      geminiHeading: 'Gemini API-Key (Beispielsätze & Geschichten)',
       geminiKeyLabel: 'Gemini API-Key',
       geminiModelLabel: 'Modell',
       geminiKeyNote: 'Der Key verlässt diesen Browser nie außer in direkten Anfragen an Google — er wird nur lokal gespeichert, nicht in dieser Datei oder irgendwo sonst.',
       geminiSaveBtn: 'Key speichern', geminiSavedToast: 'Gespeichert ✓', geminiKeyMissing: 'Bitte zuerst deinen Gemini API-Key in den Einstellungen speichern.',
       standardSwitchConfirm: 'Zum {0}-Wortschatz wechseln? Die aktuelle Runde wird neu gestartet. Dein Fortschritt bleibt für beide Standards getrennt erhalten.',
       // pool
-      poolAriaLabel: 'Fortschritt aller Wörter', notLearned: 'noch nicht gelernt',
+      poolAriaLabel: 'Fortschritt aller Wörter', notLearned: 'noch nicht gelernt', cellLevelLabel: 'Level',
       // stories
       storiesLibraryTitle: 'Meine Geschichten',
       storiesNewBtn: '+ Neue Geschichte',
@@ -1325,20 +1383,24 @@
       resetNote: 'Your progress is only stored locally in this browser (localStorage). "Reset progress" deletes it completely.',
       resetConfirm: 'Really delete all learning progress completely? All words will start again at level 0.',
       exportHeading: 'Back up data',
-      exportBtn: '⬇ Export (JSON)',
-      importBtn: '⬆ Import (JSON)',
-      exportNote: 'Exports progress, generated example sentences and stories as one file — for backup or transferring to another device. Importing completely replaces the current data in this browser.',
+      exportBtn: '⬇',
+      importBtn: '⬆',
+      exportProgressLabel: 'Progress', exportExamplesLabel: 'Example sentences', exportStoriesLabel: 'Stories',
+      exportNote: 'Each category is exported/imported as its own JSON file — for backup or transferring to another device. Importing completely replaces that category in this browser.',
+      importConfirmProgress: 'Importing will replace all your current progress in this browser. Continue?',
+      importConfirmExamples: 'Importing will replace all generated example sentences in this browser. Continue?',
+      importConfirmStories: 'Importing will replace all stories in this browser. Continue?',
       importInvalidJson: 'This file is not valid JSON.',
       importInvalidFormat: 'This file doesn\'t look like an export from this app (missing "progress" field).',
       importConfirm: 'Importing will replace your entire current progress, all generated example sentences and all stories in this browser. Continue?',
       importDone: 'Import complete.',
-      geminiHeading: 'Generate example sentences (Gemini)',
+      geminiHeading: 'Gemini API key (examples & stories)',
       geminiKeyLabel: 'Gemini API key',
       geminiModelLabel: 'Model',
       geminiKeyNote: 'The key never leaves this browser except in direct requests to Google — it\'s only stored locally, not in this file or anywhere else.',
       geminiSaveBtn: 'Save key', geminiSavedToast: 'Saved ✓', geminiKeyMissing: 'Please save your Gemini API key in settings first.',
       standardSwitchConfirm: 'Switch to the {0} vocabulary? The current round will restart. Your progress stays separate for both standards.',
-      poolAriaLabel: 'Progress of all words', notLearned: 'not learned yet',
+      poolAriaLabel: 'Progress of all words', notLearned: 'not learned yet', cellLevelLabel: 'Level',
       storiesLibraryTitle: 'My Stories',
       storiesNewBtn: '+ New Story',
       storiesEmpty: 'No stories saved yet.',
@@ -1441,20 +1503,24 @@
       resetNote: 'Ta progression n\'est stockée que localement dans ce navigateur (localStorage). "Réinitialiser la progression" la supprime complètement.',
       resetConfirm: 'Vraiment supprimer toute la progression d\'apprentissage ? Tous les mots repartiront au niveau 0.',
       exportHeading: 'Sauvegarder les données',
-      exportBtn: '⬇ Exporter (JSON)',
-      importBtn: '⬆ Importer (JSON)',
-      exportNote: 'Exporte la progression, les phrases d\'exemple générées et les histoires en un seul fichier — pour sauvegarder ou transférer sur un autre appareil. L\'import remplace entièrement les données actuelles de ce navigateur.',
+      exportBtn: '⬇',
+      importBtn: '⬆',
+      exportProgressLabel: 'Progression', exportExamplesLabel: 'Phrases d\'exemple', exportStoriesLabel: 'Histoires',
+      exportNote: 'Chaque catégorie est exportée/importée comme son propre fichier JSON — pour sauvegarder ou transférer sur un autre appareil. L\'import remplace entièrement cette catégorie dans ce navigateur.',
+      importConfirmProgress: 'L\'import remplacera toute ta progression actuelle dans ce navigateur. Continuer ?',
+      importConfirmExamples: 'L\'import remplacera toutes les phrases d\'exemple générées dans ce navigateur. Continuer ?',
+      importConfirmStories: 'L\'import remplacera toutes les histoires dans ce navigateur. Continuer ?',
       importInvalidJson: 'Ce fichier n\'est pas un JSON valide.',
       importInvalidFormat: 'Ce fichier ne ressemble pas à un export de cette application (champ "progress" manquant).',
       importConfirm: 'L\'import remplacera toute ta progression actuelle, toutes les phrases d\'exemple générées et toutes les histoires dans ce navigateur. Continuer ?',
       importDone: 'Import terminé.',
-      geminiHeading: 'Générer des phrases d\'exemple (Gemini)',
+      geminiHeading: 'Clé API Gemini (exemples et histoires)',
       geminiKeyLabel: 'Clé API Gemini',
       geminiModelLabel: 'Modèle',
       geminiKeyNote: 'La clé ne quitte jamais ce navigateur, sauf pour les requêtes directes à Google — elle n\'est stockée que localement, pas dans ce fichier ni ailleurs.',
       geminiSaveBtn: 'Enregistrer la clé', geminiSavedToast: 'Enregistré ✓', geminiKeyMissing: 'Enregistre d\'abord ta clé API Gemini dans les paramètres.',
       standardSwitchConfirm: 'Passer au vocabulaire {0} ? La série en cours redémarrera. Ta progression reste séparée pour les deux normes.',
-      poolAriaLabel: 'Progression de tous les mots', notLearned: 'pas encore appris',
+      poolAriaLabel: 'Progression de tous les mots', notLearned: 'pas encore appris', cellLevelLabel: 'Niveau',
       storiesLibraryTitle: 'Mes histoires',
       storiesNewBtn: '+ Nouvelle histoire',
       storiesEmpty: 'Aucune histoire enregistrée pour l\'instant.',
@@ -1557,20 +1623,24 @@
       resetNote: 'Tu progreso solo se guarda localmente en este navegador (localStorage). "Restablecer progreso" lo elimina por completo.',
       resetConfirm: '¿Seguro que quieres borrar todo el progreso de aprendizaje? Todas las palabras volverán a empezar en el nivel 0.',
       exportHeading: 'Respaldar datos',
-      exportBtn: '⬇ Exportar (JSON)',
-      importBtn: '⬆ Importar (JSON)',
-      exportNote: 'Exporta el progreso, las frases de ejemplo generadas y las historias en un solo archivo — para respaldar o transferir a otro dispositivo. Importar reemplaza por completo los datos actuales en este navegador.',
+      exportBtn: '⬇',
+      importBtn: '⬆',
+      exportProgressLabel: 'Progreso', exportExamplesLabel: 'Frases de ejemplo', exportStoriesLabel: 'Historias',
+      exportNote: 'Cada categoría se exporta/importa como su propio archivo JSON — para respaldar o transferir a otro dispositivo. Importar reemplaza por completo esa categoría en este navegador.',
+      importConfirmProgress: 'Importar reemplazará todo tu progreso actual en este navegador. ¿Continuar?',
+      importConfirmExamples: 'Importar reemplazará todas las frases de ejemplo generadas en este navegador. ¿Continuar?',
+      importConfirmStories: 'Importar reemplazará todas las historias en este navegador. ¿Continuar?',
       importInvalidJson: 'Este archivo no es un JSON válido.',
       importInvalidFormat: 'Este archivo no parece una exportación de esta app (falta el campo "progress").',
       importConfirm: 'Importar reemplazará todo tu progreso actual, todas las frases de ejemplo generadas y todas las historias en este navegador. ¿Continuar?',
       importDone: 'Importación completada.',
-      geminiHeading: 'Generar frases de ejemplo (Gemini)',
+      geminiHeading: 'Clave API de Gemini (ejemplos e historias)',
       geminiKeyLabel: 'Clave API de Gemini',
       geminiModelLabel: 'Modelo',
       geminiKeyNote: 'La clave nunca sale de este navegador salvo en solicitudes directas a Google — solo se guarda localmente, no en este archivo ni en ningún otro lugar.',
       geminiSaveBtn: 'Guardar clave', geminiSavedToast: 'Guardado ✓', geminiKeyMissing: 'Primero guarda tu clave API de Gemini en los ajustes.',
       standardSwitchConfirm: '¿Cambiar al vocabulario {0}? La ronda actual se reiniciará. Tu progreso se mantiene por separado para ambos estándares.',
-      poolAriaLabel: 'Progreso de todas las palabras', notLearned: 'aún no aprendida',
+      poolAriaLabel: 'Progreso de todas las palabras', notLearned: 'aún no aprendida', cellLevelLabel: 'Nivel',
       storiesLibraryTitle: 'Mis historias',
       storiesNewBtn: '+ Nueva historia',
       storiesEmpty: 'Aún no hay historias guardadas.',
@@ -3134,30 +3204,35 @@
     render();
   };
 
-  document.getElementById('btnExportData').onclick = function(){
-    var payload = {
-      format: 'hskflash-backup-v1',
-      exportedAt: new Date().toISOString(),
-      progress: progress,
-      generatedExamples: generatedExamples,
-      stories: stories
-    };
+  function downloadJson(payload, filenamePrefix){
     var json = JSON.stringify(payload, null, 2);
     var blob = new Blob([json], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     var stamp = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = 'hskflash-backup-' + stamp + '.json';
+    a.download = filenamePrefix + '-' + stamp + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }
+
+  document.getElementById('btnExportProgress').onclick = function(){
+    downloadJson({ format: 'hskflash-progress-v1', exportedAt: new Date().toISOString(), progress: progress }, 'hskflash-progress');
+  };
+  document.getElementById('btnExportExamples').onclick = function(){
+    downloadJson({ format: 'hskflash-examples-v1', exportedAt: new Date().toISOString(), generatedExamples: generatedExamples }, 'hskflash-examples');
+  };
+  document.getElementById('btnExportStories').onclick = function(){
+    downloadJson({ format: 'hskflash-stories-v1', exportedAt: new Date().toISOString(), stories: stories }, 'hskflash-stories');
   };
 
-  document.getElementById('btnImportData').onclick = function(){
-    document.getElementById('inpImportFile').click();
-  };
+  var importTarget = null; // 'progress' | 'examples' | 'stories'
+  document.getElementById('btnImportProgress').onclick = function(){ importTarget = 'progress'; document.getElementById('inpImportFile').click(); };
+  document.getElementById('btnImportExamples').onclick = function(){ importTarget = 'examples'; document.getElementById('inpImportFile').click(); };
+  document.getElementById('btnImportStories').onclick = function(){ importTarget = 'stories'; document.getElementById('inpImportFile').click(); };
+
   document.getElementById('inpImportFile').onchange = function(e){
     var file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -3171,27 +3246,32 @@
         e.target.value = '';
         return;
       }
-      if (!data || typeof data !== 'object' || typeof data.progress !== 'object') {
-        alert(t('importInvalidFormat'));
-        e.target.value = '';
-        return;
+      if (importTarget === 'progress') {
+        if (!data || typeof data.progress !== 'object') { alert(t('importInvalidFormat')); e.target.value = ''; return; }
+        if (!confirm(t('importConfirmProgress'))) { e.target.value = ''; return; }
+        progress = data.progress;
+        saveProgress(progress);
+        session = null;
+        buildPoolPanel();
+      } else if (importTarget === 'examples') {
+        if (!data || typeof data.generatedExamples !== 'object') { alert(t('importInvalidFormat')); e.target.value = ''; return; }
+        if (!confirm(t('importConfirmExamples'))) { e.target.value = ''; return; }
+        generatedExamples = data.generatedExamples;
+        saveGeneratedExamples(generatedExamples);
+      } else if (importTarget === 'stories') {
+        if (!data || !Array.isArray(data.stories)) { alert(t('importInvalidFormat')); e.target.value = ''; return; }
+        if (!confirm(t('importConfirmStories'))) { e.target.value = ''; return; }
+        stories = data.stories;
+        saveStories(stories);
+        storiesState.view = 'library';
       }
-      if (!confirm(t('importConfirm'))) {
-        e.target.value = '';
-        return;
-      }
-      progress = data.progress || {};
-      generatedExamples = data.generatedExamples || {};
-      stories = Array.isArray(data.stories) ? data.stories : [];
-      saveProgress(progress);
-      saveGeneratedExamples(generatedExamples);
-      saveStories(stories);
-      session = null;
-      storiesState.view = 'library';
       e.target.value = '';
       closeDrawer();
-      buildPoolPanel();
       render();
+      var storiesViewEl = document.getElementById('storiesView');
+      if (storiesViewEl && storiesViewEl.style.display !== 'none') { try { renderStories(); } catch(err2){} }
+      var statsViewEl = document.getElementById('statsPageView');
+      if (statsViewEl && statsViewEl.style.display !== 'none') { try { renderStatsTab(); } catch(err2){} }
       alert(t('importDone'));
     };
     reader.readAsText(file);
@@ -3266,6 +3346,27 @@
       langPopover.classList.remove('show');
     }
   });
+
+  // ---------- grid tap-to-info (mobile has no hover tooltips) ----------
+  (function initGridTapInfo(){
+    var panel = document.getElementById('poolPanel');
+    var toast = document.getElementById('gridInfoToast');
+    if (!panel || !toast) return;
+    var hideTimer = null;
+    panel.addEventListener('click', function(e){
+      var cell = e.target.closest ? e.target.closest('.pool-cell') : null;
+      if (!cell) return;
+      var id = parseInt(cell.getAttribute('data-id'), 10);
+      var w = WORD_BY_ID[id];
+      if (!w) return;
+      var p = progress[id];
+      var lvlPart = (p && p.seen && p.lvl > 0) ? (' · ' + t('cellLevelLabel') + ' ' + p.lvl) : '';
+      toast.textContent = w.h + ' · ' + w.p + ' · ' + w.e + lvlPart;
+      toast.classList.add('show');
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(function(){ toast.classList.remove('show'); }, 2600);
+    });
+  })();
 
   // ---------- init ----------
   applyStaticTranslations();
