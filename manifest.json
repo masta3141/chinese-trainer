@@ -1,14 +1,26 @@
 {
+  "id": "/",
   "name": "HSK Vokabeltrainer",
   "short_name": "HSK",
+  "description": "Karteikarten, Geschichten und Statistiken zum Lernen der HSK-Vokabeln (2.0 und 3.0), mit Fortschritts-Übersicht und Gemini-gestützter Beispielsatz- und Story-Generierung.",
   "start_url": ".",
+  "scope": ".",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
   "background_color": "#efe8d8",
   "theme_color": "#a33b2c",
+  "lang": "de",
+  "dir": "ltr",
+  "categories": ["education", "productivity"],
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
     { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "screenshot-narrow.png", "sizes": "400x850", "type": "image/png", "form_factor": "narrow", "label": "Kartenansicht auf dem Handy" },
+    { "src": "screenshot-wide.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide", "label": "Ansicht am Desktop" }
   ]
 }
