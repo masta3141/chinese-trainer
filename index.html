@@ -1307,6 +1307,7 @@
       storiesRepetition: ' (Wiederholung)',
       storiesRatingOnlyCurrent: 'Bewertung nur für den aktuellen Satz möglich.',
       storiesPrev: '← Zurück', storiesNext: 'Weiter →',
+      storiesNarrateBtn: '🎧 Erzählen', storiesStopBtn: '⏹ Stopp',
       storiesUnderstandNo: 'Verstehe nicht', storiesUnderstandHalf: 'Halbwegs', storiesUnderstandYes: 'Gut',
       storiesPinyinShow: 'Pinyin zeigen', storiesPinyinHide: 'Pinyin ausblenden',
       storiesTranslationShow: 'Übersetzung zeigen', storiesTranslationHide: 'Übersetzung ausblenden',
@@ -1428,6 +1429,7 @@
       storiesRepetition: ' (review)',
       storiesRatingOnlyCurrent: 'You can only rate the current sentence.',
       storiesPrev: '← Back', storiesNext: 'Next →',
+      storiesNarrateBtn: '🎧 Narrate', storiesStopBtn: '⏹ Stop',
       storiesUnderstandNo: 'Don\'t understand', storiesUnderstandHalf: 'Partly', storiesUnderstandYes: 'Understand',
       storiesPinyinShow: 'Show pinyin', storiesPinyinHide: 'Hide pinyin',
       storiesTranslationShow: 'Show translation', storiesTranslationHide: 'Hide translation',
@@ -1548,6 +1550,7 @@
       storiesRepetition: ' (révision)',
       storiesRatingOnlyCurrent: 'Seule la phrase actuelle peut être évaluée.',
       storiesPrev: '← Précédent', storiesNext: 'Suivant →',
+      storiesNarrateBtn: '🎧 Raconter', storiesStopBtn: '⏹ Arrêter',
       storiesUnderstandNo: 'Je ne comprends pas', storiesUnderstandHalf: 'Partiellement', storiesUnderstandYes: 'Je comprends',
       storiesPinyinShow: 'Afficher le pinyin', storiesPinyinHide: 'Masquer le pinyin',
       storiesTranslationShow: 'Afficher la traduction', storiesTranslationHide: 'Masquer la traduction',
@@ -1668,6 +1671,7 @@
       storiesRepetition: ' (repaso)',
       storiesRatingOnlyCurrent: 'Solo puedes evaluar la frase actual.',
       storiesPrev: '← Atrás', storiesNext: 'Siguiente →',
+      storiesNarrateBtn: '🎧 Narrar', storiesStopBtn: '⏹ Detener',
       storiesUnderstandNo: 'No entiendo', storiesUnderstandHalf: 'Más o menos', storiesUnderstandYes: 'Entiendo',
       storiesPinyinShow: 'Mostrar pinyin', storiesPinyinHide: 'Ocultar pinyin',
       storiesTranslationShow: 'Mostrar traducción', storiesTranslationHide: 'Ocultar traducción',
@@ -2234,6 +2238,7 @@
   function goToPage(n){
     currentPage = Math.max(0, Math.min(PAGE_NAMES.length - 1, n));
     var view = PAGE_NAMES[currentPage];
+    if (view !== 'stories' && typeof stopNarration === 'function') stopNarration();
     applyCarouselTransform();
     updateTabsAndDots(view);
     if (view === 'stories') safeRenderStories();
@@ -2247,6 +2252,7 @@
     }
     // Desktop: no grid tab (sidebar is always visible), plain show/hide of the views.
     if (view === 'grid') return;
+    if (view !== 'stories') stopNarration();
     currentPage = PAGE_NAMES.indexOf(view);
     document.getElementById('tabCards').classList.toggle('active', view === 'cards');
     document.getElementById('tabStories').classList.toggle('active', view === 'stories');
@@ -2360,7 +2366,7 @@
           listHtml +
         '</div>';
       var btnNew = document.getElementById('btnNewStory');
-      if (btnNew) btnNew.onclick = function(){ st.view = 'generate'; renderStories(); };
+      if (btnNew) btnNew.onclick = function(){ stopNarration(); st.view = 'generate'; renderStories(); };
       Array.prototype.forEach.call(root.querySelectorAll('[data-restart-id]'), function(btn){
         btn.onclick = function(e){
           e.stopPropagation();
@@ -2375,6 +2381,7 @@
       });
       Array.prototype.forEach.call(root.querySelectorAll('.story-card'), function(card){
         card.onclick = function(){
+          stopNarration();
           var id = card.getAttribute('data-id');
           var s = stories.filter(function(x){ return x.id === id; })[0];
           var startAt = (s && s.currentIdx) ? Math.min(s.currentIdx, s.sentences.length) : 0;
@@ -2501,8 +2508,9 @@
               '<p>' + esc(tf('storiesFinishedDesc', story.title.h)) + '</p>' +
               '<button class="btn-primary" id="btnReadAgain">' + esc(t('storiesRestartBtn')) + '</button></div>' +
           '</div>';
-        document.getElementById('btnBackToLibrary2').onclick = function(){ st.view = 'library'; renderStories(); };
+        document.getElementById('btnBackToLibrary2').onclick = function(){ stopNarration(); st.view = 'library'; renderStories(); };
         document.getElementById('btnDeleteStory').onclick = function(){
+          stopNarration();
           if (!confirm(t('storiesDeleteConfirm'))) return;
           stories = stories.filter(function(s){ return s.id !== story.id; });
           saveStories(stories);
@@ -2510,6 +2518,7 @@
           renderStories();
         };
         document.getElementById('btnReadAgain').onclick = function(){
+          stopNarration();
           st.readIdx = 0;
           st.readCurrent = 0;
           st.readShowPinyin = false;
@@ -2536,7 +2545,10 @@
       root.innerHTML =
         '<div class="stories-wrap">' +
           '<div class="story-toprow"><button class="hint-btn" id="btnBackToLibrary2">' + esc(t('storiesBackToLibrary')) + '</button>' +
-            '<button class="hint-btn" id="btnDeleteStory" style="color:var(--seal);">' + esc(t('storiesDeleteBtn')) + '</button></div>' +
+            '<div style="display:flex;gap:8px;">' +
+              '<button class="hint-btn' + (narrating ? ' on' : '') + '" id="btnNarrate">' + esc(narrating ? t('storiesStopBtn') : t('storiesNarrateBtn')) + '</button>' +
+              '<button class="hint-btn" id="btnDeleteStory" style="color:var(--seal);">' + esc(t('storiesDeleteBtn')) + '</button>' +
+            '</div></div>' +
           '<div class="story-title-block" style="margin-bottom:14px;padding-bottom:12px;">' +
             '<div class="t-h" style="font-size:18px;">' + esc(story.title.h) + '</div>' +
             '<div class="t-e" style="margin-top:2px;">' + esc(story.title.e) + '</div>' +
@@ -2565,12 +2577,29 @@
           '</div>' +
         '</div>';
 
-      document.getElementById('btnBackToLibrary2').onclick = function(){ st.view = 'library'; renderStories(); };
+      document.getElementById('btnBackToLibrary2').onclick = function(){ stopNarration(); st.view = 'library'; renderStories(); };
       document.getElementById('btnDeleteStory').onclick = function(){
+        stopNarration();
         if (!confirm(t('storiesDeleteConfirm'))) return;
         stories = stories.filter(function(s){ return s.id !== story.id; });
         saveStories(stories);
         st.view = 'library';
+        renderStories();
+      };
+      document.getElementById('btnNarrate').onclick = function(){
+        if (narrating) {
+          stopNarration();
+          renderStories();
+          return;
+        }
+        narrateStory(story, idx, function(i){
+          st.readIdx = i;
+          st.readShowPinyin = true;
+          st.readShowTranslation = true;
+          renderStories();
+        }, function(){
+          renderStories();
+        });
         renderStories();
       };
       document.getElementById('sentHanzi').onclick = function(){ speak(sent.h); };
@@ -2584,6 +2613,7 @@
         renderStories();
       };
       function goToSentence(newIdx){
+        stopNarration();
         st.readIdx = newIdx;
         st.readShowPinyin = false;
         st.readShowTranslation = false;
@@ -2599,6 +2629,7 @@
       if (isCurrent) {
         Array.prototype.forEach.call(root.querySelectorAll('.rate-row .rate-btn'), function(btn){
           btn.onclick = function(){
+            stopNarration();
             var val = parseInt(btn.getAttribute('data-val'), 10);
             var matched = matchWordsInSentence(sent.h, WORDS);
             matched.forEach(function(w){
@@ -2815,6 +2846,55 @@
   function speak(text){
     if (!speechOn || !text) return;
     speakWithVoice(text, findVoiceByName(settings.voiceName));
+  }
+
+  // ---------- story narration (Chinese slow → English → Chinese slow, per sentence) ----------
+  var narrating = false;
+  var narrationToken = 0;
+
+  function speakAsync(text, lang, rate, voice){
+    return new Promise(function(resolve){
+      if (!text || !('speechSynthesis' in window)) { resolve(); return; }
+      try {
+        var u = new SpeechSynthesisUtterance(text);
+        if (voice && lang === 'zh-CN') { u.voice = voice; u.lang = voice.lang; }
+        else { u.lang = lang; }
+        u.rate = rate;
+        u.onend = function(){ resolve(); };
+        u.onerror = function(){ resolve(); };
+        window.speechSynthesis.speak(u);
+      } catch(e) { resolve(); }
+    });
+  }
+  function narrationSleep(ms){
+    return new Promise(function(resolve){ setTimeout(resolve, ms); });
+  }
+  function stopNarration(){
+    narrationToken++;
+    narrating = false;
+    try { window.speechSynthesis.cancel(); } catch(e) {}
+  }
+  function narrateStory(story, startIdx, onStep, onDone){
+    narrating = true;
+    var myToken = ++narrationToken;
+    var zhVoice = findVoiceByName(settings.voiceName);
+
+    function step(i){
+      if (!narrating || myToken !== narrationToken) return;
+      if (i >= story.sentences.length) { narrating = false; onDone(); return; }
+      onStep(i);
+      var sent = story.sentences[i];
+      function alive(){ return myToken === narrationToken; }
+      speakAsync(sent.h, 'zh-CN', 0.6, zhVoice)
+        .then(function(){ if (!alive()) return Promise.reject('stopped'); return narrationSleep(280); })
+        .then(function(){ if (!alive()) return Promise.reject('stopped'); return speakAsync(sent.e, 'en-US', 1.0); })
+        .then(function(){ if (!alive()) return Promise.reject('stopped'); return narrationSleep(280); })
+        .then(function(){ if (!alive()) return Promise.reject('stopped'); return speakAsync(sent.h, 'zh-CN', 0.6, zhVoice); })
+        .then(function(){ if (!alive()) return Promise.reject('stopped'); return narrationSleep(1100); })
+        .then(function(){ if (!alive()) return Promise.reject('stopped'); step(i + 1); })
+        .catch(function(){ /* narration was stopped mid-sentence — do nothing further */ });
+    }
+    step(startIdx);
   }
 
   // ---------- rendering ----------
