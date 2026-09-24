@@ -230,7 +230,7 @@
   main#main {
     min-width: 0;
   }
-  /* ---- mobile: 4-page swipe carousel (Vokabeln | Karten | Geschichten | Statistiken) ---- */
+  /* ---- mobile: 5-page swipe carousel (Vokabeln | Karten | Geschichten | Satzinseln | Statistiken) ---- */
   @media (max-width: 820px) {
     /* Move .app's own horizontal padding onto the header/tabs/dots individually,
        so the carousel track's clip boundary sits exactly at the viewport edge —
@@ -244,25 +244,26 @@
     }
     .learn-area.carousel {
       flex-wrap: nowrap;
-      width: 400%;
+      width: 500%;
       transition: transform 0.28s cubic-bezier(.2,.7,.3,1);
       gap: 0;
       touch-action: pan-y;
     }
     /* content-col itself must not take a carousel slot — it only exists for the
        desktop layout. In carousel mode its children (cardsView/storiesView/
-       statsPageView) are promoted to act as direct flex items of .learn-area,
-       each its own page. */
+       islandsView/statsPageView) are promoted to act as direct flex items of
+       .learn-area, each its own page. */
     .learn-area.carousel > .content-col {
       display: contents;
     }
     .learn-area.carousel > .pool-panel,
     .learn-area.carousel #cardsView,
     .learn-area.carousel #storiesView,
+    .learn-area.carousel #islandsView,
     .learn-area.carousel #statsPageView {
-      flex: 0 0 25%;
-      width: 25%;
-      max-width: 25%;
+      flex: 0 0 20%;
+      width: 20%;
+      max-width: 20%;
       min-width: 0;
       box-sizing: border-box;
       padding: 0 8px;
@@ -273,6 +274,7 @@
     }
     .learn-area.carousel #cardsView,
     .learn-area.carousel #storiesView,
+    .learn-area.carousel #islandsView,
     .learn-area.carousel #statsPageView {
       display: block !important;
     }
@@ -300,7 +302,11 @@
     display: flex;
     gap: 6px;
     padding: 12px 0 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .view-tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
     background: none;
     border: none;
@@ -311,6 +317,8 @@
     padding: 8px 4px 10px;
     cursor: pointer;
     border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
   .tab-btn.active {
     color: var(--seal);
@@ -351,6 +359,11 @@
     margin-bottom: 10px;
     cursor: pointer;
     display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .story-card-toprow {
+    display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
@@ -372,6 +385,84 @@
     color: var(--ink-faint);
   }
   .story-card .story-arrow { color: var(--ink-faint); font-size: 16px; }
+  .story-audio-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px dashed var(--hairline);
+    padding-top: 9px;
+    cursor: default;
+  }
+  .story-audio-bar {
+    flex: 1;
+    height: 6px;
+    border-radius: 4px;
+    background: var(--hairline);
+    overflow: hidden;
+  }
+  .story-audio-fill {
+    height: 100%;
+    background: var(--seal);
+    border-radius: 4px;
+    transition: width .3s;
+  }
+  .story-audio-label {
+    font-size: 11px;
+    color: var(--ink-faint);
+    min-width: 40px;
+    text-align: right;
+  }
+  .audio-mini-btn {
+    padding: 5px 9px;
+    font-size: 13px;
+    min-width: auto;
+    flex: 0 0 auto;
+  }
+  .audio-mini-note {
+    font-size: 11px;
+    color: var(--ink-faint);
+    flex: 0 0 auto;
+  }
+  .audio-mini-done { color: var(--seal); font-weight: 700; font-size: 14px; }
+  .audio-picker {
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: default;
+  }
+  .audio-picker-label {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin: 8px 0 6px;
+  }
+  .audio-picker-label:first-child { margin-top: 0; }
+  .audio-picker-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .audio-opt {
+    background: var(--paper-raised);
+    border: 1px solid var(--hairline);
+    border-radius: 7px;
+    padding: 7px 12px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .audio-opt.selected {
+    border-color: var(--seal);
+    background: var(--seal);
+    color: #fff;
+    font-weight: 600;
+  }
+  .audio-picker-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
   .story-toprow {
     display: flex;
     justify-content: space-between;
@@ -1017,6 +1108,7 @@
     <button class="tab-btn" id="tabGrid" data-view="grid" data-i18n="tabGrid">Vokabeln</button>
     <button class="tab-btn active" id="tabCards" data-view="cards" data-i18n="tabCards">Karten</button>
     <button class="tab-btn" id="tabStories" data-view="stories" data-i18n="tabStories">Geschichten</button>
+    <button class="tab-btn" id="tabIslands" data-view="islands" data-i18n="tabIslands">Satzinseln</button>
     <button class="tab-btn" id="tabStats" data-view="stats" data-i18n="tabStats">Statistiken</button>
   </div>
   <div class="swipe-dots" id="swipeDots">
@@ -1024,6 +1116,7 @@
     <span class="sdot on" data-dot="1"></span>
     <span class="sdot" data-dot="2"></span>
     <span class="sdot" data-dot="3"></span>
+    <span class="sdot" data-dot="4"></span>
   </div>
 
   <div class="learn-area" id="learnArea">
@@ -1037,6 +1130,7 @@
         <main id="main"></main>
       </div>
       <div id="storiesView" style="display:none;"></div>
+      <div id="islandsView" style="display:none;"></div>
       <div id="statsPageView" style="display:none;"></div>
     </div>
   </div>
@@ -1218,7 +1312,28 @@
   var I18N = {
     de: {
       appTitle: 'HSK Vokabeltrainer',
-      tabGrid: 'Vokabeln', tabCards: 'Karten', tabStories: 'Geschichten', tabStats: 'Statistiken',
+      tabGrid: 'Vokabeln', tabCards: 'Karten', tabStories: 'Geschichten', tabIslands: 'Satzinseln', tabStats: 'Statistiken',
+      islandsLibraryTitle: 'Meine Satzinseln',
+      islandsNewBtn: '+ Neue Insel',
+      islandsEmpty: 'Noch keine Satzinseln angelegt.',
+      islandsNewNamePrompt: 'Themengebiet (z. B. "Im Restaurant", "Gespräch mit Nachbarn")',
+      islandsNewNamePlaceholder: 'z. B. Im Restaurant',
+      islandsCreateBtn: 'Anlegen',
+      islandsCancelBtn: 'Abbrechen',
+      islandsSentenceCount: '{0} Sätze',
+      islandsDeleteConfirm: 'Diese Insel mit allen Sätzen wirklich löschen?',
+      islandsDeleteSentenceConfirm: 'Diesen Satz wirklich löschen?',
+      islandsBackToLibrary: '← Zur Übersicht',
+      islandsAddSentencesBtn: '✨ Neue Sätze vorschlagen',
+      islandsGeneratingBtn: 'Wird generiert …',
+      islandsReviewTitle: 'Vorschläge durchsehen',
+      islandsReviewDesc: 'Übernimm die passenden Sätze oder verwirf sie einzeln.',
+      islandsAcceptAllBtn: 'Alle übernehmen',
+      islandsDiscardAllBtn: 'Alle verwerfen',
+      islandsDoneReviewBtn: 'Fertig',
+      islandsNarrateBtn: '🎧 Vorlesen', islandsStopBtn: '⏹ Stopp',
+      islandsErrorPrefix: 'Fehler beim Anzeigen der Satzinseln:',
+      islandsGenErrorPrefix: 'Fehler bei der Satz-Generierung: ', islandsNoSentencesYet: 'Noch keine Sätze — leg mit "Neue Sätze vorschlagen" los.',
       settingsTitle: 'Sprache / Language',
       statsInPool: 'im Pool', statsMastered: 'gut gelernt (Level ≥ 40)', statsPerRound: 'Wörter pro Runde',
       readyTitle: 'Bereit für eine Runde?',
@@ -1308,7 +1423,9 @@
       storiesRatingOnlyCurrent: 'Bewertung nur für den aktuellen Satz möglich.',
       storiesPrev: '← Zurück', storiesNext: 'Weiter →',
       storiesNarrateBtn: '🎧 Erzählen', storiesStopBtn: '⏹ Stopp',
-      storiesExportAudioBtn: '🔊 Als Audiodatei erzeugen', storiesAudioProgress: 'Erzeuge Satz {0} von {1} …', storiesAudioErrorPrefix: 'Fehler bei der Audio-Erzeugung: ',
+      audioStartBtn: 'Starten', audioCancelBtn: 'Abbrechen', audioPickVoice: 'Stimme', audioPickSpeed: 'Tempo',
+      audioDownloadTitle: 'Audio herunterladen', audioBlockedUntil: 'Tageslimit erreicht — weiter ab {0} Uhr', audioErrorPrefix: 'Fehler: ',
+      audioVoiceMale: 'männlich', audioVoiceFemale: 'weiblich',
       storiesUnderstandNo: 'Verstehe nicht', storiesUnderstandHalf: 'Halbwegs', storiesUnderstandYes: 'Gut',
       storiesPinyinShow: 'Pinyin zeigen', storiesPinyinHide: 'Pinyin ausblenden',
       storiesTranslationShow: 'Übersetzung zeigen', storiesTranslationHide: 'Übersetzung ausblenden',
@@ -1344,7 +1461,28 @@
     },
     en: {
       appTitle: 'HSK Flashcards',
-      tabGrid: 'Vocabulary', tabCards: 'Cards', tabStories: 'Stories', tabStats: 'Stats',
+      tabGrid: 'Vocabulary', tabCards: 'Cards', tabStories: 'Stories', tabIslands: 'Phrase Islands', tabStats: 'Stats',
+      islandsLibraryTitle: 'My Phrase Islands',
+      islandsNewBtn: '+ New Island',
+      islandsEmpty: 'No phrase islands yet.',
+      islandsNewNamePrompt: 'Topic (e.g. "At the restaurant", "Chatting with a neighbor")',
+      islandsNewNamePlaceholder: 'e.g. At the restaurant',
+      islandsCreateBtn: 'Create',
+      islandsCancelBtn: 'Cancel',
+      islandsSentenceCount: '{0} sentences',
+      islandsDeleteConfirm: 'Really delete this island and all its sentences?',
+      islandsDeleteSentenceConfirm: 'Really delete this sentence?',
+      islandsBackToLibrary: '← Back to overview',
+      islandsAddSentencesBtn: '✨ Suggest new sentences',
+      islandsGeneratingBtn: 'Generating …',
+      islandsReviewTitle: 'Review suggestions',
+      islandsReviewDesc: 'Keep the sentences that fit, or discard them individually.',
+      islandsAcceptAllBtn: 'Keep all',
+      islandsDiscardAllBtn: 'Discard all',
+      islandsDoneReviewBtn: 'Done',
+      islandsNarrateBtn: '🎧 Read aloud', islandsStopBtn: '⏹ Stop',
+      islandsErrorPrefix: 'Error displaying phrase islands:',
+      islandsGenErrorPrefix: 'Error generating sentences: ', islandsNoSentencesYet: 'No sentences yet — start with "Suggest new sentences".',
       settingsTitle: 'Language / Sprache',
       statsInPool: 'in pool', statsMastered: 'well learned (level ≥ 40)', statsPerRound: 'words per round',
       readyTitle: 'Ready for a round?',
@@ -1431,7 +1569,9 @@
       storiesRatingOnlyCurrent: 'You can only rate the current sentence.',
       storiesPrev: '← Back', storiesNext: 'Next →',
       storiesNarrateBtn: '🎧 Narrate', storiesStopBtn: '⏹ Stop',
-      storiesExportAudioBtn: '🔊 Generate audio file', storiesAudioProgress: 'Generating sentence {0} of {1} …', storiesAudioErrorPrefix: 'Error generating audio: ',
+      audioStartBtn: 'Start', audioCancelBtn: 'Cancel', audioPickVoice: 'Voice', audioPickSpeed: 'Speed',
+      audioDownloadTitle: 'Download audio', audioBlockedUntil: 'Daily limit reached — resumes at {0}', audioErrorPrefix: 'Error: ',
+      audioVoiceMale: 'male', audioVoiceFemale: 'female',
       storiesUnderstandNo: 'Don\'t understand', storiesUnderstandHalf: 'Partly', storiesUnderstandYes: 'Understand',
       storiesPinyinShow: 'Show pinyin', storiesPinyinHide: 'Hide pinyin',
       storiesTranslationShow: 'Show translation', storiesTranslationHide: 'Hide translation',
@@ -1466,7 +1606,28 @@
     },
     fr: {
       appTitle: 'Cartes HSK',
-      tabGrid: 'Vocabulaire', tabCards: 'Cartes', tabStories: 'Histoires', tabStats: 'Statistiques',
+      tabGrid: 'Vocabulaire', tabCards: 'Cartes', tabStories: 'Histoires', tabIslands: 'Îlots de phrases', tabStats: 'Statistiques',
+      islandsLibraryTitle: 'Mes îlots de phrases',
+      islandsNewBtn: '+ Nouvel îlot',
+      islandsEmpty: 'Aucun îlot de phrases pour l\'instant.',
+      islandsNewNamePrompt: 'Thème (p. ex. "Au restaurant", "Discussion avec un voisin")',
+      islandsNewNamePlaceholder: 'p. ex. Au restaurant',
+      islandsCreateBtn: 'Créer',
+      islandsCancelBtn: 'Annuler',
+      islandsSentenceCount: '{0} phrases',
+      islandsDeleteConfirm: 'Vraiment supprimer cet îlot et toutes ses phrases ?',
+      islandsDeleteSentenceConfirm: 'Vraiment supprimer cette phrase ?',
+      islandsBackToLibrary: '← Retour à l\'aperçu',
+      islandsAddSentencesBtn: '✨ Suggérer de nouvelles phrases',
+      islandsGeneratingBtn: 'Génération …',
+      islandsReviewTitle: 'Examiner les suggestions',
+      islandsReviewDesc: 'Garde les phrases qui conviennent, ou rejette-les individuellement.',
+      islandsAcceptAllBtn: 'Tout garder',
+      islandsDiscardAllBtn: 'Tout rejeter',
+      islandsDoneReviewBtn: 'Terminé',
+      islandsNarrateBtn: '🎧 Lire à voix haute', islandsStopBtn: '⏹ Arrêter',
+      islandsErrorPrefix: 'Erreur lors de l\'affichage des îlots de phrases :',
+      islandsGenErrorPrefix: 'Erreur lors de la génération des phrases : ', islandsNoSentencesYet: 'Pas encore de phrases — commence avec « Suggérer de nouvelles phrases ».',
       settingsTitle: 'Langue / Language',
       statsInPool: 'dans le pool', statsMastered: 'bien appris (niveau ≥ 40)', statsPerRound: 'mots par série',
       readyTitle: 'Prêt pour une série ?',
@@ -1553,7 +1714,9 @@
       storiesRatingOnlyCurrent: 'Seule la phrase actuelle peut être évaluée.',
       storiesPrev: '← Précédent', storiesNext: 'Suivant →',
       storiesNarrateBtn: '🎧 Raconter', storiesStopBtn: '⏹ Arrêter',
-      storiesExportAudioBtn: '🔊 Générer un fichier audio', storiesAudioProgress: 'Génération de la phrase {0} sur {1} …', storiesAudioErrorPrefix: 'Erreur lors de la génération audio : ',
+      audioStartBtn: 'Démarrer', audioCancelBtn: 'Annuler', audioPickVoice: 'Voix', audioPickSpeed: 'Vitesse',
+      audioDownloadTitle: 'Télécharger l\'audio', audioBlockedUntil: 'Limite quotidienne atteinte — reprise à {0}', audioErrorPrefix: 'Erreur : ',
+      audioVoiceMale: 'masculine', audioVoiceFemale: 'féminine',
       storiesUnderstandNo: 'Je ne comprends pas', storiesUnderstandHalf: 'Partiellement', storiesUnderstandYes: 'Je comprends',
       storiesPinyinShow: 'Afficher le pinyin', storiesPinyinHide: 'Masquer le pinyin',
       storiesTranslationShow: 'Afficher la traduction', storiesTranslationHide: 'Masquer la traduction',
@@ -1588,7 +1751,28 @@
     },
     es: {
       appTitle: 'Tarjetas HSK',
-      tabGrid: 'Vocabulario', tabCards: 'Tarjetas', tabStories: 'Historias', tabStats: 'Estadísticas',
+      tabGrid: 'Vocabulario', tabCards: 'Tarjetas', tabStories: 'Historias', tabIslands: 'Islas de frases', tabStats: 'Estadísticas',
+      islandsLibraryTitle: 'Mis islas de frases',
+      islandsNewBtn: '+ Nueva isla',
+      islandsEmpty: 'Aún no hay islas de frases.',
+      islandsNewNamePrompt: 'Tema (p. ej. "En el restaurante", "Charla con un vecino")',
+      islandsNewNamePlaceholder: 'p. ej. En el restaurante',
+      islandsCreateBtn: 'Crear',
+      islandsCancelBtn: 'Cancelar',
+      islandsSentenceCount: '{0} frases',
+      islandsDeleteConfirm: '¿Seguro que quieres eliminar esta isla y todas sus frases?',
+      islandsDeleteSentenceConfirm: '¿Seguro que quieres eliminar esta frase?',
+      islandsBackToLibrary: '← Volver al resumen',
+      islandsAddSentencesBtn: '✨ Sugerir nuevas frases',
+      islandsGeneratingBtn: 'Generando …',
+      islandsReviewTitle: 'Revisar sugerencias',
+      islandsReviewDesc: 'Conserva las frases que encajen o descártalas una a una.',
+      islandsAcceptAllBtn: 'Conservar todas',
+      islandsDiscardAllBtn: 'Descartar todas',
+      islandsDoneReviewBtn: 'Listo',
+      islandsNarrateBtn: '🎧 Leer en voz alta', islandsStopBtn: '⏹ Detener',
+      islandsErrorPrefix: 'Error al mostrar las islas de frases:',
+      islandsGenErrorPrefix: 'Error al generar frases: ', islandsNoSentencesYet: 'Aún no hay frases — empieza con «Sugerir nuevas frases».',
       settingsTitle: 'Idioma / Language',
       statsInPool: 'en el pool', statsMastered: 'bien aprendido (nivel ≥ 40)', statsPerRound: 'palabras por ronda',
       readyTitle: '¿Listo para una ronda?',
@@ -1675,7 +1859,9 @@
       storiesRatingOnlyCurrent: 'Solo puedes evaluar la frase actual.',
       storiesPrev: '← Atrás', storiesNext: 'Siguiente →',
       storiesNarrateBtn: '🎧 Narrar', storiesStopBtn: '⏹ Detener',
-      storiesExportAudioBtn: '🔊 Generar archivo de audio', storiesAudioProgress: 'Generando frase {0} de {1} …', storiesAudioErrorPrefix: 'Error al generar audio: ',
+      audioStartBtn: 'Iniciar', audioCancelBtn: 'Cancelar', audioPickVoice: 'Voz', audioPickSpeed: 'Velocidad',
+      audioDownloadTitle: 'Descargar audio', audioBlockedUntil: 'Límite diario alcanzado — continúa a las {0}', audioErrorPrefix: 'Error: ',
+      audioVoiceMale: 'masculina', audioVoiceFemale: 'femenina',
       storiesUnderstandNo: 'No entiendo', storiesUnderstandHalf: 'Más o menos', storiesUnderstandYes: 'Entiendo',
       storiesPinyinShow: 'Mostrar pinyin', storiesPinyinHide: 'Ocultar pinyin',
       storiesTranslationShow: 'Mostrar traducción', storiesTranslationHide: 'Ocultar traducción',
@@ -2104,9 +2290,7 @@
     generateError: null,
     draft: null,           // { title:{h,p,e}, sentences:[{h,p,e},...], hsk, count }
     selectedId: null,
-    audioGenerating: false,
-    audioProgress: null,   // { current, total }
-    audioError: null
+    audioPickerFor: null    // story id currently showing the voice/speed picker, or null
   };
 
   function hskPromptLabel(key){
@@ -2185,7 +2369,20 @@
 
   // ---------- story audio export (Gemini TTS) ----------
   var GEMINI_TTS_MODEL = 'gemini-3.8-flash-lite-tts';
-  var TTS_VOICE = 'Kore';
+  var TTS_VOICES = [
+    { id: 'Puck', gender: 'm' },
+    { id: 'Charon', gender: 'm' },
+    { id: 'Kore', gender: 'f' },
+    { id: 'Leda', gender: 'f' }
+  ];
+  var TTS_SPEED_STYLES = {
+    '0.5': 'speaking very slowly and clearly, like a patient teacher helping a total beginner, with clear space between words',
+    '0.75': 'speaking slowly and clearly, like a teacher helping a language learner',
+    '1': 'speaking at a natural, normal conversational pace'
+  };
+  var TTS_MAX_PER_MINUTE = 2;
+  var TTS_MAX_PER_DAY = 8; // rolling 24h window, not a midnight reset
+  var TTS_LOG_KEY = 'hskflash_tts_call_log_v1';
 
   function base64ToBytes(b64){
     var bin = atob(b64);
@@ -2248,14 +2445,104 @@
     return new Blob([out], { type: 'audio/wav' });
   }
 
+  // ---- IndexedDB: persistent store for per-sentence audio (can grow to several
+  // MB across a story generated over many days — too big for localStorage) ----
+  var AUDIO_DB_NAME = 'hskflash_audio_db';
+  var AUDIO_STORE = 'sentenceAudio';
+  var audioDbPromise = null;
+  function openAudioDB(){
+    if (audioDbPromise) return audioDbPromise;
+    audioDbPromise = new Promise(function(resolve, reject){
+      if (!('indexedDB' in window)) { reject(new Error('no-indexeddb')); return; }
+      var req = indexedDB.open(AUDIO_DB_NAME, 1);
+      req.onupgradeneeded = function(e){
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains(AUDIO_STORE)) db.createObjectStore(AUDIO_STORE);
+      };
+      req.onsuccess = function(e){ resolve(e.target.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+    return audioDbPromise;
+  }
+  function idbGet(key){
+    return openAudioDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var req = db.transaction(AUDIO_STORE, 'readonly').objectStore(AUDIO_STORE).get(key);
+        req.onsuccess = function(){ resolve(req.result || null); };
+        req.onerror = function(){ reject(req.error); };
+      });
+    });
+  }
+  function idbSet(key, value){
+    return openAudioDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(AUDIO_STORE, 'readwrite');
+        tx.objectStore(AUDIO_STORE).put(value, key);
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+  function idbDeletePrefix(prefix){
+    return openAudioDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(AUDIO_STORE, 'readwrite');
+        var store = tx.objectStore(AUDIO_STORE);
+        var req = store.openCursor();
+        req.onsuccess = function(e){
+          var cursor = e.target.result;
+          if (!cursor) return;
+          if (String(cursor.key).indexOf(prefix) === 0) cursor.delete();
+          cursor.continue();
+        };
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+
+  // ---- Rate limiter: max 2 calls/minute, max 8 calls per rolling 24h window,
+  // shared globally across all stories since it tracks the same API key. ----
+  function loadTtsLog(){
+    try { return JSON.parse(localStorage.getItem(TTS_LOG_KEY)) || []; } catch(e) { return []; }
+  }
+  function saveTtsLog(log){
+    try { localStorage.setItem(TTS_LOG_KEY, JSON.stringify(log)); } catch(e) {}
+  }
+  function pruneTtsLog(log){
+    var cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    return log.filter(function(ts){ return ts > cutoff; });
+  }
+  function recordTtsCall(){
+    var log = pruneTtsLog(loadTtsLog());
+    log.push(Date.now());
+    saveTtsLog(log);
+  }
+  // Returns { canProceed:true } | { canProceed:false, dailyLimitReached:true, nextSlotAt } | { canProceed:false, waitMs }
+  function checkTtsRateLimit(){
+    var log = pruneTtsLog(loadTtsLog());
+    saveTtsLog(log);
+    if (log.length >= TTS_MAX_PER_DAY) {
+      var oldest = Math.min.apply(null, log);
+      return { canProceed: false, dailyLimitReached: true, nextSlotAt: oldest + 24 * 60 * 60 * 1000 };
+    }
+    var oneMinAgo = Date.now() - 60 * 1000;
+    var recent = log.filter(function(ts){ return ts > oneMinAgo; });
+    if (recent.length >= TTS_MAX_PER_MINUTE) {
+      var oldestRecent = Math.min.apply(null, recent);
+      return { canProceed: false, dailyLimitReached: false, waitMs: Math.max(500, (oldestRecent + 60 * 1000) - Date.now()) };
+    }
+    return { canProceed: true };
+  }
+
   // One Gemini TTS call per sentence: 3 parts (slow Chinese, English, slow Chinese
   // again), each with its own speech_metadata.style — the model returns one
   // continuous WAV covering all three in order.
-  function callSentenceTTS(sent){
+  function callSentenceTTS(sent, voiceId, speedKey){
     var apiKey = loadGeminiKey();
     if (!apiKey) return Promise.reject(new Error('no-key'));
     var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(GEMINI_TTS_MODEL) + ':generateContent?key=' + encodeURIComponent(apiKey);
-    var slowStyle = 'speaking slowly and clearly, like a teacher helping a language learner';
+    var slowStyle = TTS_SPEED_STYLES[speedKey] || TTS_SPEED_STYLES['0.75'];
     var payload = {
       contents: [{
         role: 'user',
@@ -2267,7 +2554,7 @@
       }],
       generationConfig: {
         responseModalities: ['AUDIO'],
-        speechConfig: { voiceConfig: { voice: TTS_VOICE } }
+        speechConfig: { voiceConfig: { voice: voiceId || 'Kore' } }
       }
     };
     return fetch(url, {
@@ -2283,31 +2570,316 @@
     });
   }
 
-  // Generates one combined audio file for the whole story: each sentence's
-  // 3-part clip (Chinese slow / English / Chinese slow) back to back, with a
-  // fixed silence gap inserted between sentences.
-  function generateStoryAudio(story, onProgress){
+  function findNextMissingSentenceIndex(story){
+    var i = 0;
+    function check(){
+      if (i >= story.sentences.length) return Promise.resolve(-1);
+      return idbGet(story.id + ':' + i).then(function(val){
+        if (!val) return i;
+        i++;
+        return check();
+      });
+    }
+    return check();
+  }
+
+  // Resumable, rate-limited generator: call once to start or continue a story's
+  // audio. Paces itself at TTS_MAX_PER_MINUTE within the current session, and
+  // stops cleanly (without erroring) once the rolling daily cap is hit — the
+  // caller can invoke this again later (e.g. next day, or next app open) to
+  // pick up exactly where it left off.
+  var audioGenActive = {}; // storyId -> true while a generation loop is running
+  function isStoryAudioActive(storyId){ return !!audioGenActive[storyId]; }
+
+  function startOrResumeStoryAudio(story, voiceId, speedKey, callbacks){
+    if (audioGenActive[story.id]) return;
+    audioGenActive[story.id] = true;
+
+    function loop(){
+      if (!audioGenActive[story.id]) return; // was cancelled
+      findNextMissingSentenceIndex(story).then(function(idx){
+        if (idx === -1) {
+          audioGenActive[story.id] = false;
+          callbacks.onDone();
+          return;
+        }
+        var rl = checkTtsRateLimit();
+        if (!rl.canProceed) {
+          if (rl.dailyLimitReached) {
+            audioGenActive[story.id] = false;
+            callbacks.onBlocked(rl.nextSlotAt);
+          } else {
+            callbacks.onWaiting(rl.waitMs);
+            setTimeout(loop, rl.waitMs);
+          }
+          return;
+        }
+        recordTtsCall();
+        callSentenceTTS(story.sentences[idx], voiceId, speedKey).then(function(result){
+          return idbSet(story.id + ':' + idx, result).then(function(){
+            callbacks.onProgress(idx + 1, story.sentences.length);
+            setTimeout(loop, 300);
+          });
+        }).catch(function(err){
+          audioGenActive[story.id] = false;
+          callbacks.onError(err);
+        });
+      });
+    }
+    loop();
+  }
+  function cancelStoryAudio(storyId){
+    audioGenActive[storyId] = false;
+  }
+
+  // Transient (non-persisted) per-story UI status: blocked-until time or last
+  // error, shown under the progress row. Cleared on the next successful step.
+  var audioStatus = {};
+
+  function buildAudioPickerHtml(s){
+    var choice = storiesState.pickerChoice || { voice: null, speed: '0.75' };
+    var voiceOpts = TTS_VOICES.map(function(v){
+      var label = v.id + ' (' + t(v.gender === 'm' ? 'audioVoiceMale' : 'audioVoiceFemale') + ')';
+      return '<button class="audio-opt' + (choice.voice === v.id ? ' selected' : '') + '" data-pick-voice="' + v.id + '">' + esc(label) + '</button>';
+    }).join('');
+    var speedOpts = ['0.5', '0.75', '1'].map(function(sp){
+      return '<button class="audio-opt' + (choice.speed === sp ? ' selected' : '') + '" data-pick-speed="' + sp + '">' + sp + 'x</button>';
+    }).join('');
+    return '<div class="audio-picker" data-picker-id="' + s.id + '">' +
+      '<div class="audio-picker-label">' + esc(t('audioPickVoice')) + '</div>' +
+      '<div class="audio-picker-row">' + voiceOpts + '</div>' +
+      '<div class="audio-picker-label">' + esc(t('audioPickSpeed')) + '</div>' +
+      '<div class="audio-picker-row">' + speedOpts + '</div>' +
+      '<div class="audio-picker-actions">' +
+        '<button class="btn-primary" data-audio-start="' + s.id + '"' + (choice.voice ? '' : ' disabled') + ' style="flex:1;padding:9px;font-size:13px;">' + esc(t('audioStartBtn')) + '</button>' +
+        '<button class="hint-btn" data-audio-cancel-picker="' + s.id + '">' + esc(t('audioCancelBtn')) + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function makeAudioCallbacks(s){
+    return {
+      onProgress: function(current, total){
+        s.audioDone = current;
+        saveStories(stories);
+        delete audioStatus[s.id];
+        renderStories();
+      },
+      onDone: function(){
+        delete audioStatus[s.id];
+        renderStories();
+      },
+      onBlocked: function(nextSlotAt){
+        audioStatus[s.id] = { blockedUntil: nextSlotAt };
+        renderStories();
+      },
+      onWaiting: function(){
+        renderStories(); // keeps the pause/active state visible during the short inter-call pacing wait
+      },
+      onError: function(err){
+        audioStatus[s.id] = { error: err.message };
+        renderStories();
+      }
+    };
+  }
+
+  function wireAudioRowHandlers(root, stories){
+    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-open-picker]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        storiesState.audioPickerFor = btn.getAttribute('data-audio-open-picker');
+        storiesState.pickerChoice = { voice: null, speed: '0.75' };
+        renderStories();
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-cancel-picker]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        storiesState.audioPickerFor = null;
+        renderStories();
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-pick-voice]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        storiesState.pickerChoice = storiesState.pickerChoice || { voice: null, speed: '0.75' };
+        storiesState.pickerChoice.voice = btn.getAttribute('data-pick-voice');
+        renderStories();
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-pick-speed]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        storiesState.pickerChoice = storiesState.pickerChoice || { voice: null, speed: '0.75' };
+        storiesState.pickerChoice.speed = btn.getAttribute('data-pick-speed');
+        renderStories();
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-start]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        var id = btn.getAttribute('data-audio-start');
+        var s = stories.filter(function(x){ return x.id === id; })[0];
+        var choice = storiesState.pickerChoice;
+        if (!s || !choice || !choice.voice) return;
+        var apiKey = loadGeminiKey();
+        if (!apiKey) {
+          openDrawer();
+          var f = document.getElementById('inpGeminiKey');
+          if (f) f.focus();
+          return;
+        }
+        s.audioVoice = choice.voice;
+        s.audioSpeed = choice.speed;
+        saveStories(stories);
+        storiesState.audioPickerFor = null;
+        delete audioStatus[s.id];
+        renderStories();
+        startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-resume]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        var id = btn.getAttribute('data-audio-resume');
+        var s = stories.filter(function(x){ return x.id === id; })[0];
+        if (!s) return;
+        var apiKey = loadGeminiKey();
+        if (!apiKey) {
+          openDrawer();
+          var f = document.getElementById('inpGeminiKey');
+          if (f) f.focus();
+          return;
+        }
+        delete audioStatus[s.id];
+        renderStories();
+        startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-cancel]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        cancelStoryAudio(btn.getAttribute('data-audio-cancel'));
+        renderStories();
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-download]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        var id = btn.getAttribute('data-audio-download');
+        var s = stories.filter(function(x){ return x.id === id; })[0];
+        if (!s) return;
+        downloadStoryAudio(s).then(function(blob){
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          var safeName = s.title.h.replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'story';
+          a.href = url;
+          a.download = 'hskflash-' + safeName + '.wav';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+        }).catch(function(err){
+          audioStatus[s.id] = { error: err.message };
+          renderStories();
+        });
+      };
+    });
+  }
+
+  // Builds a downloadable WAV from whatever sentences already have audio saved
+  // (a contiguous prefix, since generation always proceeds in order) — works
+  // fine with a partially-completed story.
+  function downloadStoryAudio(story){
     var chunks = [];
-    var fmt = null;
+    var fmt = { channels: 1, sampleRate: 24000, bitsPerSample: 16 };
     var i = 0;
     function next(){
-      if (i >= story.sentences.length) {
-        return Promise.resolve(buildWavBlob(chunks, fmt || { channels: 1, sampleRate: 24000, bitsPerSample: 16 }));
-      }
-      if (onProgress) onProgress(i + 1, story.sentences.length);
-      return callSentenceTTS(story.sentences[i]).then(function(result){
-        fmt = result.fmt;
-        chunks.push(result.pcm);
-        if (i < story.sentences.length - 1) chunks.push(silencePcm(1000, fmt));
+      if (i >= story.sentences.length) return Promise.resolve();
+      return idbGet(story.id + ':' + i).then(function(val){
+        if (!val) return; // stop at first missing sentence
+        // Gap goes BEFORE this chunk (only once we know there IS a next chunk to
+        // separate) — inserting it as a suffix after the previous one instead
+        // would leave a trailing silent tail on a partially-generated story.
+        if (chunks.length) chunks.push(silencePcm(1000, fmt));
+        fmt = val.fmt;
+        chunks.push(val.pcm);
         i++;
         return next();
       });
     }
-    return next();
+    return next().then(function(){
+      if (!chunks.length) throw new Error('nothing generated yet');
+      return buildWavBlob(chunks, fmt);
+    });
   }
 
+  // ---------- Sentence islands (Satzinseln) ----------
+  var ISLANDS_KEY = 'hskflash_islands_v1';
+  function loadIslands(){
+    try { return JSON.parse(localStorage.getItem(ISLANDS_KEY)) || []; } catch(e) { return []; }
+  }
+  function saveIslands(list){
+    try { localStorage.setItem(ISLANDS_KEY, JSON.stringify(list)); } catch(e) {}
+  }
+  var islands = loadIslands();
+
+  var islandsState = {
+    view: 'list',          // 'list' | 'detail' | 'review'
+    selectedId: null,
+    generating: false,
+    generateError: null,
+    candidates: null,      // pending sentence candidates awaiting accept/reject, when view === 'review'
+    newIslandName: '',
+    showNewForm: false
+  };
+
+  function buildIslandPrompt(topicName, existingSentences, count){
+    var existingList = existingSentences.map(function(s){ return s.h; }).join('; ');
+    return "You are a precise linguistic API for a Mandarin learning app.\n" +
+      "TASK: Suggest natural, everyday Mandarin Chinese sentences a learner could actually use or hear in real life.\n" +
+      "TOPIC: \"" + topicName + "\"\n" +
+      "Number of sentences: " + count + "\n" +
+      "Keep vocabulary and grammar accessible for an intermediate learner (roughly HSK 3-4 level).\n" +
+      (existingList ? "Do not repeat or closely duplicate any of these already-collected sentences: " + existingList + "\n" : "") +
+      "STRICT OUTPUT RULES:\n" +
+      "1. Output MUST contain exactly " + count + " lines. Nothing else.\n" +
+      "2. Each line is one standalone, natural sentence, format: HANZI|PINYIN|ENGLISH\n" +
+      "3. No introduction, no markdown fences, no numbering, no explanatory text.";
+  }
+
+  function generateIslandSentences(island, count){
+    var apiKey = loadGeminiKey();
+    if (!apiKey) {
+      openDrawer();
+      var f = document.getElementById('inpGeminiKey');
+      if (f) f.focus();
+      return Promise.reject(new Error('no-key'));
+    }
+    var model = loadGeminiModel();
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    var prompt = buildIslandPrompt(island.name, island.sentences, count);
+    var payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(res){
+      if (!res.ok) return res.text().then(function(t){ throw new Error('HTTP ' + res.status + ': ' + t); });
+      return res.json();
+    }).then(function(data){
+      var text = data.candidates[0].content.parts[0].text;
+      var parsed = parseGeminiResponse(text);
+      if (!parsed.length) throw new Error('Antwort konnte nicht gelesen werden.');
+      parsed.forEach(function(s){ s.id = 'sent_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); });
+      return parsed;
+    });
+  }
+
+
   // ---------- mobile swipe carousel (Vokabeln | Karten | Geschichten | Statistiken) ----------
-  var PAGE_NAMES = ['grid', 'cards', 'stories', 'stats'];
+  var PAGE_NAMES = ['grid', 'cards', 'stories', 'islands', 'stats'];
   var currentPage = 1; // start centered on Karten
   var learnArea = document.getElementById('learnArea');
 
@@ -2324,6 +2896,15 @@
         esc(e.message) + '<br><br>' + esc(t('storiesErrorNote')) + '</div></div>';
     }
   }
+  function safeRenderIslands(){
+    try {
+      renderIslands();
+    } catch (e) {
+      document.getElementById('islandsView').innerHTML =
+        '<div class="stories-wrap"><div class="empty-note">' + esc(t('islandsErrorPrefix')) + '<br>' +
+        esc(e.message) + '<br><br>' + esc(t('storiesErrorNote')) + '</div></div>';
+    }
+  }
   function safeRenderStatsTab(){
     try {
       renderStatsTab();
@@ -2335,7 +2916,7 @@
   }
 
   function updateTabsAndDots(view){
-    ['tabGrid', 'tabCards', 'tabStories', 'tabStats'].forEach(function(id, i){
+    ['tabGrid', 'tabCards', 'tabStories', 'tabIslands', 'tabStats'].forEach(function(id, i){
       var el = document.getElementById(id);
       if (el) el.classList.toggle('active', PAGE_NAMES[i] === view);
     });
@@ -2349,9 +2930,10 @@
     var mobile = isMobileLayout();
     learnArea.classList.toggle('carousel', mobile);
     if (mobile) {
-      learnArea.style.transform = 'translateX(-' + (currentPage * 25) + '%)';
+      learnArea.style.transform = 'translateX(-' + (currentPage * 20) + '%)';
       document.getElementById('cardsView').style.display = '';
       document.getElementById('storiesView').style.display = '';
+      document.getElementById('islandsView').style.display = '';
       document.getElementById('statsPageView').style.display = '';
     } else {
       // Restore proper desktop show/hide state — otherwise a view left visible
@@ -2360,6 +2942,7 @@
       var desktopView = PAGE_NAMES[currentPage] === 'grid' ? 'cards' : PAGE_NAMES[currentPage];
       document.getElementById('cardsView').style.display = desktopView === 'cards' ? '' : 'none';
       document.getElementById('storiesView').style.display = desktopView === 'stories' ? '' : 'none';
+      document.getElementById('islandsView').style.display = desktopView === 'islands' ? '' : 'none';
       document.getElementById('statsPageView').style.display = desktopView === 'stats' ? '' : 'none';
       updateTabsAndDots(desktopView);
     }
@@ -2368,10 +2951,11 @@
   function goToPage(n){
     currentPage = Math.max(0, Math.min(PAGE_NAMES.length - 1, n));
     var view = PAGE_NAMES[currentPage];
-    if (view !== 'stories' && typeof stopNarration === 'function') stopNarration();
+    if (view !== 'stories' && view !== 'islands' && typeof stopNarration === 'function') stopNarration();
     applyCarouselTransform();
     updateTabsAndDots(view);
     if (view === 'stories') safeRenderStories();
+    if (view === 'islands') safeRenderIslands();
     if (view === 'stats') safeRenderStatsTab();
   }
 
@@ -2382,15 +2966,18 @@
     }
     // Desktop: no grid tab (sidebar is always visible), plain show/hide of the views.
     if (view === 'grid') return;
-    if (view !== 'stories') stopNarration();
+    if (view !== 'stories' && view !== 'islands') stopNarration();
     currentPage = PAGE_NAMES.indexOf(view);
     document.getElementById('tabCards').classList.toggle('active', view === 'cards');
     document.getElementById('tabStories').classList.toggle('active', view === 'stories');
+    document.getElementById('tabIslands').classList.toggle('active', view === 'islands');
     document.getElementById('tabStats').classList.toggle('active', view === 'stats');
     document.getElementById('cardsView').style.display = view === 'cards' ? '' : 'none';
     document.getElementById('storiesView').style.display = view === 'stories' ? '' : 'none';
+    document.getElementById('islandsView').style.display = view === 'islands' ? '' : 'none';
     document.getElementById('statsPageView').style.display = view === 'stats' ? '' : 'none';
     if (view === 'stories') safeRenderStories();
+    if (view === 'islands') safeRenderIslands();
     if (view === 'stats') safeRenderStatsTab();
   }
 
@@ -2480,13 +3067,48 @@
     if (st.view === 'library') {
       var listHtml = stories.length
         ? stories.slice().reverse().map(function(s){
+            var done = s.audioDone || 0;
+            var total = s.sentences.length;
+            var pct = total ? (done / total * 100) : 0;
+            var active = isStoryAudioActive(s.id);
+            var blockedUntil = audioStatus[s.id] && audioStatus[s.id].blockedUntil;
+            var errMsg = audioStatus[s.id] && audioStatus[s.id].error;
+            var showPicker = st.audioPickerFor === s.id;
+
+            var actionBtnHtml;
+            if (done >= total) {
+              actionBtnHtml = '<span class="audio-mini-done">✓</span>';
+            } else if (active) {
+              actionBtnHtml = '<button class="audio-mini-btn hint-btn on" data-audio-cancel="' + s.id + '">⏸</button>';
+            } else if (s.audioVoice) {
+              actionBtnHtml = '<button class="audio-mini-btn hint-btn" data-audio-resume="' + s.id + '">▶</button>';
+            } else {
+              actionBtnHtml = '<button class="audio-mini-btn hint-btn" data-audio-open-picker="' + s.id + '">🔊</button>';
+            }
+            var downloadBtnHtml = done > 0
+              ? '<button class="audio-mini-btn hint-btn" data-audio-download="' + s.id + '" title="' + esc(t('audioDownloadTitle')) + '">⬇</button>'
+              : '';
+            var audioRowHtml =
+              '<div class="story-audio-row" data-id="' + s.id + '">' +
+                '<div class="story-audio-bar"><div class="story-audio-fill" style="width:' + pct + '%"></div></div>' +
+                '<span class="story-audio-label">' + done + ' / ' + total + '</span>' +
+                downloadBtnHtml + actionBtnHtml +
+              '</div>' +
+              (blockedUntil ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(tf('audioBlockedUntil', new Date(blockedUntil).toLocaleString())) + '</div>' : '') +
+              (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioErrorPrefix')) + esc(errMsg) + '</div>' : '') +
+              (showPicker ? buildAudioPickerHtml(s) : '');
+
             return '<div class="story-card" data-id="' + s.id + '">' +
-              '<div><div class="story-title">' + esc(s.title.h) + '</div><div class="story-title-en">' + esc(s.title.e) + '</div>' +
-              '<div class="story-meta">' + esc(storyMeta(s)) + ' · ' + esc(storyProgressLabel(s)) + '</div></div>' +
-              '<div style="display:flex;align-items:center;gap:10px;">' +
-                '<button class="hint-btn" data-restart-id="' + s.id + '" title="' + esc(t('storiesRestartBtn')) + '">↺</button>' +
-                '<span class="story-arrow">→</span>' +
-              '</div></div>';
+              '<div class="story-card-toprow" data-toprow-id="' + s.id + '">' +
+                '<div><div class="story-title">' + esc(s.title.h) + '</div><div class="story-title-en">' + esc(s.title.e) + '</div>' +
+                '<div class="story-meta">' + esc(storyMeta(s)) + ' · ' + esc(storyProgressLabel(s)) + '</div></div>' +
+                '<div style="display:flex;align-items:center;gap:10px;">' +
+                  '<button class="hint-btn" data-restart-id="' + s.id + '" title="' + esc(t('storiesRestartBtn')) + '">↺</button>' +
+                  '<span class="story-arrow">→</span>' +
+                '</div>' +
+              '</div>' +
+              audioRowHtml +
+            '</div>';
           }).join('')
         : '<div class="empty-note">' + esc(t('storiesEmpty')) + '</div>';
       root.innerHTML =
@@ -2509,10 +3131,10 @@
           renderStories();
         };
       });
-      Array.prototype.forEach.call(root.querySelectorAll('.story-card'), function(card){
-        card.onclick = function(){
+      Array.prototype.forEach.call(root.querySelectorAll('[data-toprow-id]'), function(row){
+        row.onclick = function(){
           stopNarration();
-          var id = card.getAttribute('data-id');
+          var id = row.getAttribute('data-toprow-id');
           var s = stories.filter(function(x){ return x.id === id; })[0];
           var startAt = (s && s.currentIdx) ? Math.min(s.currentIdx, s.sentences.length) : 0;
           st.selectedId = id;
@@ -2525,6 +3147,7 @@
           renderStories();
         };
       });
+      wireAudioRowHandlers(root, stories);
       return;
     }
 
@@ -2682,10 +3305,6 @@
           '<div class="story-title-block" style="margin-bottom:14px;padding-bottom:12px;">' +
             '<div class="t-h" style="font-size:18px;">' + esc(story.title.h) + '</div>' +
             '<div class="t-e" style="margin-top:2px;">' + esc(story.title.e) + '</div>' +
-            '<button class="hint-btn" id="btnExportAudio" style="margin-top:10px;"' + (st.audioGenerating ? ' disabled' : '') + '>' +
-              esc(st.audioGenerating ? tf('storiesAudioProgress', st.audioProgress ? st.audioProgress.current : 0, st.audioProgress ? st.audioProgress.total : 0) : t('storiesExportAudioBtn')) +
-            '</button>' +
-            (st.audioError ? '<div class="ex-e" style="margin-top:8px;color:var(--seal);">' + esc(st.audioError) + '</div>' : '') +
           '</div>' +
           '<div class="session-bar"><span>' + esc(tf('storiesSentenceOf', idx + 1, story.sentences.length)) + (isCurrent ? '' : esc(t('storiesRepetition'))) + '</span>' +
             '<span class="dots">' + dotsHtml + '</span></div>' +
@@ -2712,40 +3331,6 @@
         '</div>';
 
       document.getElementById('btnBackToLibrary2').onclick = function(){ stopNarration(); st.view = 'library'; renderStories(); };
-      document.getElementById('btnExportAudio').onclick = function(){
-        stopNarration();
-        var apiKey = loadGeminiKey();
-        if (!apiKey) {
-          openDrawer();
-          var f = document.getElementById('inpGeminiKey');
-          if (f) f.focus();
-          return;
-        }
-        st.audioGenerating = true;
-        st.audioError = null;
-        st.audioProgress = { current: 0, total: story.sentences.length };
-        renderStories();
-        generateStoryAudio(story, function(current, total){
-          st.audioProgress = { current: current, total: total };
-          renderStories();
-        }).then(function(blob){
-          st.audioGenerating = false;
-          renderStories();
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          var safeName = story.title.h.replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'story';
-          a.href = url;
-          a.download = 'hskflash-' + safeName + '.wav';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-        }).catch(function(err){
-          st.audioGenerating = false;
-          if (err.message !== 'no-key') st.audioError = t('storiesAudioErrorPrefix') + err.message;
-          renderStories();
-        });
-      };
       document.getElementById('btnDeleteStory').onclick = function(){
         stopNarration();
         if (!confirm(t('storiesDeleteConfirm'))) return;
@@ -2835,10 +3420,12 @@
   var tabGridBtn = document.getElementById('tabGrid');
   var tabCardsBtn = document.getElementById('tabCards');
   var tabStoriesBtn = document.getElementById('tabStories');
+  var tabIslandsBtn = document.getElementById('tabIslands');
   var tabStatsBtn = document.getElementById('tabStats');
   if (tabGridBtn) tabGridBtn.onclick = function(){ switchView('grid'); };
   if (tabCardsBtn) tabCardsBtn.onclick = function(){ switchView('cards'); };
   if (tabStoriesBtn) tabStoriesBtn.onclick = function(){ switchView('stories'); };
+  if (tabIslandsBtn) tabIslandsBtn.onclick = function(){ switchView('islands'); };
   if (tabStatsBtn) tabStatsBtn.onclick = function(){ switchView('stats'); };
 
   // ---------- pool overview (left panel) ----------
@@ -2989,6 +3576,243 @@
     return cachedVoices.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf('zh') === 0; });
   }
 
+  function renderIslands(){
+    var root = document.getElementById('islandsView');
+    if (!root) return;
+    var ist = islandsState;
+
+    if (ist.view === 'list') {
+      var listHtml = islands.length
+        ? islands.slice().reverse().map(function(isl){
+            return '<div class="story-card" data-id="' + isl.id + '">' +
+              '<div><div class="story-title" style="font-family:inherit;font-size:15px;">' + esc(isl.name) + '</div>' +
+              '<div class="story-meta">' + esc(tf('islandsSentenceCount', isl.sentences.length)) + '</div></div>' +
+              '<span class="story-arrow">→</span>' +
+            '</div>';
+          }).join('')
+        : '<div class="empty-note">' + esc(t('islandsEmpty')) + '</div>';
+
+      var newFormHtml = ist.showNewForm
+        ? '<div class="audio-picker" style="margin-bottom:12px;">' +
+            '<div class="audio-picker-label">' + esc(t('islandsNewNamePrompt')) + '</div>' +
+            '<input type="text" id="inpNewIslandName" placeholder="' + esc(t('islandsNewNamePlaceholder')) + '" value="' + esc(ist.newIslandName) + '" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--hairline);border-radius:7px;font-family:inherit;font-size:13.5px;background:var(--paper-raised);color:var(--ink);">' +
+            '<div class="audio-picker-actions">' +
+              '<button class="btn-primary" id="btnCreateIsland" style="flex:1;padding:9px;font-size:13px;">' + esc(t('islandsCreateBtn')) + '</button>' +
+              '<button class="hint-btn" id="btnCancelNewIsland">' + esc(t('islandsCancelBtn')) + '</button>' +
+            '</div>' +
+          '</div>'
+        : '';
+
+      root.innerHTML =
+        '<div class="stories-wrap">' +
+          '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">' + esc(t('islandsLibraryTitle')) + '</h2>' +
+            '<button class="btn-primary" id="btnNewIsland" style="padding:9px 18px;font-size:13.5px;">' + esc(t('islandsNewBtn')) + '</button></div>' +
+          newFormHtml +
+          listHtml +
+        '</div>';
+
+      var btnNew = document.getElementById('btnNewIsland');
+      if (btnNew) btnNew.onclick = function(){
+        ist.showNewForm = true;
+        ist.newIslandName = '';
+        renderIslands();
+        setTimeout(function(){ var el = document.getElementById('inpNewIslandName'); if (el) el.focus(); }, 0);
+      };
+      var btnCancelNew = document.getElementById('btnCancelNewIsland');
+      if (btnCancelNew) btnCancelNew.onclick = function(){ ist.showNewForm = false; renderIslands(); };
+      var btnCreate = document.getElementById('btnCreateIsland');
+      if (btnCreate) btnCreate.onclick = function(){
+        var nameInput = document.getElementById('inpNewIslandName');
+        var name = nameInput ? nameInput.value.trim() : '';
+        if (!name) return;
+        var newIsland = { id: 'island_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), name: name, sentences: [], createdAt: new Date().toISOString() };
+        islands.push(newIsland);
+        saveIslands(islands);
+        ist.showNewForm = false;
+        renderIslands();
+      };
+      var nameField = document.getElementById('inpNewIslandName');
+      if (nameField) {
+        nameField.onkeydown = function(e){ if (e.key === 'Enter') { var b = document.getElementById('btnCreateIsland'); if (b) b.click(); } };
+      }
+      Array.prototype.forEach.call(root.querySelectorAll('.story-card'), function(card){
+        card.onclick = function(){
+          stopNarration();
+          ist.selectedId = card.getAttribute('data-id');
+          ist.view = 'detail';
+          ist.generateError = null;
+          renderIslands();
+        };
+      });
+      return;
+    }
+
+    if (ist.view === 'detail') {
+      var isl = islands.filter(function(x){ return x.id === ist.selectedId; })[0];
+      if (!isl) { ist.view = 'list'; renderIslands(); return; }
+
+      var sentHtml = isl.sentences.length
+        ? isl.sentences.map(function(s){
+            return '<div class="freq-word-row" style="align-items:flex-start;gap:8px;">' +
+              '<button class="hint-btn" data-speak-sent="' + s.id + '" style="padding:5px 9px;font-size:12px;flex:0 0 auto;">🔊</button>' +
+              '<div style="flex:1;min-width:0;">' +
+                '<div class="freq-word-h" style="min-width:0;">' + esc(s.h) + '</div>' +
+                '<div class="freq-word-p" style="min-width:0;">' + esc(s.p) + '</div>' +
+                '<div class="freq-word-e" style="white-space:normal;overflow:visible;text-overflow:clip;">' + esc(s.e) + '</div>' +
+              '</div>' +
+              '<button class="hint-btn" data-delete-sent="' + s.id + '" style="padding:5px 9px;font-size:12px;color:var(--seal);flex:0 0 auto;">✕</button>' +
+            '</div>';
+          }).join('')
+        : '<div class="empty-note">' + esc(t('islandsNoSentencesYet')) + '</div>';
+
+      root.innerHTML =
+        '<div class="stories-wrap">' +
+          '<div class="story-toprow"><button class="hint-btn" id="btnBackToIslandsList">' + esc(t('islandsBackToLibrary')) + '</button>' +
+            '<div style="display:flex;gap:8px;">' +
+              '<button class="hint-btn' + (narrating ? ' on' : '') + '" id="btnNarrateIsland">' + esc(narrating ? t('islandsStopBtn') : t('islandsNarrateBtn')) + '</button>' +
+              '<button class="hint-btn" id="btnDeleteIsland" style="color:var(--seal);">' + esc(t('storiesDeleteBtn')) + '</button>' +
+            '</div></div>' +
+          '<div class="story-title-block" style="margin-bottom:14px;padding-bottom:12px;">' +
+            '<div class="t-h" style="font-size:17px;font-family:inherit;">' + esc(isl.name) + '</div>' +
+            '<div class="t-e" style="margin-top:2px;">' + esc(tf('islandsSentenceCount', isl.sentences.length)) + '</div>' +
+          '</div>' +
+          sentHtml +
+          '<button class="btn-primary" id="btnAddSentences" style="width:100%;margin-top:14px;"' + (ist.generating ? ' disabled' : '') + '>' +
+            esc(ist.generating ? t('islandsGeneratingBtn') : t('islandsAddSentencesBtn')) +
+          '</button>' +
+          (ist.generateError ? '<div class="ex-e" style="margin-top:8px;color:var(--seal);">' + esc(ist.generateError) + '</div>' : '') +
+        '</div>';
+
+      document.getElementById('btnBackToIslandsList').onclick = function(){ stopNarration(); ist.view = 'list'; renderIslands(); };
+      document.getElementById('btnDeleteIsland').onclick = function(){
+        stopNarration();
+        if (!confirm(t('islandsDeleteConfirm'))) return;
+        islands = islands.filter(function(x){ return x.id !== isl.id; });
+        saveIslands(islands);
+        ist.view = 'list';
+        renderIslands();
+      };
+      document.getElementById('btnNarrateIsland').onclick = function(){
+        if (narrating) { stopNarration(); renderIslands(); return; }
+        if (!isl.sentences.length) return;
+        narrateSentences(isl.sentences, 0, function(){ renderIslands(); }, function(){ renderIslands(); });
+        renderIslands();
+      };
+      document.getElementById('btnAddSentences').onclick = function(){
+        var apiKey = loadGeminiKey();
+        if (!apiKey) {
+          openDrawer();
+          var f = document.getElementById('inpGeminiKey');
+          if (f) f.focus();
+          return;
+        }
+        ist.generating = true;
+        ist.generateError = null;
+        renderIslands();
+        generateIslandSentences(isl, 6).then(function(candidates){
+          ist.generating = false;
+          ist.candidates = candidates;
+          ist.view = 'review';
+          renderIslands();
+        }).catch(function(err){
+          ist.generating = false;
+          if (err.message !== 'no-key') ist.generateError = t('islandsGenErrorPrefix') + err.message;
+          renderIslands();
+        });
+      };
+      Array.prototype.forEach.call(root.querySelectorAll('[data-speak-sent]'), function(btn){
+        btn.onclick = function(){
+          var id = btn.getAttribute('data-speak-sent');
+          var s = isl.sentences.filter(function(x){ return x.id === id; })[0];
+          if (s) speak(s.h);
+        };
+      });
+      Array.prototype.forEach.call(root.querySelectorAll('[data-delete-sent]'), function(btn){
+        btn.onclick = function(){
+          var id = btn.getAttribute('data-delete-sent');
+          if (!confirm(t('islandsDeleteSentenceConfirm'))) return;
+          isl.sentences = isl.sentences.filter(function(x){ return x.id !== id; });
+          saveIslands(islands);
+          renderIslands();
+        };
+      });
+      return;
+    }
+
+    if (ist.view === 'review') {
+      var isl2 = islands.filter(function(x){ return x.id === ist.selectedId; })[0];
+      if (!isl2 || !ist.candidates) { ist.view = 'detail'; renderIslands(); return; }
+
+      var candHtml = ist.candidates.length
+        ? ist.candidates.map(function(c){
+            return '<div class="freq-word-row" style="align-items:flex-start;gap:8px;">' +
+              '<div style="flex:1;min-width:0;">' +
+                '<div class="freq-word-h" style="min-width:0;">' + esc(c.h) + '</div>' +
+                '<div class="freq-word-p" style="min-width:0;">' + esc(c.p) + '</div>' +
+                '<div class="freq-word-e" style="white-space:normal;overflow:visible;text-overflow:clip;">' + esc(c.e) + '</div>' +
+              '</div>' +
+              '<button class="hint-btn" data-accept-cand="' + c.id + '" style="color:var(--seal);padding:5px 9px;flex:0 0 auto;">✓</button>' +
+              '<button class="hint-btn" data-reject-cand="' + c.id + '" style="padding:5px 9px;flex:0 0 auto;">✕</button>' +
+            '</div>';
+          }).join('')
+        : '<div class="empty-note">✓</div>';
+
+      root.innerHTML =
+        '<div class="stories-wrap">' +
+          '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">' + esc(t('islandsReviewTitle')) + '</h2></div>' +
+          '<p style="font-size:12px;color:var(--ink-faint);margin:0 0 12px;">' + esc(t('islandsReviewDesc')) + '</p>' +
+          candHtml +
+          '<div class="audio-picker-actions" style="margin-top:14px;">' +
+            '<button class="btn-secondary" id="btnAcceptAllCand" style="flex:1;">' + esc(t('islandsAcceptAllBtn')) + '</button>' +
+            '<button class="btn-secondary" id="btnDiscardAllCand" style="flex:1;">' + esc(t('islandsDiscardAllBtn')) + '</button>' +
+          '</div>' +
+          '<button class="btn-primary" id="btnDoneReview" style="width:100%;margin-top:10px;">' + esc(t('islandsDoneReviewBtn')) + '</button>' +
+        '</div>';
+
+      function backToDetailAfterReview(){
+        ist.view = 'detail';
+        ist.candidates = null;
+        renderIslands();
+      }
+      function removeCandidateById(id){
+        for (var ci = 0; ci < ist.candidates.length; ci++) {
+          if (ist.candidates[ci].id === id) return ist.candidates.splice(ci, 1)[0];
+        }
+        return null;
+      }
+      Array.prototype.forEach.call(root.querySelectorAll('[data-accept-cand]'), function(btn){
+        btn.onclick = function(){
+          var accepted = removeCandidateById(btn.getAttribute('data-accept-cand'));
+          if (accepted) {
+            isl2.sentences.push(accepted);
+            saveIslands(islands);
+          }
+          if (ist.candidates.length === 0) backToDetailAfterReview();
+          else renderIslands();
+        };
+      });
+      Array.prototype.forEach.call(root.querySelectorAll('[data-reject-cand]'), function(btn){
+        btn.onclick = function(){
+          removeCandidateById(btn.getAttribute('data-reject-cand'));
+          if (ist.candidates.length === 0) backToDetailAfterReview();
+          else renderIslands();
+        };
+      });
+      document.getElementById('btnAcceptAllCand').onclick = function(){
+        isl2.sentences = isl2.sentences.concat(ist.candidates);
+        saveIslands(islands);
+        backToDetailAfterReview();
+      };
+      document.getElementById('btnDiscardAllCand').onclick = function(){
+        backToDetailAfterReview();
+      };
+      document.getElementById('btnDoneReview').onclick = function(){
+        backToDetailAfterReview();
+      };
+      return;
+    }
+  }
+
   function findVoiceByName(name){
     if (!name) return null;
     var match = cachedVoices.filter(function(v){ return v.name === name; });
@@ -3042,16 +3866,16 @@
     narrating = false;
     try { window.speechSynthesis.cancel(); } catch(e) {}
   }
-  function narrateStory(story, startIdx, onStep, onDone){
+  function narrateSentences(sentences, startIdx, onStep, onDone){
     narrating = true;
     var myToken = ++narrationToken;
     var zhVoice = findVoiceByName(settings.voiceName);
 
     function step(i){
       if (!narrating || myToken !== narrationToken) return;
-      if (i >= story.sentences.length) { narrating = false; onDone(); return; }
+      if (i >= sentences.length) { narrating = false; onDone(); return; }
       onStep(i);
-      var sent = story.sentences[i];
+      var sent = sentences[i];
       function alive(){ return myToken === narrationToken; }
       speakAsync(sent.h, 'zh-CN', 0.6, zhVoice)
         .then(function(){ if (!alive()) return Promise.reject('stopped'); return narrationSleep(280); })
@@ -3063,6 +3887,9 @@
         .catch(function(){ /* narration was stopped mid-sentence — do nothing further */ });
     }
     step(startIdx);
+  }
+  function narrateStory(story, startIdx, onStep, onDone){
+    return narrateSentences(story.sentences, startIdx, onStep, onDone);
   }
 
   // ---------- rendering ----------
