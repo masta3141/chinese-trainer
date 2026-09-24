@@ -1308,6 +1308,7 @@
       storiesRatingOnlyCurrent: 'Bewertung nur für den aktuellen Satz möglich.',
       storiesPrev: '← Zurück', storiesNext: 'Weiter →',
       storiesNarrateBtn: '🎧 Erzählen', storiesStopBtn: '⏹ Stopp',
+      storiesExportAudioBtn: '🔊 Als Audiodatei erzeugen', storiesAudioProgress: 'Erzeuge Satz {0} von {1} …', storiesAudioErrorPrefix: 'Fehler bei der Audio-Erzeugung: ',
       storiesUnderstandNo: 'Verstehe nicht', storiesUnderstandHalf: 'Halbwegs', storiesUnderstandYes: 'Gut',
       storiesPinyinShow: 'Pinyin zeigen', storiesPinyinHide: 'Pinyin ausblenden',
       storiesTranslationShow: 'Übersetzung zeigen', storiesTranslationHide: 'Übersetzung ausblenden',
@@ -1430,6 +1431,7 @@
       storiesRatingOnlyCurrent: 'You can only rate the current sentence.',
       storiesPrev: '← Back', storiesNext: 'Next →',
       storiesNarrateBtn: '🎧 Narrate', storiesStopBtn: '⏹ Stop',
+      storiesExportAudioBtn: '🔊 Generate audio file', storiesAudioProgress: 'Generating sentence {0} of {1} …', storiesAudioErrorPrefix: 'Error generating audio: ',
       storiesUnderstandNo: 'Don\'t understand', storiesUnderstandHalf: 'Partly', storiesUnderstandYes: 'Understand',
       storiesPinyinShow: 'Show pinyin', storiesPinyinHide: 'Hide pinyin',
       storiesTranslationShow: 'Show translation', storiesTranslationHide: 'Hide translation',
@@ -1551,6 +1553,7 @@
       storiesRatingOnlyCurrent: 'Seule la phrase actuelle peut être évaluée.',
       storiesPrev: '← Précédent', storiesNext: 'Suivant →',
       storiesNarrateBtn: '🎧 Raconter', storiesStopBtn: '⏹ Arrêter',
+      storiesExportAudioBtn: '🔊 Générer un fichier audio', storiesAudioProgress: 'Génération de la phrase {0} sur {1} …', storiesAudioErrorPrefix: 'Erreur lors de la génération audio : ',
       storiesUnderstandNo: 'Je ne comprends pas', storiesUnderstandHalf: 'Partiellement', storiesUnderstandYes: 'Je comprends',
       storiesPinyinShow: 'Afficher le pinyin', storiesPinyinHide: 'Masquer le pinyin',
       storiesTranslationShow: 'Afficher la traduction', storiesTranslationHide: 'Masquer la traduction',
@@ -1672,6 +1675,7 @@
       storiesRatingOnlyCurrent: 'Solo puedes evaluar la frase actual.',
       storiesPrev: '← Atrás', storiesNext: 'Siguiente →',
       storiesNarrateBtn: '🎧 Narrar', storiesStopBtn: '⏹ Detener',
+      storiesExportAudioBtn: '🔊 Generar archivo de audio', storiesAudioProgress: 'Generando frase {0} de {1} …', storiesAudioErrorPrefix: 'Error al generar audio: ',
       storiesUnderstandNo: 'No entiendo', storiesUnderstandHalf: 'Más o menos', storiesUnderstandYes: 'Entiendo',
       storiesPinyinShow: 'Mostrar pinyin', storiesPinyinHide: 'Ocultar pinyin',
       storiesTranslationShow: 'Mostrar traducción', storiesTranslationHide: 'Ocultar traducción',
@@ -2099,7 +2103,10 @@
     generating: false,
     generateError: null,
     draft: null,           // { title:{h,p,e}, sentences:[{h,p,e},...], hsk, count }
-    selectedId: null
+    selectedId: null,
+    audioGenerating: false,
+    audioProgress: null,   // { current, total }
+    audioError: null
   };
 
   function hskPromptLabel(key){
@@ -2174,6 +2181,129 @@
       if (parsed.length < 2) throw new Error('Antwort konnte nicht gelesen werden.');
       return { title: parsed[0], sentences: parsed.slice(1), hsk: hsk, count: parsed.length - 1 };
     });
+  }
+
+  // ---------- story audio export (Gemini TTS) ----------
+  var GEMINI_TTS_MODEL = 'gemini-3.8-flash-lite-tts';
+  var TTS_VOICE = 'Kore';
+
+  function base64ToBytes(b64){
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  // Parses a RIFF/WAVE file returned by the TTS API into its format info + raw PCM bytes.
+  function parseWav(bytes){
+    var dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    var pos = 12; // skip "RIFF"(4) + size(4) + "WAVE"(4)
+    var fmt = { channels: 1, sampleRate: 24000, bitsPerSample: 16 };
+    var dataBytes = null;
+    while (pos + 8 <= bytes.length) {
+      var id = String.fromCharCode(bytes[pos], bytes[pos+1], bytes[pos+2], bytes[pos+3]);
+      var size = dv.getUint32(pos + 4, true);
+      var body = pos + 8;
+      if (id === 'fmt ') {
+        fmt.channels = dv.getUint16(body + 2, true);
+        fmt.sampleRate = dv.getUint32(body + 4, true);
+        fmt.bitsPerSample = dv.getUint16(body + 14, true);
+      } else if (id === 'data') {
+        dataBytes = bytes.subarray(body, body + size);
+      }
+      pos = body + size + (size % 2); // chunks are word-aligned
+    }
+    return { fmt: fmt, pcm: dataBytes || new Uint8Array(0) };
+  }
+
+  function silencePcm(ms, fmt){
+    var bytesPerSample = fmt.bitsPerSample / 8;
+    var numSamples = Math.round(fmt.sampleRate * (ms / 1000));
+    return new Uint8Array(numSamples * fmt.channels * bytesPerSample);
+  }
+
+  function buildWavBlob(pcmChunks, fmt){
+    var totalLen = pcmChunks.reduce(function(sum, c){ return sum + c.length; }, 0);
+    var buffer = new ArrayBuffer(44 + totalLen);
+    var dv = new DataView(buffer);
+    var byteRate = fmt.sampleRate * fmt.channels * (fmt.bitsPerSample / 8);
+    var blockAlign = fmt.channels * (fmt.bitsPerSample / 8);
+    function writeStr(offset, str){ for (var i = 0; i < str.length; i++) dv.setUint8(offset + i, str.charCodeAt(i)); }
+    writeStr(0, 'RIFF');
+    dv.setUint32(4, 36 + totalLen, true);
+    writeStr(8, 'WAVE');
+    writeStr(12, 'fmt ');
+    dv.setUint32(16, 16, true);
+    dv.setUint16(20, 1, true); // PCM
+    dv.setUint16(22, fmt.channels, true);
+    dv.setUint32(24, fmt.sampleRate, true);
+    dv.setUint32(28, byteRate, true);
+    dv.setUint16(32, blockAlign, true);
+    dv.setUint16(34, fmt.bitsPerSample, true);
+    writeStr(36, 'data');
+    dv.setUint32(40, totalLen, true);
+    var out = new Uint8Array(buffer);
+    var offset = 44;
+    pcmChunks.forEach(function(chunk){ out.set(chunk, offset); offset += chunk.length; });
+    return new Blob([out], { type: 'audio/wav' });
+  }
+
+  // One Gemini TTS call per sentence: 3 parts (slow Chinese, English, slow Chinese
+  // again), each with its own speech_metadata.style — the model returns one
+  // continuous WAV covering all three in order.
+  function callSentenceTTS(sent){
+    var apiKey = loadGeminiKey();
+    if (!apiKey) return Promise.reject(new Error('no-key'));
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(GEMINI_TTS_MODEL) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    var slowStyle = 'speaking slowly and clearly, like a teacher helping a language learner';
+    var payload = {
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: sent.h, speech_metadata: { style: slowStyle } },
+          { text: sent.e, speech_metadata: { style: 'natural conversational pace' } },
+          { text: sent.h, speech_metadata: { style: slowStyle } }
+        ]
+      }],
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        speechConfig: { voiceConfig: { voice: TTS_VOICE } }
+      }
+    };
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(res){
+      if (!res.ok) return res.text().then(function(t){ throw new Error('HTTP ' + res.status + ': ' + t); });
+      return res.json();
+    }).then(function(data){
+      var b64 = data.candidates[0].content.parts[0].inlineData.data;
+      return parseWav(base64ToBytes(b64));
+    });
+  }
+
+  // Generates one combined audio file for the whole story: each sentence's
+  // 3-part clip (Chinese slow / English / Chinese slow) back to back, with a
+  // fixed silence gap inserted between sentences.
+  function generateStoryAudio(story, onProgress){
+    var chunks = [];
+    var fmt = null;
+    var i = 0;
+    function next(){
+      if (i >= story.sentences.length) {
+        return Promise.resolve(buildWavBlob(chunks, fmt || { channels: 1, sampleRate: 24000, bitsPerSample: 16 }));
+      }
+      if (onProgress) onProgress(i + 1, story.sentences.length);
+      return callSentenceTTS(story.sentences[i]).then(function(result){
+        fmt = result.fmt;
+        chunks.push(result.pcm);
+        if (i < story.sentences.length - 1) chunks.push(silencePcm(1000, fmt));
+        i++;
+        return next();
+      });
+    }
+    return next();
   }
 
   // ---------- mobile swipe carousel (Vokabeln | Karten | Geschichten | Statistiken) ----------
@@ -2552,6 +2682,10 @@
           '<div class="story-title-block" style="margin-bottom:14px;padding-bottom:12px;">' +
             '<div class="t-h" style="font-size:18px;">' + esc(story.title.h) + '</div>' +
             '<div class="t-e" style="margin-top:2px;">' + esc(story.title.e) + '</div>' +
+            '<button class="hint-btn" id="btnExportAudio" style="margin-top:10px;"' + (st.audioGenerating ? ' disabled' : '') + '>' +
+              esc(st.audioGenerating ? tf('storiesAudioProgress', st.audioProgress ? st.audioProgress.current : 0, st.audioProgress ? st.audioProgress.total : 0) : t('storiesExportAudioBtn')) +
+            '</button>' +
+            (st.audioError ? '<div class="ex-e" style="margin-top:8px;color:var(--seal);">' + esc(st.audioError) + '</div>' : '') +
           '</div>' +
           '<div class="session-bar"><span>' + esc(tf('storiesSentenceOf', idx + 1, story.sentences.length)) + (isCurrent ? '' : esc(t('storiesRepetition'))) + '</span>' +
             '<span class="dots">' + dotsHtml + '</span></div>' +
@@ -2578,6 +2712,40 @@
         '</div>';
 
       document.getElementById('btnBackToLibrary2').onclick = function(){ stopNarration(); st.view = 'library'; renderStories(); };
+      document.getElementById('btnExportAudio').onclick = function(){
+        stopNarration();
+        var apiKey = loadGeminiKey();
+        if (!apiKey) {
+          openDrawer();
+          var f = document.getElementById('inpGeminiKey');
+          if (f) f.focus();
+          return;
+        }
+        st.audioGenerating = true;
+        st.audioError = null;
+        st.audioProgress = { current: 0, total: story.sentences.length };
+        renderStories();
+        generateStoryAudio(story, function(current, total){
+          st.audioProgress = { current: current, total: total };
+          renderStories();
+        }).then(function(blob){
+          st.audioGenerating = false;
+          renderStories();
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          var safeName = story.title.h.replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'story';
+          a.href = url;
+          a.download = 'hskflash-' + safeName + '.wav';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+        }).catch(function(err){
+          st.audioGenerating = false;
+          if (err.message !== 'no-key') st.audioError = t('storiesAudioErrorPrefix') + err.message;
+          renderStories();
+        });
+      };
       document.getElementById('btnDeleteStory').onclick = function(){
         stopNarration();
         if (!confirm(t('storiesDeleteConfirm'))) return;
