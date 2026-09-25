@@ -1226,6 +1226,11 @@
       <button class="btn-secondary" id="btnExportStories" data-i18n="exportBtn">⬇</button>
       <button class="btn-secondary" id="btnImportStories" data-i18n="importBtn">⬆</button>
     </div>
+    <div class="export-row">
+      <span class="export-row-label" data-i18n="exportIslandsLabel">Satzinseln</span>
+      <button class="btn-secondary" id="btnExportIslands" data-i18n="exportBtn">⬇</button>
+      <button class="btn-secondary" id="btnImportIslands" data-i18n="importBtn">⬆</button>
+    </div>
     <input type="file" id="inpImportFile" accept="application/json,.json" style="display:none;">
     <p class="drawer-note" data-i18n="exportNote">Jede Kategorie wird als eigene JSON-Datei exportiert bzw. importiert — zum Sichern oder Übertragen auf ein anderes Gerät. Import ersetzt die jeweilige Kategorie in diesem Browser komplett.</p>
   </div>
@@ -1415,11 +1420,12 @@
       exportHeading: 'Daten sichern',
       exportBtn: '⬇',
       importBtn: '⬆',
-      exportProgressLabel: 'Fortschritt', exportExamplesLabel: 'Beispielsätze', exportStoriesLabel: 'Geschichten',
+      exportProgressLabel: 'Fortschritt', exportExamplesLabel: 'Beispielsätze', exportStoriesLabel: 'Geschichten', exportIslandsLabel: 'Satzinseln',
       exportNote: 'Jede Kategorie wird als eigene JSON-Datei exportiert bzw. importiert — zum Sichern oder Übertragen auf ein anderes Gerät. Import ersetzt die jeweilige Kategorie in diesem Browser komplett.',
       importConfirmProgress: 'Import ersetzt deinen kompletten aktuellen Fortschritt in diesem Browser. Fortfahren?',
       importConfirmExamples: 'Import ersetzt alle generierten Beispielsätze in diesem Browser. Fortfahren?',
       importConfirmStories: 'Import ersetzt alle Geschichten in diesem Browser. Fortfahren?',
+      importConfirmIslands: 'Import ersetzt alle Satzinseln in diesem Browser. Fortfahren?',
       importInvalidJson: 'Diese Datei ist kein gültiges JSON.',
       importInvalidFormat: 'Diese Datei sieht nicht wie ein Export dieser App aus (fehlendes "progress"-Feld).',
       importConfirm: 'Import ersetzt deinen kompletten aktuellen Fortschritt, alle generierten Beispielsätze und alle Geschichten in diesem Browser. Fortfahren?',
@@ -1575,11 +1581,12 @@
       exportHeading: 'Back up data',
       exportBtn: '⬇',
       importBtn: '⬆',
-      exportProgressLabel: 'Progress', exportExamplesLabel: 'Example sentences', exportStoriesLabel: 'Stories',
+      exportProgressLabel: 'Progress', exportExamplesLabel: 'Example sentences', exportStoriesLabel: 'Stories', exportIslandsLabel: 'Phrase islands',
       exportNote: 'Each category is exported/imported as its own JSON file — for backup or transferring to another device. Importing completely replaces that category in this browser.',
       importConfirmProgress: 'Importing will replace all your current progress in this browser. Continue?',
       importConfirmExamples: 'Importing will replace all generated example sentences in this browser. Continue?',
       importConfirmStories: 'Importing will replace all stories in this browser. Continue?',
+      importConfirmIslands: 'Importing will replace all phrase islands in this browser. Continue?',
       importInvalidJson: 'This file is not valid JSON.',
       importInvalidFormat: 'This file doesn\'t look like an export from this app (missing "progress" field).',
       importConfirm: 'Importing will replace your entire current progress, all generated example sentences and all stories in this browser. Continue?',
@@ -1732,11 +1739,12 @@
       exportHeading: 'Sauvegarder les données',
       exportBtn: '⬇',
       importBtn: '⬆',
-      exportProgressLabel: 'Progression', exportExamplesLabel: 'Phrases d\'exemple', exportStoriesLabel: 'Histoires',
+      exportProgressLabel: 'Progression', exportExamplesLabel: 'Phrases d\'exemple', exportStoriesLabel: 'Histoires', exportIslandsLabel: 'Îlots de phrases',
       exportNote: 'Chaque catégorie est exportée/importée comme son propre fichier JSON — pour sauvegarder ou transférer sur un autre appareil. L\'import remplace entièrement cette catégorie dans ce navigateur.',
       importConfirmProgress: 'L\'import remplacera toute ta progression actuelle dans ce navigateur. Continuer ?',
       importConfirmExamples: 'L\'import remplacera toutes les phrases d\'exemple générées dans ce navigateur. Continuer ?',
       importConfirmStories: 'L\'import remplacera toutes les histoires dans ce navigateur. Continuer ?',
+      importConfirmIslands: 'L\'import remplacera tous les îlots de phrases dans ce navigateur. Continuer ?',
       importInvalidJson: 'Ce fichier n\'est pas un JSON valide.',
       importInvalidFormat: 'Ce fichier ne ressemble pas à un export de cette application (champ "progress" manquant).',
       importConfirm: 'L\'import remplacera toute ta progression actuelle, toutes les phrases d\'exemple générées et toutes les histoires dans ce navigateur. Continuer ?',
@@ -1889,11 +1897,12 @@
       exportHeading: 'Respaldar datos',
       exportBtn: '⬇',
       importBtn: '⬆',
-      exportProgressLabel: 'Progreso', exportExamplesLabel: 'Frases de ejemplo', exportStoriesLabel: 'Historias',
+      exportProgressLabel: 'Progreso', exportExamplesLabel: 'Frases de ejemplo', exportStoriesLabel: 'Historias', exportIslandsLabel: 'Islas de frases',
       exportNote: 'Cada categoría se exporta/importa como su propio archivo JSON — para respaldar o transferir a otro dispositivo. Importar reemplaza por completo esa categoría en este navegador.',
       importConfirmProgress: 'Importar reemplazará todo tu progreso actual en este navegador. ¿Continuar?',
       importConfirmExamples: 'Importar reemplazará todas las frases de ejemplo generadas en este navegador. ¿Continuar?',
       importConfirmStories: 'Importar reemplazará todas las historias en este navegador. ¿Continuar?',
+      importConfirmIslands: 'Importar reemplazará todas las islas de frases en este navegador. ¿Continuar?',
       importInvalidJson: 'Este archivo no es un JSON válido.',
       importInvalidFormat: 'Este archivo no parece una exportación de esta app (falta el campo "progress").',
       importConfirm: 'Importar reemplazará todo tu progreso actual, todas las frases de ejemplo generadas y todas las historias en este navegador. ¿Continuar?',
@@ -4769,11 +4778,15 @@
   document.getElementById('btnExportStories').onclick = function(){
     downloadJson({ format: 'hskflash-stories-v1', exportedAt: new Date().toISOString(), stories: stories }, 'hskflash-stories');
   };
+  document.getElementById('btnExportIslands').onclick = function(){
+    downloadJson({ format: 'hskflash-islands-v1', exportedAt: new Date().toISOString(), islands: islands }, 'hskflash-islands');
+  };
 
-  var importTarget = null; // 'progress' | 'examples' | 'stories'
+  var importTarget = null; // 'progress' | 'examples' | 'stories' | 'islands'
   document.getElementById('btnImportProgress').onclick = function(){ importTarget = 'progress'; document.getElementById('inpImportFile').click(); };
   document.getElementById('btnImportExamples').onclick = function(){ importTarget = 'examples'; document.getElementById('inpImportFile').click(); };
   document.getElementById('btnImportStories').onclick = function(){ importTarget = 'stories'; document.getElementById('inpImportFile').click(); };
+  document.getElementById('btnImportIslands').onclick = function(){ importTarget = 'islands'; document.getElementById('inpImportFile').click(); };
 
   document.getElementById('inpImportFile').onchange = function(e){
     var file = e.target.files && e.target.files[0];
@@ -4806,12 +4819,20 @@
         stories = data.stories;
         saveStories(stories);
         storiesState.view = 'library';
+      } else if (importTarget === 'islands') {
+        if (!data || !Array.isArray(data.islands)) { alert(t('importInvalidFormat')); e.target.value = ''; return; }
+        if (!confirm(t('importConfirmIslands'))) { e.target.value = ''; return; }
+        islands = data.islands;
+        saveIslands(islands);
+        islandsState.view = 'list';
       }
       e.target.value = '';
       closeDrawer();
       render();
       var storiesViewEl = document.getElementById('storiesView');
       if (storiesViewEl && storiesViewEl.style.display !== 'none') { try { renderStories(); } catch(err2){} }
+      var islandsViewEl = document.getElementById('islandsView');
+      if (islandsViewEl && islandsViewEl.style.display !== 'none') { try { renderIslands(); } catch(err2){} }
       var statsViewEl = document.getElementById('statsPageView');
       if (statsViewEl && statsViewEl.style.display !== 'none') { try { renderStatsTab(); } catch(err2){} }
       alert(t('importDone'));
