@@ -1351,6 +1351,10 @@
       islandsEmpty: 'Noch keine Satzinseln angelegt.',
       islandsNewNamePrompt: 'Themengebiet (z. B. "Im Restaurant", "Gespräch mit Nachbarn")',
       islandsNewNamePlaceholder: 'z. B. Im Restaurant',
+      islandsNewDescPrompt: 'Situation genauer beschreiben (optional, hilft Gemini)', islandsNewDescPlaceholder: 'z. B. Ich bestelle Essen und frage nach der Rechnung, eher formell',
+      islandsEditDescBtn: 'Beschreibung bearbeiten', islandsAddDescBtn: '+ Beschreibung hinzufügen', islandsSaveDescBtn: 'Speichern',
+      islandsOwnSentenceLabel: 'Eigenen Satz auf Englisch eingeben und übersetzen lassen', islandsOwnSentencePlaceholder: 'z. B. Can I get the check, please?',
+      islandsTranslateAddBtn: 'Übersetzen & hinzufügen', islandsTranslatingBtn: 'Übersetze…',
       islandsCreateBtn: 'Anlegen',
       islandsCancelBtn: 'Abbrechen',
       islandsSentenceCount: '{0} Sätze',
@@ -1508,6 +1512,10 @@
       islandsEmpty: 'No phrase islands yet.',
       islandsNewNamePrompt: 'Topic (e.g. "At the restaurant", "Chatting with a neighbor")',
       islandsNewNamePlaceholder: 'e.g. At the restaurant',
+      islandsNewDescPrompt: 'Describe the situation in more detail (optional, helps Gemini)', islandsNewDescPlaceholder: 'e.g. I\'m ordering food and asking for the check, fairly formal',
+      islandsEditDescBtn: 'Edit description', islandsAddDescBtn: '+ Add description', islandsSaveDescBtn: 'Save',
+      islandsOwnSentenceLabel: 'Type your own sentence in English and have it translated', islandsOwnSentencePlaceholder: 'e.g. Can I get the check, please?',
+      islandsTranslateAddBtn: 'Translate & add', islandsTranslatingBtn: 'Translating…',
       islandsCreateBtn: 'Create',
       islandsCancelBtn: 'Cancel',
       islandsSentenceCount: '{0} sentences',
@@ -1661,6 +1669,10 @@
       islandsEmpty: 'Aucun îlot de phrases pour l\'instant.',
       islandsNewNamePrompt: 'Thème (p. ex. "Au restaurant", "Discussion avec un voisin")',
       islandsNewNamePlaceholder: 'p. ex. Au restaurant',
+      islandsNewDescPrompt: 'Décrire la situation plus précisément (facultatif, aide Gemini)', islandsNewDescPlaceholder: 'p. ex. Je commande à manger et je demande l\'addition, plutôt formel',
+      islandsEditDescBtn: 'Modifier la description', islandsAddDescBtn: '+ Ajouter une description', islandsSaveDescBtn: 'Enregistrer',
+      islandsOwnSentenceLabel: 'Saisir votre propre phrase en anglais et la faire traduire', islandsOwnSentencePlaceholder: 'p. ex. Can I get the check, please?',
+      islandsTranslateAddBtn: 'Traduire et ajouter', islandsTranslatingBtn: 'Traduction…',
       islandsCreateBtn: 'Créer',
       islandsCancelBtn: 'Annuler',
       islandsSentenceCount: '{0} phrases',
@@ -1814,6 +1826,10 @@
       islandsEmpty: 'Aún no hay islas de frases.',
       islandsNewNamePrompt: 'Tema (p. ej. "En el restaurante", "Charla con un vecino")',
       islandsNewNamePlaceholder: 'p. ej. En el restaurante',
+      islandsNewDescPrompt: 'Describe la situación con más detalle (opcional, ayuda a Gemini)', islandsNewDescPlaceholder: 'p. ej. Estoy pidiendo comida y pidiendo la cuenta, bastante formal',
+      islandsEditDescBtn: 'Editar descripción', islandsAddDescBtn: '+ Añadir descripción', islandsSaveDescBtn: 'Guardar',
+      islandsOwnSentenceLabel: 'Escribe tu propia frase en inglés y tradúcela', islandsOwnSentencePlaceholder: 'p. ej. Can I get the check, please?',
+      islandsTranslateAddBtn: 'Traducir y añadir', islandsTranslatingBtn: 'Traduciendo…',
       islandsCreateBtn: 'Crear',
       islandsCancelBtn: 'Cancelar',
       islandsSentenceCount: '{0} frases',
@@ -3140,14 +3156,20 @@
     generateError: null,
     candidates: null,      // pending sentence candidates awaiting accept/reject, when view === 'review'
     newIslandName: '',
-    showNewForm: false
+    newIslandDesc: '',
+    showNewForm: false,
+    editingDescId: null,   // id of the island whose description textarea is open, or null
+    ownSentenceDraft: '',
+    ownSentenceBusy: false,
+    ownSentenceError: null
   };
 
-  function buildIslandPrompt(topicName, existingSentences, count){
+  function buildIslandPrompt(topicName, description, existingSentences, count){
     var existingList = existingSentences.map(function(s){ return s.h; }).join('; ');
     return "You are a precise linguistic API for a Mandarin learning app.\n" +
       "TASK: Suggest natural, everyday Mandarin Chinese sentences a learner could actually use or hear in real life.\n" +
       "TOPIC: \"" + topicName + "\"\n" +
+      (description ? "SITUATION / CONTEXT DETAILS (follow this closely — it describes exactly what the learner expects): " + description + "\n" : "") +
       "Number of sentences: " + count + "\n" +
       "Keep vocabulary and grammar accessible for an intermediate learner (roughly HSK 3-4 level).\n" +
       (existingList ? "Do not repeat or closely duplicate any of these already-collected sentences: " + existingList + "\n" : "") +
@@ -3167,7 +3189,7 @@
     }
     var model = loadGeminiModel();
     var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
-    var prompt = buildIslandPrompt(island.name, island.sentences, count);
+    var prompt = buildIslandPrompt(island.name, island.description, island.sentences, count);
     var payload = { contents: [{ parts: [{ text: prompt }] }] };
 
     return fetch(url, {
@@ -3183,6 +3205,50 @@
       if (!parsed.length) throw new Error('Antwort konnte nicht gelesen werden.');
       parsed.forEach(function(s){ s.id = 'sent_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); });
       return parsed;
+    });
+  }
+
+  // Lets the user type their own sentence in English and have Gemini translate
+  // it into natural Mandarin — added directly to the island (no accept/reject
+  // review step, since it's the user's own content, not a Gemini suggestion).
+  function buildTranslateSentencePrompt(englishText){
+    return "You are a precise linguistic API for a Mandarin learning app.\n" +
+      "TASK: Translate the following English sentence into natural, everyday Mandarin Chinese that a learner could actually use or hear in real life.\n" +
+      "ENGLISH SENTENCE: \"" + englishText + "\"\n" +
+      "Keep vocabulary and grammar accessible for an intermediate learner (roughly HSK 3-4 level) while staying faithful to the original meaning.\n" +
+      "STRICT OUTPUT RULES:\n" +
+      "1. Output MUST contain exactly 1 line. Nothing else.\n" +
+      "2. Format: HANZI|PINYIN|ENGLISH (use the original English sentence, lightly cleaned up if needed, as the ENGLISH field)\n" +
+      "3. No introduction, no markdown fences, no numbering, no explanatory text.";
+  }
+
+  function translateOwnSentence(englishText){
+    var apiKey = loadGeminiKey();
+    if (!apiKey) {
+      openDrawer();
+      var f = document.getElementById('inpGeminiKey');
+      if (f) f.focus();
+      return Promise.reject(new Error('no-key'));
+    }
+    var model = loadGeminiModel();
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    var prompt = buildTranslateSentencePrompt(englishText);
+    var payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(res){
+      if (!res.ok) return res.text().then(function(t){ throw new Error('HTTP ' + res.status + ': ' + t); });
+      return res.json();
+    }).then(function(data){
+      var text = data.candidates[0].content.parts[0].text;
+      var parsed = parseGeminiResponse(text);
+      if (!parsed.length) throw new Error('Antwort konnte nicht gelesen werden.');
+      var s = parsed[0];
+      s.id = 'sent_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      return s;
     });
   }
 
@@ -3922,6 +3988,8 @@
         ? '<div class="audio-picker" style="margin-bottom:12px;">' +
             '<div class="audio-picker-label">' + esc(t('islandsNewNamePrompt')) + '</div>' +
             '<input type="text" id="inpNewIslandName" placeholder="' + esc(t('islandsNewNamePlaceholder')) + '" value="' + esc(ist.newIslandName) + '" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--hairline);border-radius:7px;font-family:inherit;font-size:13.5px;background:var(--paper-raised);color:var(--ink);">' +
+            '<div class="audio-picker-label" style="margin-top:9px;">' + esc(t('islandsNewDescPrompt')) + '</div>' +
+            '<textarea id="inpNewIslandDesc" placeholder="' + esc(t('islandsNewDescPlaceholder')) + '" rows="2" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--hairline);border-radius:7px;font-family:inherit;font-size:13px;background:var(--paper-raised);color:var(--ink);resize:vertical;">' + esc(ist.newIslandDesc) + '</textarea>' +
             '<div class="audio-picker-actions">' +
               '<button class="btn-primary" id="btnCreateIsland" style="flex:1;padding:9px;font-size:13px;">' + esc(t('islandsCreateBtn')) + '</button>' +
               '<button class="hint-btn" id="btnCancelNewIsland">' + esc(t('islandsCancelBtn')) + '</button>' +
@@ -3941,6 +4009,7 @@
       if (btnNew) btnNew.onclick = function(){
         ist.showNewForm = true;
         ist.newIslandName = '';
+        ist.newIslandDesc = '';
         renderIslands();
         setTimeout(function(){ var el = document.getElementById('inpNewIslandName'); if (el) el.focus(); }, 0);
       };
@@ -3949,9 +4018,11 @@
       var btnCreate = document.getElementById('btnCreateIsland');
       if (btnCreate) btnCreate.onclick = function(){
         var nameInput = document.getElementById('inpNewIslandName');
+        var descInput = document.getElementById('inpNewIslandDesc');
         var name = nameInput ? nameInput.value.trim() : '';
+        var description = descInput ? descInput.value.trim() : '';
         if (!name) return;
-        var newIsland = { id: 'island_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), name: name, sentences: [], createdAt: new Date().toISOString() };
+        var newIsland = { id: 'island_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), name: name, description: description, sentences: [], createdAt: new Date().toISOString() };
         islands.push(newIsland);
         saveIslands(islands);
         ist.showNewForm = false;
@@ -4001,12 +4072,31 @@
           '<div class="story-title-block" style="margin-bottom:14px;padding-bottom:12px;">' +
             '<div class="t-h" style="font-size:17px;font-family:inherit;">' + esc(isl.name) + '</div>' +
             '<div class="t-e" style="margin-top:2px;">' + esc(tf('islandsSentenceCount', isl.sentences.length)) + '</div>' +
+            (ist.editingDescId === isl.id
+              ? '<div style="margin-top:9px;">' +
+                  '<textarea id="inpEditIslandDesc" rows="2" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--hairline);border-radius:7px;font-family:inherit;font-size:13px;background:var(--paper-raised);color:var(--ink);resize:vertical;">' + esc(isl.description || '') + '</textarea>' +
+                  '<div class="audio-picker-actions" style="margin-top:6px;">' +
+                    '<button class="btn-primary" id="btnSaveIslandDesc" style="flex:1;padding:8px;font-size:12.5px;">' + esc(t('islandsSaveDescBtn')) + '</button>' +
+                    '<button class="hint-btn" id="btnCancelIslandDesc">' + esc(t('islandsCancelBtn')) + '</button>' +
+                  '</div>' +
+                '</div>'
+              : (isl.description
+                  ? '<div class="story-meta" style="margin-top:6px;white-space:pre-wrap;">' + esc(isl.description) + '</div><button class="hint-btn" id="btnEditIslandDesc" style="margin-top:6px;font-size:11px;padding:4px 9px;">' + esc(t('islandsEditDescBtn')) + '</button>'
+                  : '<button class="hint-btn" id="btnEditIslandDesc" style="margin-top:6px;font-size:11px;padding:4px 9px;">' + esc(t('islandsAddDescBtn')) + '</button>')) +
           '</div>' +
           sentHtml +
           '<button class="btn-primary" id="btnAddSentences" style="width:100%;margin-top:14px;"' + (ist.generating ? ' disabled' : '') + '>' +
             esc(ist.generating ? t('islandsGeneratingBtn') : t('islandsAddSentencesBtn')) +
           '</button>' +
           (ist.generateError ? '<div class="ex-e" style="margin-top:8px;color:var(--seal);">' + esc(ist.generateError) + '</div>' : '') +
+          '<div class="audio-picker" style="margin-top:14px;">' +
+            '<div class="audio-picker-label">' + esc(t('islandsOwnSentenceLabel')) + '</div>' +
+            '<input type="text" id="inpOwnSentence" placeholder="' + esc(t('islandsOwnSentencePlaceholder')) + '" value="' + esc(ist.ownSentenceDraft || '') + '" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--hairline);border-radius:7px;font-family:inherit;font-size:13.5px;background:var(--paper-raised);color:var(--ink);">' +
+            '<button class="btn-primary" id="btnTranslateOwnSentence" style="width:100%;margin-top:8px;padding:9px;font-size:13px;"' + (ist.ownSentenceBusy ? ' disabled' : '') + '>' +
+              esc(ist.ownSentenceBusy ? t('islandsTranslatingBtn') : t('islandsTranslateAddBtn')) +
+            '</button>' +
+            (ist.ownSentenceError ? '<div class="ex-e" style="margin-top:6px;color:var(--seal);">' + esc(ist.ownSentenceError) + '</div>' : '') +
+          '</div>' +
         '</div>';
 
       document.getElementById('btnBackToIslandsList').onclick = function(){ stopNarration(); ist.view = 'list'; renderIslands(); };
@@ -4023,6 +4113,53 @@
         if (!isl.sentences.length) return;
         narrateSentences(isl.sentences, 0, function(){ renderIslands(); }, function(){ renderIslands(); });
         renderIslands();
+      };
+      var editDescBtn = document.getElementById('btnEditIslandDesc');
+      if (editDescBtn) editDescBtn.onclick = function(){
+        ist.editingDescId = isl.id;
+        renderIslands();
+        setTimeout(function(){ var el = document.getElementById('inpEditIslandDesc'); if (el) el.focus(); }, 0);
+      };
+      var saveDescBtn = document.getElementById('btnSaveIslandDesc');
+      if (saveDescBtn) saveDescBtn.onclick = function(){
+        var ta = document.getElementById('inpEditIslandDesc');
+        isl.description = ta ? ta.value.trim() : '';
+        saveIslands(islands);
+        ist.editingDescId = null;
+        renderIslands();
+      };
+      var cancelDescBtn = document.getElementById('btnCancelIslandDesc');
+      if (cancelDescBtn) cancelDescBtn.onclick = function(){ ist.editingDescId = null; renderIslands(); };
+      var ownInput = document.getElementById('inpOwnSentence');
+      if (ownInput) {
+        ownInput.onkeydown = function(e){ if (e.key === 'Enter') { var b = document.getElementById('btnTranslateOwnSentence'); if (b) b.click(); } };
+      }
+      document.getElementById('btnTranslateOwnSentence').onclick = function(){
+        var input = document.getElementById('inpOwnSentence');
+        var text = input ? input.value.trim() : '';
+        if (!text) return;
+        var apiKey = loadGeminiKey();
+        if (!apiKey) {
+          openDrawer();
+          var f = document.getElementById('inpGeminiKey');
+          if (f) f.focus();
+          return;
+        }
+        ist.ownSentenceDraft = text;
+        ist.ownSentenceBusy = true;
+        ist.ownSentenceError = null;
+        renderIslands();
+        translateOwnSentence(text).then(function(s){
+          isl.sentences.push(s);
+          saveIslands(islands);
+          ist.ownSentenceBusy = false;
+          ist.ownSentenceDraft = '';
+          renderIslands();
+        }).catch(function(err){
+          ist.ownSentenceBusy = false;
+          if (err.message !== 'no-key') ist.ownSentenceError = t('islandsGenErrorPrefix') + err.message;
+          renderIslands();
+        });
       };
       document.getElementById('btnAddSentences').onclick = function(){
         var apiKey = loadGeminiKey();
