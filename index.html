@@ -3797,8 +3797,13 @@
             saveProgress(progress);
             recordActivity();
             renderStats();
-            if (settings.autoSpeak) speak(sent.h);
-            setTimeout(function(){
+            // Reveal pinyin and translation together right away, rather than
+            // requiring a separate toggle tap, so there's something to read
+            // while (optionally) listening to the auto-speak.
+            st.readShowPinyin = true;
+            st.readShowTranslation = true;
+            renderStories();
+            function advance(){
               if (current + 1 >= story.sentences.length) {
                 st.readFinished = true;
                 story.currentIdx = story.sentences.length;
@@ -3811,7 +3816,14 @@
               }
               saveStories(stories);
               renderStories();
-            }, 700);
+            }
+            if (settings.autoSpeak) {
+              // Wait for the sentence to actually finish being read aloud
+              // before moving on, instead of a fixed pause.
+              speakWithVoiceAsync(sent.h).then(advance);
+            } else {
+              setTimeout(advance, 700);
+            }
           };
         });
       }
@@ -4290,6 +4302,25 @@
     if (!name) return null;
     var match = cachedVoices.filter(function(v){ return v.name === name; });
     return match.length ? match[0] : null;
+  }
+
+  // Same as speakWithVoice, but resolves once the utterance actually finishes —
+  // used by the story reader so it can wait for the auto-speak to end before
+  // advancing to the next sentence, instead of a fixed timeout.
+  function speakWithVoiceAsync(text){
+    return new Promise(function(resolve){
+      if (!text || !('speechSynthesis' in window)) { resolve(); return; }
+      try {
+        window.speechSynthesis.cancel();
+        var voice = findVoiceByName(settings.voiceName);
+        var u = new SpeechSynthesisUtterance(text);
+        if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = 'zh-CN'; }
+        u.rate = 0.85;
+        u.onend = function(){ resolve(); };
+        u.onerror = function(){ resolve(); };
+        window.speechSynthesis.speak(u);
+      } catch(e) { resolve(); }
+    });
   }
 
   function speakWithVoice(text, voice){
