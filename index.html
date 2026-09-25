@@ -1471,6 +1471,7 @@
       audioDownloadedNote: 'Heruntergeladen ✓', audioResetTitle: 'Zurücksetzen (andere Stimme/Geschwindigkeit wählen)',
       audioResetConfirm: 'Bisher erzeugtes Audio für diese Geschichte löschen und neu mit anderen Optionen starten?',
       audioVoiceMale: 'männlich', audioVoiceFemale: 'weiblich',
+      audioFunVoiceNote: '🎭 Überraschungsstimmen: bei jedem Satz eine zufällige, alberne Regieanweisung (dramatisch, flüsternd, verschnupft, …) — nur zum Spaß!',
       audioServiceLabel: 'TTS-Dienst (Geschichten-Audio)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
       audioQuotaEnabledLabel: 'Kontingent-Begrenzung aktiv (2/Minute, 8/Tag)',
       audioSpeedSlow: 'Langsam', audioSpeedNormal: 'Normal',
@@ -1630,6 +1631,7 @@
       audioDownloadedNote: 'Downloaded ✓', audioResetTitle: 'Reset (choose a different voice/speed)',
       audioResetConfirm: 'Delete the audio generated so far for this story and start over with different options?',
       audioVoiceMale: 'male', audioVoiceFemale: 'female',
+      audioFunVoiceNote: '🎭 Surprise voices: a random, silly direction (dramatic, whispering, stuffy-nosed, …) for every sentence — just for fun!',
       audioServiceLabel: 'TTS service (story audio)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
       audioQuotaEnabledLabel: 'Quota limit enabled (2/minute, 8/day)',
       audioSpeedSlow: 'Slow', audioSpeedNormal: 'Normal',
@@ -1788,6 +1790,7 @@
       audioDownloadedNote: 'Téléchargé ✓', audioResetTitle: 'Réinitialiser (choisir une autre voix/vitesse)',
       audioResetConfirm: 'Supprimer l\'audio déjà généré pour cette histoire et recommencer avec d\'autres options ?',
       audioVoiceMale: 'masculine', audioVoiceFemale: 'féminine',
+      audioFunVoiceNote: '🎭 Voix surprises : une indication de jeu aléatoire et loufoque (dramatique, chuchotée, enrhumée, …) à chaque phrase — juste pour rire !',
       audioServiceLabel: 'Service TTS (audio des histoires)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
       audioQuotaEnabledLabel: 'Limite de quota activée (2/minute, 8/jour)',
       audioSpeedSlow: 'Lent', audioSpeedNormal: 'Normal',
@@ -1946,6 +1949,7 @@
       audioDownloadedNote: 'Descargado ✓', audioResetTitle: 'Restablecer (elegir otra voz/velocidad)',
       audioResetConfirm: '¿Eliminar el audio generado hasta ahora para esta historia y empezar de nuevo con otras opciones?',
       audioVoiceMale: 'masculina', audioVoiceFemale: 'femenina',
+      audioFunVoiceNote: '🎭 Voces sorpresa: una indicación de interpretación aleatoria y divertida (dramática, susurrada, resfriada, …) en cada frase — ¡solo por diversión!',
       audioServiceLabel: 'Servicio TTS (audio de historias)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
       audioQuotaEnabledLabel: 'Límite de cuota activado (2/minuto, 8/día)',
       audioSpeedSlow: 'Lento', audioSpeedNormal: 'Normal',
@@ -2463,7 +2467,12 @@
     { id: 'Puck', gender: 'm' },
     { id: 'Charon', gender: 'm' },
     { id: 'Kore', gender: 'f' },
-    { id: 'Leda', gender: 'f' }
+    { id: 'Leda', gender: 'f' },
+    // "Fun" voices: same Gemini TTS mechanism, but each sentence gets a
+    // randomly-picked, over-the-top delivery style instead of the plain
+    // teacher-style pacing — see TTS_FUN_DIRECTIVES / pickFunDirective().
+    { id: 'Orus', gender: 'm', fun: true },
+    { id: 'Zephyr', gender: 'f', fun: true }
   ];
   // Google Cloud TTS uses a separate, language-specific voice catalog (unlike
   // Gemini, one voice can't speak both Chinese and English) — each entry also
@@ -2489,6 +2498,31 @@
     'slow': 0.8,
     'normal': 1.0
   };
+  // Delivery styles for the two "fun" Gemini voices (Orus/Zephyr). One is
+  // picked at random per sentence (fresh each time, not per-story) and
+  // applied to all 3 parts via speech_metadata.style — purely for
+  // entertainment, so this intentionally overrides the normal slow/normal
+  // pacing style for that sentence. Cloud TTS has no equivalent free-text
+  // style field, so fun voices only exist on the Gemini backend.
+  var TTS_FUN_DIRECTIVES = [
+    'like an over-the-top soap-opera villain revealing a shocking plot twist',
+    'in a sultry, seductive late-night radio host voice',
+    'in a rough, raspy just-woke-up voice',
+    'as if you have a bad head cold and a stuffy nose',
+    'in a hushed, conspiratorial whisper, as if sharing a secret',
+    'like an overly enthusiastic game show host announcing the grand prize',
+    'in a posh, exaggerated aristocratic accent',
+    'like you are fighting to stay awake, drowsy and sleepy',
+    'like a glitchy, monotone robot slowly running out of battery',
+    'in a nervous, stammering voice, terrified of making a mistake',
+    'like an epic movie-trailer narrator building suspense',
+    'like a cartoon supervillain gloating over an evil plan',
+    'in a dreamy, love-struck sigh, hopelessly infatuated',
+    'like a strict drill sergeant barking an order'
+  ];
+  function pickFunDirective(){
+    return TTS_FUN_DIRECTIVES[Math.floor(Math.random() * TTS_FUN_DIRECTIVES.length)];
+  }
   // Older saved stories may still carry a legacy 3-tier speed key ('0.5'/'0.75'/'1');
   // map those onto the current 2-tier scheme so resuming them keeps working.
   function normalizeSpeedKey(sp){
@@ -2678,13 +2712,20 @@
     var apiKey = loadGeminiKey();
     if (!apiKey) return Promise.reject(new Error('no-key'));
     var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(GEMINI_TTS_MODEL) + ':generateContent?key=' + encodeURIComponent(apiKey);
-    var slowStyle = TTS_SPEED_STYLES[normalizeSpeedKey(speedKey)];
+    var voiceEntry = TTS_VOICES.filter(function(v){ return v.id === voiceId; })[0];
+    var isFun = !!(voiceEntry && voiceEntry.fun);
+    // Fun voices ignore the normal slow/normal pacing style and instead get
+    // one randomly-picked playful directive per sentence, applied to all 3
+    // parts (both Chinese repetitions and the English translation) so the
+    // whole sentence keeps a consistent "character" throughout.
+    var slowStyle = isFun ? ('speaking ' + pickFunDirective()) : TTS_SPEED_STYLES[normalizeSpeedKey(speedKey)];
+    var enStyle = isFun ? slowStyle : 'natural conversational pace';
     var payload = {
       contents: [{
         role: 'user',
         parts: [
           { text: sent.h, speech_metadata: { style: slowStyle } },
-          { text: sent.e, speech_metadata: { style: 'natural conversational pace' } },
+          { text: sent.e, speech_metadata: { style: enStyle } },
           { text: sent.h, speech_metadata: { style: slowStyle } }
         ]
       }],
@@ -2916,8 +2957,9 @@
     var choice = storiesState.pickerChoice || { voice: null, speed: 'slow' };
     var service = loadTtsService();
     var voiceList = service === 'cloud' ? CLOUD_TTS_VOICES : TTS_VOICES;
+    var hasFunVoice = voiceList.some(function(v){ return v.fun; });
     var voiceOpts = voiceList.map(function(v){
-      var label = (v.label || v.id) + ' (' + t(v.gender === 'm' ? 'audioVoiceMale' : 'audioVoiceFemale') + ')';
+      var label = (v.fun ? '🎭 ' : '') + (v.label || v.id) + ' (' + t(v.gender === 'm' ? 'audioVoiceMale' : 'audioVoiceFemale') + ')';
       return '<button class="audio-opt' + (choice.voice === v.id ? ' selected' : '') + '" data-pick-voice="' + v.id + '">' + esc(label) + '</button>';
     }).join('');
     var speedOpts = ['slow', 'normal'].map(function(sp){
@@ -2926,6 +2968,7 @@
     return '<div class="audio-picker" data-picker-id="' + s.id + '">' +
       '<div class="audio-picker-label">' + esc(t('audioPickVoice')) + '</div>' +
       '<div class="audio-picker-row">' + voiceOpts + '</div>' +
+      (hasFunVoice ? '<p class="drawer-note" style="margin:4px 0 8px;">' + esc(t('audioFunVoiceNote')) + '</p>' : '') +
       '<div class="audio-picker-label">' + esc(t('audioPickSpeed')) + '</div>' +
       '<div class="audio-picker-row">' + speedOpts + '</div>' +
       '<div class="audio-picker-actions">' +
