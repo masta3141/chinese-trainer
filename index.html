@@ -3797,6 +3797,7 @@
             saveProgress(progress);
             recordActivity();
             renderStats();
+            if (settings.autoSpeak) speak(sent.h);
             setTimeout(function(){
               if (current + 1 >= story.sentences.length) {
                 st.readFinished = true;
