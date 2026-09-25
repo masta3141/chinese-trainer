@@ -430,6 +430,14 @@
     flex: 0 0 auto;
   }
   .audio-mini-done { color: var(--seal); font-weight: 700; font-size: 14px; }
+  .audio-mini-success { font-size: 11px; color: var(--jade); flex: 0 0 auto; }
+  .story-audio-params {
+    font-size: 10px;
+    color: var(--ink-faint);
+    opacity: .65;
+    padding: 0 2px;
+    margin-top: 1px;
+  }
   .audio-picker {
     background: var(--paper);
     border: 1px solid var(--hairline);
@@ -1450,6 +1458,8 @@
       storiesNarrateBtn: '🎧 Erzählen', storiesStopBtn: '⏹ Stopp',
       audioStartBtn: 'Starten', audioCancelBtn: 'Abbrechen', audioPickVoice: 'Stimme', audioPickSpeed: 'Tempo',
       audioDownloadTitle: 'Audio herunterladen', audioBlockedUntil: 'Tageslimit erreicht — weiter ab {0} Uhr', audioErrorPrefix: 'Fehler: ',
+      audioDownloadedNote: 'Heruntergeladen ✓', audioResetTitle: 'Zurücksetzen (andere Stimme/Geschwindigkeit wählen)',
+      audioResetConfirm: 'Bisher erzeugtes Audio für diese Geschichte löschen und neu mit anderen Optionen starten?',
       audioVoiceMale: 'männlich', audioVoiceFemale: 'weiblich',
       audioServiceLabel: 'TTS-Dienst (Geschichten-Audio)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
       audioQuotaEnabledLabel: 'Kontingent-Begrenzung aktiv (2/Minute, 8/Tag)',
@@ -1602,6 +1612,8 @@
       storiesNarrateBtn: '🎧 Narrate', storiesStopBtn: '⏹ Stop',
       audioStartBtn: 'Start', audioCancelBtn: 'Cancel', audioPickVoice: 'Voice', audioPickSpeed: 'Speed',
       audioDownloadTitle: 'Download audio', audioBlockedUntil: 'Daily limit reached — resumes at {0}', audioErrorPrefix: 'Error: ',
+      audioDownloadedNote: 'Downloaded ✓', audioResetTitle: 'Reset (choose a different voice/speed)',
+      audioResetConfirm: 'Delete the audio generated so far for this story and start over with different options?',
       audioVoiceMale: 'male', audioVoiceFemale: 'female',
       audioServiceLabel: 'TTS service (story audio)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
       audioQuotaEnabledLabel: 'Quota limit enabled (2/minute, 8/day)',
@@ -1753,6 +1765,8 @@
       storiesNarrateBtn: '🎧 Raconter', storiesStopBtn: '⏹ Arrêter',
       audioStartBtn: 'Démarrer', audioCancelBtn: 'Annuler', audioPickVoice: 'Voix', audioPickSpeed: 'Vitesse',
       audioDownloadTitle: 'Télécharger l\'audio', audioBlockedUntil: 'Limite quotidienne atteinte — reprise à {0}', audioErrorPrefix: 'Erreur : ',
+      audioDownloadedNote: 'Téléchargé ✓', audioResetTitle: 'Réinitialiser (choisir une autre voix/vitesse)',
+      audioResetConfirm: 'Supprimer l\'audio déjà généré pour cette histoire et recommencer avec d\'autres options ?',
       audioVoiceMale: 'masculine', audioVoiceFemale: 'féminine',
       audioServiceLabel: 'Service TTS (audio des histoires)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
       audioQuotaEnabledLabel: 'Limite de quota activée (2/minute, 8/jour)',
@@ -1904,6 +1918,8 @@
       storiesNarrateBtn: '🎧 Narrar', storiesStopBtn: '⏹ Detener',
       audioStartBtn: 'Iniciar', audioCancelBtn: 'Cancelar', audioPickVoice: 'Voz', audioPickSpeed: 'Velocidad',
       audioDownloadTitle: 'Descargar audio', audioBlockedUntil: 'Límite diario alcanzado — continúa a las {0}', audioErrorPrefix: 'Error: ',
+      audioDownloadedNote: 'Descargado ✓', audioResetTitle: 'Restablecer (elegir otra voz/velocidad)',
+      audioResetConfirm: '¿Eliminar el audio generado hasta ahora para esta historia y empezar de nuevo con otras opciones?',
       audioVoiceMale: 'masculina', audioVoiceFemale: 'femenina',
       audioServiceLabel: 'Servicio TTS (audio de historias)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
       audioQuotaEnabledLabel: 'Límite de cuota activado (2/minuto, 8/día)',
@@ -3028,8 +3044,37 @@
           a.click();
           document.body.removeChild(a);
           setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+          // brief "downloaded ✓" feedback under the progress row, self-clears
+          audioStatus[s.id] = { downloaded: true };
+          renderStories();
+          setTimeout(function(){
+            if (audioStatus[s.id] && audioStatus[s.id].downloaded) {
+              delete audioStatus[s.id];
+              renderStories();
+            }
+          }, 2200);
         }).catch(function(err){
           audioStatus[s.id] = { error: err.message };
+          renderStories();
+        });
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-reset]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        var id = btn.getAttribute('data-audio-reset');
+        var s = stories.filter(function(x){ return x.id === id; })[0];
+        if (!s) return;
+        if (!confirm(t('audioResetConfirm'))) return;
+        cancelStoryAudio(s.id);
+        idbDeletePrefix(s.id + ':').then(function(){
+          s.audioDone = 0;
+          delete s.audioVoice;
+          delete s.audioSpeed;
+          delete s.audioService;
+          saveStories(stories);
+          delete audioStatus[s.id];
+          if (storiesState.audioPickerFor === s.id) storiesState.audioPickerFor = null;
           renderStories();
         });
       };
@@ -3302,6 +3347,13 @@
     return (s.hsk ? hskLabel(s.hsk) : 'HSK') + ' · ' + tf('storiesSentencesCount', s.count);
   }
 
+  function buildAudioParamsLine(s){
+    if (!s.audioVoice) return '';
+    var serviceLabel = t(s.audioService === 'cloud' ? 'audioServiceCloud' : 'audioServiceGemini');
+    var speedLabel = t(normalizeSpeedKey(s.audioSpeed) === 'slow' ? 'audioSpeedSlow' : 'audioSpeedNormal');
+    return '<div class="story-audio-params">' + esc(serviceLabel + ' · ' + s.audioVoice + ' · ' + speedLabel) + '</div>';
+  }
+
   function storyProgressLabel(s){
     var cur = s.currentIdx || 0;
     if (cur >= s.sentences.length) return t('storiesFinishedLabel');
@@ -3322,6 +3374,7 @@
             var active = isStoryAudioActive(s.id);
             var blockedUntil = audioStatus[s.id] && audioStatus[s.id].blockedUntil;
             var errMsg = audioStatus[s.id] && audioStatus[s.id].error;
+            var justDownloaded = audioStatus[s.id] && audioStatus[s.id].downloaded;
             var showPicker = st.audioPickerFor === s.id;
 
             var actionBtnHtml;
@@ -3337,14 +3390,22 @@
             var downloadBtnHtml = done > 0
               ? '<button class="audio-mini-btn hint-btn" data-audio-download="' + s.id + '" title="' + esc(t('audioDownloadTitle')) + '">⬇</button>'
               : '';
+            // Reset ("start over with different voice/speed/service") is offered
+            // whenever any audio choice has been made, even mid-generation —
+            // resetting cancels an active run first.
+            var resetBtnHtml = s.audioVoice
+              ? '<button class="audio-mini-btn hint-btn" data-audio-reset="' + s.id + '" title="' + esc(t('audioResetTitle')) + '">✕</button>'
+              : '';
             var audioRowHtml =
               '<div class="story-audio-row" data-id="' + s.id + '">' +
                 '<div class="story-audio-bar"><div class="story-audio-fill" style="width:' + pct + '%"></div></div>' +
                 '<span class="story-audio-label">' + done + ' / ' + total + '</span>' +
-                downloadBtnHtml + actionBtnHtml +
+                downloadBtnHtml + actionBtnHtml + resetBtnHtml +
               '</div>' +
+              buildAudioParamsLine(s) +
               (blockedUntil ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(tf('audioBlockedUntil', new Date(blockedUntil).toLocaleString())) + '</div>' : '') +
               (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioErrorPrefix')) + esc(errMsg) + '</div>' : '') +
+              (justDownloaded ? '<div class="audio-mini-success" style="padding:0 2px;">' + esc(t('audioDownloadedNote')) + '</div>' : '') +
               (showPicker ? buildAudioPickerHtml(s) : '');
 
             return '<div class="story-card" data-id="' + s.id + '">' +
