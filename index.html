@@ -2443,11 +2443,15 @@
   // Google Cloud TTS uses a separate, language-specific voice catalog (unlike
   // Gemini, one voice can't speak both Chinese and English) — each entry also
   // names the English voice used for the translation part of a sentence.
+  // Chirp3: HD is Google's newest, most natural-sounding tier, and — handily —
+  // uses the exact same persona names as Gemini's own voices (just with a
+  // '-Chirp3-HD-' model segment and a language prefix), so the same identity
+  // carries across both Chinese and English parts of a sentence.
   var CLOUD_TTS_VOICES = [
-    { id: 'cmn-CN-Wavenet-B', gender: 'm', enVoice: 'en-US-Wavenet-D' },
-    { id: 'cmn-CN-Wavenet-C', gender: 'm', enVoice: 'en-US-Wavenet-B' },
-    { id: 'cmn-CN-Wavenet-A', gender: 'f', enVoice: 'en-US-Wavenet-F' },
-    { id: 'cmn-CN-Wavenet-D', gender: 'f', enVoice: 'en-US-Wavenet-C' }
+    { id: 'cmn-CN-Chirp3-HD-Puck', gender: 'm', enVoice: 'en-US-Chirp3-HD-Puck', label: 'Puck' },
+    { id: 'cmn-CN-Chirp3-HD-Charon', gender: 'm', enVoice: 'en-US-Chirp3-HD-Charon', label: 'Charon' },
+    { id: 'cmn-CN-Chirp3-HD-Kore', gender: 'f', enVoice: 'en-US-Chirp3-HD-Kore', label: 'Kore' },
+    { id: 'cmn-CN-Chirp3-HD-Leda', gender: 'f', enVoice: 'en-US-Chirp3-HD-Leda', label: 'Leda' }
   ];
   // Speed is simplified to two tiers, shared by both services. Gemini has no
   // real speed parameter and only approximates it via a style description;
@@ -2516,6 +2520,8 @@
     }
     return { fmt: fmt, pcm: dataBytes || new Uint8Array(0) };
   }
+
+  var STORY_SENTENCE_GAP_MS = 2000; // pause between sentences in the downloaded story audio
 
   function silencePcm(ms, fmt){
     var bytesPerSample = fmt.bitsPerSample / 8;
@@ -2872,12 +2878,21 @@
   // error, shown under the progress row. Cleared on the next successful step.
   var audioStatus = {};
 
+  // Cloud TTS voice ids are long/technical (cmn-CN-Chirp3-HD-Puck); shows the
+  // short persona name where we have one, falling back to the raw id (older
+  // saved stories may still carry a pre-Chirp3 Wavenet voice id).
+  function voiceDisplayLabel(voiceId, service){
+    var list = service === 'cloud' ? CLOUD_TTS_VOICES : TTS_VOICES;
+    var entry = list.filter(function(v){ return v.id === voiceId; })[0];
+    return entry && entry.label ? entry.label : voiceId;
+  }
+
   function buildAudioPickerHtml(s){
     var choice = storiesState.pickerChoice || { voice: null, speed: 'slow' };
     var service = loadTtsService();
     var voiceList = service === 'cloud' ? CLOUD_TTS_VOICES : TTS_VOICES;
     var voiceOpts = voiceList.map(function(v){
-      var label = v.id + ' (' + t(v.gender === 'm' ? 'audioVoiceMale' : 'audioVoiceFemale') + ')';
+      var label = (v.label || v.id) + ' (' + t(v.gender === 'm' ? 'audioVoiceMale' : 'audioVoiceFemale') + ')';
       return '<button class="audio-opt' + (choice.voice === v.id ? ' selected' : '') + '" data-pick-voice="' + v.id + '">' + esc(label) + '</button>';
     }).join('');
     var speedOpts = ['slow', 'normal'].map(function(sp){
@@ -3095,7 +3110,7 @@
         // Gap goes BEFORE this chunk (only once we know there IS a next chunk to
         // separate) — inserting it as a suffix after the previous one instead
         // would leave a trailing silent tail on a partially-generated story.
-        if (chunks.length) chunks.push(silencePcm(1000, fmt));
+        if (chunks.length) chunks.push(silencePcm(STORY_SENTENCE_GAP_MS, fmt));
         fmt = val.fmt;
         chunks.push(val.pcm);
         i++;
@@ -3350,8 +3365,9 @@
   function buildAudioParamsLine(s){
     if (!s.audioVoice) return '';
     var serviceLabel = t(s.audioService === 'cloud' ? 'audioServiceCloud' : 'audioServiceGemini');
+    var voiceLabel = voiceDisplayLabel(s.audioVoice, s.audioService);
     var speedLabel = t(normalizeSpeedKey(s.audioSpeed) === 'slow' ? 'audioSpeedSlow' : 'audioSpeedNormal');
-    return '<div class="story-audio-params">' + esc(serviceLabel + ' · ' + s.audioVoice + ' · ' + speedLabel) + '</div>';
+    return '<div class="story-audio-params">' + esc(serviceLabel + ' · ' + voiceLabel + ' · ' + speedLabel) + '</div>';
   }
 
   function storyProgressLabel(s){
