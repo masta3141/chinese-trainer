@@ -8,6 +8,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HSK Vokabeltrainer">
 <meta name="theme-color" content="#a33b2c">
+<!-- Google Identity Services: used only for the optional Google Cloud TTS
+     backend, to get a short-lived OAuth2 access token via a sign-in popup.
+     No secret of any kind is ever embedded here — the client ID below is
+     public by design. Loaded async; if it fails (offline, blocked), Cloud
+     TTS sign-in simply reports an error and Gemini TTS is unaffected. -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <title>汉字 Karten — HSK Vokabeltrainer</title>
@@ -1228,6 +1234,25 @@
     </div>
     <button class="btn-secondary" id="btnSaveGeminiKey" style="margin-top:14px;" data-i18n="geminiSaveBtn">Key speichern</button>
     <p class="drawer-note" data-i18n="geminiKeyNote">Der Key verlässt diesen Browser nie außer in direkten Anfragen an Google — er wird nur lokal gespeichert, nicht in dieser Datei oder irgendwo sonst.</p>
+
+    <div class="field" style="margin-top:18px;margin-bottom:0;">
+      <label for="inpTtsService" data-i18n="audioServiceLabel">TTS-Dienst (Geschichten-Audio)</label>
+      <select id="inpTtsService">
+        <option value="gemini" data-i18n="audioServiceGemini">Gemini TTS</option>
+        <option value="cloud" data-i18n="audioServiceCloud">Google Cloud TTS</option>
+      </select>
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label class="hsk-check" style="width:100%;justify-content:flex-start;">
+        <input type="checkbox" id="inpTtsQuotaEnabled">
+        <span data-i18n="audioQuotaEnabledLabel">Kontingent-Begrenzung aktiv (2/Minute, 8/Tag)</span>
+      </label>
+    </div>
+    <div class="field" id="cloudAuthField" style="margin-top:10px;display:none;">
+      <button class="btn-secondary" id="btnCloudSignIn" data-i18n="audioCloudSignInBtn">Bei Google anmelden</button>
+      <button class="hint-btn" id="btnCloudSignOut" style="margin-left:8px;" data-i18n="audioCloudSignOutBtn">Abmelden</button>
+      <p class="drawer-note" id="cloudAuthStatus"></p>
+    </div>
   </div>
 </div>
 
@@ -1426,6 +1451,12 @@
       audioStartBtn: 'Starten', audioCancelBtn: 'Abbrechen', audioPickVoice: 'Stimme', audioPickSpeed: 'Tempo',
       audioDownloadTitle: 'Audio herunterladen', audioBlockedUntil: 'Tageslimit erreicht — weiter ab {0} Uhr', audioErrorPrefix: 'Fehler: ',
       audioVoiceMale: 'männlich', audioVoiceFemale: 'weiblich',
+      audioServiceLabel: 'TTS-Dienst (Geschichten-Audio)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
+      audioQuotaEnabledLabel: 'Kontingent-Begrenzung aktiv (2/Minute, 8/Tag)',
+      audioSpeedSlow: 'Langsam', audioSpeedNormal: 'Normal',
+      audioCloudSignInBtn: 'Bei Google anmelden', audioCloudSignOutBtn: 'Abmelden',
+      audioCloudSignedIn: 'Angemeldet — Token noch {0} Min. gültig.', audioCloudNotSignedIn: 'Noch nicht angemeldet. Nötig, bevor Cloud-TTS-Audio erzeugt werden kann.',
+      audioCloudGisError: 'Google-Anmeldedienst konnte nicht geladen werden (offline oder blockiert?).', audioCloudAuthCancelled: 'Google-Anmeldung abgebrochen oder fehlgeschlagen.',
       storiesUnderstandNo: 'Verstehe nicht', storiesUnderstandHalf: 'Halbwegs', storiesUnderstandYes: 'Gut',
       storiesPinyinShow: 'Pinyin zeigen', storiesPinyinHide: 'Pinyin ausblenden',
       storiesTranslationShow: 'Übersetzung zeigen', storiesTranslationHide: 'Übersetzung ausblenden',
@@ -1572,6 +1603,12 @@
       audioStartBtn: 'Start', audioCancelBtn: 'Cancel', audioPickVoice: 'Voice', audioPickSpeed: 'Speed',
       audioDownloadTitle: 'Download audio', audioBlockedUntil: 'Daily limit reached — resumes at {0}', audioErrorPrefix: 'Error: ',
       audioVoiceMale: 'male', audioVoiceFemale: 'female',
+      audioServiceLabel: 'TTS service (story audio)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
+      audioQuotaEnabledLabel: 'Quota limit enabled (2/minute, 8/day)',
+      audioSpeedSlow: 'Slow', audioSpeedNormal: 'Normal',
+      audioCloudSignInBtn: 'Sign in with Google', audioCloudSignOutBtn: 'Sign out',
+      audioCloudSignedIn: 'Signed in — token valid for {0} more min.', audioCloudNotSignedIn: 'Not signed in yet. Required before Cloud TTS audio can be generated.',
+      audioCloudGisError: 'Could not load the Google sign-in service (offline or blocked?).', audioCloudAuthCancelled: 'Google sign-in was cancelled or failed.',
       storiesUnderstandNo: 'Don\'t understand', storiesUnderstandHalf: 'Partly', storiesUnderstandYes: 'Understand',
       storiesPinyinShow: 'Show pinyin', storiesPinyinHide: 'Hide pinyin',
       storiesTranslationShow: 'Show translation', storiesTranslationHide: 'Hide translation',
@@ -1717,6 +1754,12 @@
       audioStartBtn: 'Démarrer', audioCancelBtn: 'Annuler', audioPickVoice: 'Voix', audioPickSpeed: 'Vitesse',
       audioDownloadTitle: 'Télécharger l\'audio', audioBlockedUntil: 'Limite quotidienne atteinte — reprise à {0}', audioErrorPrefix: 'Erreur : ',
       audioVoiceMale: 'masculine', audioVoiceFemale: 'féminine',
+      audioServiceLabel: 'Service TTS (audio des histoires)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
+      audioQuotaEnabledLabel: 'Limite de quota activée (2/minute, 8/jour)',
+      audioSpeedSlow: 'Lent', audioSpeedNormal: 'Normal',
+      audioCloudSignInBtn: 'Se connecter avec Google', audioCloudSignOutBtn: 'Se déconnecter',
+      audioCloudSignedIn: 'Connecté — jeton valable encore {0} min.', audioCloudNotSignedIn: 'Pas encore connecté. Nécessaire avant de générer de l\'audio Cloud TTS.',
+      audioCloudGisError: 'Impossible de charger le service de connexion Google (hors ligne ou bloqué ?).', audioCloudAuthCancelled: 'Connexion Google annulée ou échouée.',
       storiesUnderstandNo: 'Je ne comprends pas', storiesUnderstandHalf: 'Partiellement', storiesUnderstandYes: 'Je comprends',
       storiesPinyinShow: 'Afficher le pinyin', storiesPinyinHide: 'Masquer le pinyin',
       storiesTranslationShow: 'Afficher la traduction', storiesTranslationHide: 'Masquer la traduction',
@@ -1862,6 +1905,12 @@
       audioStartBtn: 'Iniciar', audioCancelBtn: 'Cancelar', audioPickVoice: 'Voz', audioPickSpeed: 'Velocidad',
       audioDownloadTitle: 'Descargar audio', audioBlockedUntil: 'Límite diario alcanzado — continúa a las {0}', audioErrorPrefix: 'Error: ',
       audioVoiceMale: 'masculina', audioVoiceFemale: 'femenina',
+      audioServiceLabel: 'Servicio TTS (audio de historias)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
+      audioQuotaEnabledLabel: 'Límite de cuota activado (2/minuto, 8/día)',
+      audioSpeedSlow: 'Lento', audioSpeedNormal: 'Normal',
+      audioCloudSignInBtn: 'Iniciar sesión con Google', audioCloudSignOutBtn: 'Cerrar sesión',
+      audioCloudSignedIn: 'Sesión iniciada — token válido {0} min más.', audioCloudNotSignedIn: 'Aún no iniciaste sesión. Necesario antes de generar audio con Cloud TTS.',
+      audioCloudGisError: '¿No se pudo cargar el servicio de inicio de sesión de Google (sin conexión o bloqueado)?', audioCloudAuthCancelled: 'Inicio de sesión de Google cancelado o fallido.',
       storiesUnderstandNo: 'No entiendo', storiesUnderstandHalf: 'Más o menos', storiesUnderstandYes: 'Entiendo',
       storiesPinyinShow: 'Mostrar pinyin', storiesPinyinHide: 'Ocultar pinyin',
       storiesTranslationShow: 'Mostrar traducción', storiesTranslationHide: 'Ocultar traducción',
@@ -2367,7 +2416,7 @@
     });
   }
 
-  // ---------- story audio export (Gemini TTS) ----------
+  // ---------- story audio export (Gemini TTS + Google Cloud TTS) ----------
   var GEMINI_TTS_MODEL = 'gemini-3.8-flash-lite-tts';
   var TTS_VOICES = [
     { id: 'Puck', gender: 'm' },
@@ -2375,14 +2424,53 @@
     { id: 'Kore', gender: 'f' },
     { id: 'Leda', gender: 'f' }
   ];
+  // Google Cloud TTS uses a separate, language-specific voice catalog (unlike
+  // Gemini, one voice can't speak both Chinese and English) — each entry also
+  // names the English voice used for the translation part of a sentence.
+  var CLOUD_TTS_VOICES = [
+    { id: 'cmn-CN-Wavenet-B', gender: 'm', enVoice: 'en-US-Wavenet-D' },
+    { id: 'cmn-CN-Wavenet-C', gender: 'm', enVoice: 'en-US-Wavenet-B' },
+    { id: 'cmn-CN-Wavenet-A', gender: 'f', enVoice: 'en-US-Wavenet-F' },
+    { id: 'cmn-CN-Wavenet-D', gender: 'f', enVoice: 'en-US-Wavenet-C' }
+  ];
+  // Speed is simplified to two tiers, shared by both services. Gemini has no
+  // real speed parameter and only approximates it via a style description;
+  // Cloud TTS has a real numeric speakingRate.
   var TTS_SPEED_STYLES = {
-    '0.5': 'speaking very slowly and clearly, like a patient teacher helping a total beginner, with clear space between words',
-    '0.75': 'speaking slowly and clearly, like a teacher helping a language learner',
-    '1': 'speaking at a natural, normal conversational pace'
+    'slow': 'speaking slowly and clearly, like a teacher helping a language learner',
+    'normal': 'speaking at a natural, normal conversational pace'
   };
+  var TTS_SPEED_RATES = {
+    'slow': 0.8,
+    'normal': 1.0
+  };
+  // Older saved stories may still carry a legacy 3-tier speed key ('0.5'/'0.75'/'1');
+  // map those onto the current 2-tier scheme so resuming them keeps working.
+  function normalizeSpeedKey(sp){
+    if (sp === 'slow' || sp === 'normal') return sp;
+    if (sp === '1') return 'normal';
+    return 'slow'; // '0.5', '0.75', or unset
+  }
   var TTS_MAX_PER_MINUTE = 2;
   var TTS_MAX_PER_DAY = 8; // rolling 24h window, not a midnight reset
   var TTS_LOG_KEY = 'hskflash_tts_call_log_v1';
+  var TTS_SERVICE_KEY = 'hskflash_tts_service_v1'; // 'gemini' | 'cloud'
+  var TTS_QUOTA_ENABLED_KEY = 'hskflash_tts_quota_enabled_v1';
+  function loadTtsService(){
+    try { return localStorage.getItem(TTS_SERVICE_KEY) || 'gemini'; } catch(e) { return 'gemini'; }
+  }
+  function saveTtsService(v){
+    try { localStorage.setItem(TTS_SERVICE_KEY, v === 'cloud' ? 'cloud' : 'gemini'); } catch(e) {}
+  }
+  function loadTtsQuotaEnabled(){
+    try {
+      var raw = localStorage.getItem(TTS_QUOTA_ENABLED_KEY);
+      return raw === null ? true : raw === '1';
+    } catch(e) { return true; }
+  }
+  function saveTtsQuotaEnabled(v){
+    try { localStorage.setItem(TTS_QUOTA_ENABLED_KEY, v ? '1' : '0'); } catch(e) {}
+  }
 
   function base64ToBytes(b64){
     var bin = atob(b64);
@@ -2520,6 +2608,7 @@
   }
   // Returns { canProceed:true } | { canProceed:false, dailyLimitReached:true, nextSlotAt } | { canProceed:false, waitMs }
   function checkTtsRateLimit(){
+    if (!loadTtsQuotaEnabled()) return { canProceed: true };
     var log = pruneTtsLog(loadTtsLog());
     saveTtsLog(log);
     if (log.length >= TTS_MAX_PER_DAY) {
@@ -2542,7 +2631,7 @@
     var apiKey = loadGeminiKey();
     if (!apiKey) return Promise.reject(new Error('no-key'));
     var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(GEMINI_TTS_MODEL) + ':generateContent?key=' + encodeURIComponent(apiKey);
-    var slowStyle = TTS_SPEED_STYLES[speedKey] || TTS_SPEED_STYLES['0.75'];
+    var slowStyle = TTS_SPEED_STYLES[normalizeSpeedKey(speedKey)];
     var payload = {
       contents: [{
         role: 'user',
@@ -2568,6 +2657,137 @@
       var b64 = data.candidates[0].content.parts[0].inlineData.data;
       return parseWav(base64ToBytes(b64));
     });
+  }
+
+  // Concatenates several PCM chunks (same format) into one, optionally with a
+  // short silence gap between them — used to stitch Cloud TTS's 3 separate
+  // clips (one per API call) into a single continuous sentence recording,
+  // the same shape Gemini returns from its one bundled call.
+  function concatPcmChunks(chunks, fmt, gapMs){
+    var withGaps = [];
+    chunks.forEach(function(c, idx){
+      if (idx > 0 && gapMs) withGaps.push(silencePcm(gapMs, fmt));
+      withGaps.push(c);
+    });
+    var total = withGaps.reduce(function(sum, c){ return sum + c.length; }, 0);
+    var out = new Uint8Array(total);
+    var offset = 0;
+    withGaps.forEach(function(c){ out.set(c, offset); offset += c.length; });
+    return out;
+  }
+
+  // ---- Google Cloud TTS auth: Cloud Text-to-Speech is a full IAM-governed
+  // Cloud API and rejects plain API keys ("API keys are not supported by
+  // this API. Expected OAuth2 access token..."). Since this app has no
+  // backend, we use Google Identity Services' browser-side OAuth2 token
+  // flow: a sign-in popup hands us a short-lived (~1h) access token, and
+  // nothing long-lived or secret is ever stored. ----
+  var CLOUD_OAUTH_CLIENT_ID = '809843127262-3gqp0srglvpmrmnegi4jlfbf7llu0hfu.apps.googleusercontent.com';
+  var CLOUD_OAUTH_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
+  var cloudAuthState = { token: null, expiresAt: 0 };
+  var cloudTokenClient = null;
+  var cloudTokenPending = null; // { resolve, reject } while a requestAccessToken() is in flight
+
+  function isCloudTokenValid(){
+    return !!cloudAuthState.token && Date.now() < cloudAuthState.expiresAt;
+  }
+
+  function initCloudTokenClientIfNeeded(){
+    if (cloudTokenClient) return cloudTokenClient;
+    if (!window.google || !google.accounts || !google.accounts.oauth2) return null;
+    cloudTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLOUD_OAUTH_CLIENT_ID,
+      scope: CLOUD_OAUTH_SCOPE,
+      callback: function(resp){
+        if (resp && resp.access_token) {
+          cloudAuthState.token = resp.access_token;
+          cloudAuthState.expiresAt = Date.now() + ((resp.expires_in || 3600) * 1000) - 60000;
+          if (cloudTokenPending) { cloudTokenPending.resolve(resp.access_token); cloudTokenPending = null; }
+        } else {
+          var err = new Error((resp && resp.error) || 'oauth-failed');
+          if (cloudTokenPending) { cloudTokenPending.reject(err); cloudTokenPending = null; }
+        }
+      },
+      error_callback: function(err){
+        if (cloudTokenPending) { cloudTokenPending.reject(new Error((err && err.type) || 'oauth-error')); cloudTokenPending = null; }
+      }
+    });
+    return cloudTokenClient;
+  }
+
+  // Resolves immediately with a cached token when still valid; otherwise
+  // opens the Google sign-in popup. IMPORTANT: browsers only allow that
+  // popup when this runs synchronously inside a user click handler — so
+  // every caller of this must be invoked directly from a click, not from
+  // deep inside an async chain (recordTtsCall/idbGet/etc break that chain).
+  function ensureCloudToken(){
+    if (isCloudTokenValid()) return Promise.resolve(cloudAuthState.token);
+    var client = initCloudTokenClientIfNeeded();
+    if (!client) return Promise.reject(new Error('gis-not-loaded'));
+    return new Promise(function(resolve, reject){
+      cloudTokenPending = { resolve: resolve, reject: reject };
+      client.requestAccessToken({ prompt: cloudAuthState.token ? '' : 'consent' });
+    });
+  }
+
+  function signOutCloud(){
+    if (cloudAuthState.token && window.google && google.accounts && google.accounts.oauth2) {
+      try { google.accounts.oauth2.revoke(cloudAuthState.token, function(){}); } catch(e) {}
+    }
+    cloudAuthState.token = null;
+    cloudAuthState.expiresAt = 0;
+  }
+
+  // Google Cloud Text-to-Speech alternative backend. Unlike Gemini it can't
+  // bundle multiple styled parts into one request, so a sentence's 3 phases
+  // (slow Chinese / English / slow Chinese again) need 3 sequential calls —
+  // stitched together afterwards into one {fmt, pcm} record, same as Gemini's.
+  // All 3 share the one OAuth token fetched by the caller (see ensureCloudToken).
+  function callOneCloudTTS(token, text, languageCode, voiceName, speakingRate){
+    var url = 'https://texttospeech.googleapis.com/v1/text:synthesize';
+    var payload = {
+      input: { text: text },
+      voice: { languageCode: languageCode, name: voiceName },
+      audioConfig: { audioEncoding: 'LINEAR16', speakingRate: speakingRate }
+    };
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(payload)
+    }).then(function(res){
+      if (!res.ok) return res.text().then(function(t){ throw new Error('HTTP ' + res.status + ': ' + t); });
+      return res.json();
+    }).then(function(data){
+      return parseWav(base64ToBytes(data.audioContent));
+    });
+  }
+
+  // Expects a valid token to already be in hand (see ensureCloudToken) —
+  // startOrResumeStoryAudio is only entered after the caller resolved one
+  // from the triggering click, so no popup is attempted from deep in the loop.
+  function callSentenceTTSCloud(sent, voiceId, speedKey){
+    if (!isCloudTokenValid()) return Promise.reject(new Error('no-cloud-token'));
+    var token = cloudAuthState.token;
+    var voiceEntry = CLOUD_TTS_VOICES.filter(function(v){ return v.id === voiceId; })[0] || CLOUD_TTS_VOICES[0];
+    var rate = TTS_SPEED_RATES[normalizeSpeedKey(speedKey)];
+    return callOneCloudTTS(token, sent.h, 'cmn-CN', voiceEntry.id, rate).then(function(r1){
+      return callOneCloudTTS(token, sent.e, 'en-US', voiceEntry.enVoice, 1.0).then(function(r2){
+        return callOneCloudTTS(token, sent.h, 'cmn-CN', voiceEntry.id, rate).then(function(r3){
+          var fmt = r1.fmt;
+          var pcm = concatPcmChunks([r1.pcm, r2.pcm, r3.pcm], fmt, 150);
+          return { fmt: fmt, pcm: pcm };
+        });
+      });
+    });
+  }
+
+  // Picks the active backend. Both quota-counted the same way: the caller
+  // (startOrResumeStoryAudio) records exactly one rate-limit "hit" per
+  // sentence regardless of how many underlying HTTP calls this makes.
+  function callSentenceTTSDispatch(sent, voiceId, speedKey, service){
+    return (service || loadTtsService()) === 'cloud'
+      ? callSentenceTTSCloud(sent, voiceId, speedKey)
+      : callSentenceTTS(sent, voiceId, speedKey);
   }
 
   function findNextMissingSentenceIndex(story){
@@ -2615,7 +2835,7 @@
           return;
         }
         recordTtsCall();
-        callSentenceTTS(story.sentences[idx], voiceId, speedKey).then(function(result){
+        callSentenceTTSDispatch(story.sentences[idx], voiceId, speedKey, story.audioService).then(function(result){
           return idbSet(story.id + ':' + idx, result).then(function(){
             callbacks.onProgress(idx + 1, story.sentences.length);
             setTimeout(loop, 300);
@@ -2637,13 +2857,15 @@
   var audioStatus = {};
 
   function buildAudioPickerHtml(s){
-    var choice = storiesState.pickerChoice || { voice: null, speed: '0.75' };
-    var voiceOpts = TTS_VOICES.map(function(v){
+    var choice = storiesState.pickerChoice || { voice: null, speed: 'slow' };
+    var service = loadTtsService();
+    var voiceList = service === 'cloud' ? CLOUD_TTS_VOICES : TTS_VOICES;
+    var voiceOpts = voiceList.map(function(v){
       var label = v.id + ' (' + t(v.gender === 'm' ? 'audioVoiceMale' : 'audioVoiceFemale') + ')';
       return '<button class="audio-opt' + (choice.voice === v.id ? ' selected' : '') + '" data-pick-voice="' + v.id + '">' + esc(label) + '</button>';
     }).join('');
-    var speedOpts = ['0.5', '0.75', '1'].map(function(sp){
-      return '<button class="audio-opt' + (choice.speed === sp ? ' selected' : '') + '" data-pick-speed="' + sp + '">' + sp + 'x</button>';
+    var speedOpts = ['slow', 'normal'].map(function(sp){
+      return '<button class="audio-opt' + (choice.speed === sp ? ' selected' : '') + '" data-pick-speed="' + sp + '">' + esc(t(sp === 'slow' ? 'audioSpeedSlow' : 'audioSpeedNormal')) + '</button>';
     }).join('');
     return '<div class="audio-picker" data-picker-id="' + s.id + '">' +
       '<div class="audio-picker-label">' + esc(t('audioPickVoice')) + '</div>' +
@@ -2683,12 +2905,41 @@
     };
   }
 
+  // Resolves the credential needed to start/resume a story's audio for the
+  // given backend: the Gemini API key (already in hand, no popup) or a
+  // Cloud TTS OAuth token (may open a Google sign-in popup — only safe to
+  // call this synchronously from within a click handler, see ensureCloudToken).
+  function ensureCloudAuthOrKey(service){
+    if (service === 'cloud') return ensureCloudToken();
+    var apiKey = loadGeminiKey();
+    if (!apiKey) return Promise.reject(new Error('no-key'));
+    return Promise.resolve(apiKey);
+  }
+
+  function reportAudioAuthError(s, err){
+    var msg = err && err.message;
+    if (msg === 'no-key') {
+      openDrawer();
+      var f = document.getElementById('inpGeminiKey');
+      if (f) f.focus();
+      return;
+    }
+    if (msg === 'gis-not-loaded') {
+      audioStatus[s.id] = { error: t('audioCloudGisError') };
+    } else if (msg === 'popup_closed' || msg === 'access_denied' || msg === 'oauth-error' || msg === 'oauth-failed') {
+      audioStatus[s.id] = { error: t('audioCloudAuthCancelled') };
+    } else {
+      audioStatus[s.id] = { error: msg || 'error' };
+    }
+    renderStories();
+  }
+
   function wireAudioRowHandlers(root, stories){
     Array.prototype.forEach.call(root.querySelectorAll('[data-audio-open-picker]'), function(btn){
       btn.onclick = function(e){
         e.stopPropagation();
         storiesState.audioPickerFor = btn.getAttribute('data-audio-open-picker');
-        storiesState.pickerChoice = { voice: null, speed: '0.75' };
+        storiesState.pickerChoice = { voice: null, speed: 'slow' };
         renderStories();
       };
     });
@@ -2702,7 +2953,7 @@
     Array.prototype.forEach.call(root.querySelectorAll('[data-pick-voice]'), function(btn){
       btn.onclick = function(e){
         e.stopPropagation();
-        storiesState.pickerChoice = storiesState.pickerChoice || { voice: null, speed: '0.75' };
+        storiesState.pickerChoice = storiesState.pickerChoice || { voice: null, speed: 'slow' };
         storiesState.pickerChoice.voice = btn.getAttribute('data-pick-voice');
         renderStories();
       };
@@ -2710,7 +2961,7 @@
     Array.prototype.forEach.call(root.querySelectorAll('[data-pick-speed]'), function(btn){
       btn.onclick = function(e){
         e.stopPropagation();
-        storiesState.pickerChoice = storiesState.pickerChoice || { voice: null, speed: '0.75' };
+        storiesState.pickerChoice = storiesState.pickerChoice || { voice: null, speed: 'slow' };
         storiesState.pickerChoice.speed = btn.getAttribute('data-pick-speed');
         renderStories();
       };
@@ -2722,20 +2973,21 @@
         var s = stories.filter(function(x){ return x.id === id; })[0];
         var choice = storiesState.pickerChoice;
         if (!s || !choice || !choice.voice) return;
-        var apiKey = loadGeminiKey();
-        if (!apiKey) {
-          openDrawer();
-          var f = document.getElementById('inpGeminiKey');
-          if (f) f.focus();
-          return;
-        }
         s.audioVoice = choice.voice;
         s.audioSpeed = choice.speed;
+        s.audioService = loadTtsService();
         saveStories(stories);
         storiesState.audioPickerFor = null;
-        delete audioStatus[s.id];
-        renderStories();
-        startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
+        // Must call ensureCloudAuthOrKey() synchronously right here (inside
+        // the click handler) — the Google sign-in popup it may open is only
+        // allowed by the browser directly off a user gesture like this click.
+        ensureCloudAuthOrKey(s.audioService).then(function(){
+          delete audioStatus[s.id];
+          renderStories();
+          startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
+        }).catch(function(err){
+          reportAudioAuthError(s, err);
+        });
       };
     });
     Array.prototype.forEach.call(root.querySelectorAll('[data-audio-resume]'), function(btn){
@@ -2744,16 +2996,13 @@
         var id = btn.getAttribute('data-audio-resume');
         var s = stories.filter(function(x){ return x.id === id; })[0];
         if (!s) return;
-        var apiKey = loadGeminiKey();
-        if (!apiKey) {
-          openDrawer();
-          var f = document.getElementById('inpGeminiKey');
-          if (f) f.focus();
-          return;
-        }
-        delete audioStatus[s.id];
-        renderStories();
-        startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
+        ensureCloudAuthOrKey(s.audioService || loadTtsService()).then(function(){
+          delete audioStatus[s.id];
+          renderStories();
+          startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
+        }).catch(function(err){
+          reportAudioAuthError(s, err);
+        });
       };
     });
     Array.prototype.forEach.call(root.querySelectorAll('[data-audio-cancel]'), function(btn){
@@ -4236,6 +4485,9 @@
     document.getElementById('exampleSizeVal').textContent = fonts.exampleSize + 'px';
     document.getElementById('inpGeminiKey').value = loadGeminiKey();
     document.getElementById('inpGeminiModel').value = loadGeminiModel();
+    document.getElementById('inpTtsService').value = loadTtsService();
+    document.getElementById('inpTtsQuotaEnabled').checked = loadTtsQuotaEnabled();
+    updateCloudAuthUi();
     buildVoiceSelect();
     overlay.classList.add('show');
     drawer.classList.add('show');
@@ -4357,6 +4609,49 @@
   document.getElementById('inpAutoSpeak').onchange = function(e){
     settings.autoSpeak = e.target.checked;
     saveSettings(settings);
+  };
+
+  document.getElementById('inpTtsService').onchange = function(e){
+    saveTtsService(e.target.value);
+    // switching service invalidates any in-progress voice/speed picker choice,
+    // since the two services have different voice catalogs
+    storiesState.pickerChoice = null;
+    updateCloudAuthUi();
+  };
+
+  document.getElementById('inpTtsQuotaEnabled').onchange = function(e){
+    saveTtsQuotaEnabled(e.target.checked);
+  };
+
+  // Shows the Cloud-TTS sign-in controls only while that service is selected,
+  // and reports whether we currently hold a valid (unexpired) access token.
+  function updateCloudAuthUi(){
+    var field = document.getElementById('cloudAuthField');
+    var status = document.getElementById('cloudAuthStatus');
+    if (!field || !status) return;
+    field.style.display = document.getElementById('inpTtsService').value === 'cloud' ? '' : 'none';
+    if (isCloudTokenValid()) {
+      var mins = Math.max(0, Math.round((cloudAuthState.expiresAt - Date.now()) / 60000));
+      status.textContent = tf('audioCloudSignedIn', mins);
+    } else {
+      status.textContent = t('audioCloudNotSignedIn');
+    }
+  }
+
+  document.getElementById('btnCloudSignIn').onclick = function(){
+    // Direct click handler — safe context for the Google sign-in popup.
+    ensureCloudToken().then(function(){
+      updateCloudAuthUi();
+    }).catch(function(err){
+      var status = document.getElementById('cloudAuthStatus');
+      var msg = err && err.message;
+      status.textContent = msg === 'gis-not-loaded' ? t('audioCloudGisError') : t('audioCloudAuthCancelled');
+    });
+  };
+
+  document.getElementById('btnCloudSignOut').onclick = function(){
+    signOutCloud();
+    updateCloudAuthUi();
   };
 
   document.getElementById('inpVoice').onchange = function(e){
