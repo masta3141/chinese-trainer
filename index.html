@@ -1016,6 +1016,17 @@
   }
   .dot.done { background: var(--jade); }
   .dot.active { box-shadow: 0 0 0 2px var(--seal); }
+  .srs-state-badge {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: var(--paper-raised);
+    border: 1px solid var(--hairline);
+    border-radius: 20px;
+    padding: 2px 9px;
+  }
 
   .card {
     background: var(--paper-raised);
@@ -1356,12 +1367,24 @@
     </select>
   </div>
   <div class="field">
+    <label for="inpLearnMode" data-i18n="learnModeLabel">Lernmodus</label>
+    <select id="inpLearnMode">
+      <option value="punkte" data-i18n="learnModeOptPunkte">Punkte-Modus — Session-Runden</option>
+      <option value="karteikasten" data-i18n="learnModeOptKarteikasten">Karteikasten-Modus — klassisches SRS</option>
+    </select>
+    <p class="drawer-note" data-i18n="learnModeNote">Punkte-Modus: feste Runden, Punkte pro Karte bis Level 100. Karteikasten-Modus: jede Karte bekommt ein Fälligkeitsdatum — gute Bewertungen verlängern die Pause bis zur nächsten Wiederholung, "Nochmal" zeigt die Karte bald erneut.</p>
+  </div>
+  <div class="field">
     <label for="inpPool" data-i18n="poolLabel">Pool-Größe (aktive Wörter insgesamt)</label>
     <input type="number" id="inpPool" min="10" max="10000" step="10">
   </div>
   <div class="field">
     <label for="inpSession" data-i18n="sessionLabel">Wörter pro Runde</label>
     <input type="number" id="inpSession" min="4" max="200" step="1">
+  </div>
+  <div class="field">
+    <label for="inpSrsNewPerDay" data-i18n="srsNewPerDayLabel">Neue Karten pro Tag (Karteikasten-Modus)</label>
+    <input type="number" id="inpSrsNewPerDay" min="1" max="200" step="1">
   </div>
   <div class="field">
     <label class="hsk-check" style="width:100%;justify-content:flex-start;">
@@ -1540,7 +1563,7 @@
   }
   var DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
-  var DEFAULT_SETTINGS = { standard: 'hsk2', pool: 300, sessionSize: 20, speak: true, autoSpeak: true, voiceName: '', lang: 'de' };
+  var DEFAULT_SETTINGS = { standard: 'hsk2', pool: 300, sessionSize: 20, speak: true, autoSpeak: true, voiceName: '', lang: 'de', learnMode: 'punkte', srsNewPerDay: 15 };
 
   // ---------- i18n ----------
   var LANG_FLAGS = { de: '🇩🇪', en: '🇬🇧', fr: '🇫🇷', es: '🇪🇸' };
@@ -1597,6 +1620,18 @@
       standardLabel: 'HSK-Standard',
       standardOptHsk2: 'HSK 2.0 — 6 Stufen, 5000 Wörter',
       standardOptHsk3: 'HSK 3.0 — 7 Stufen (inkl. 7–9), 9226 Wörter',
+      learnModeLabel: 'Lernmodus',
+      learnModeOptPunkte: 'Punkte-Modus — Session-Runden',
+      learnModeOptKarteikasten: 'Karteikasten-Modus — klassisches SRS',
+      learnModeNote: 'Punkte-Modus: feste Runden, Punkte pro Karte bis Level 100. Karteikasten-Modus: jede Karte bekommt ein Fälligkeitsdatum — gute Bewertungen verlängern die Pause bis zur nächsten Wiederholung, "Nochmal" zeigt die Karte bald erneut.',
+      srsNewPerDayLabel: 'Neue Karten pro Tag (Karteikasten-Modus)',
+      srsSessionBar: '{0} fällig · {1} neue Karten heute übrig',
+      srsNothingDueTitle: 'Alles erledigt! 🎉',
+      srsNothingDueDesc: 'Gerade ist keine Karte fällig, oder das Tageslimit für neue Karten ist erreicht. Schau später wieder vorbei.',
+      srsCheckAgainBtn: 'Nochmal prüfen',
+      srsBadgeNew: 'Neu',
+      srsBadgeLearning: 'Lernen',
+      srsBadgeReview: 'Wiederholung',
       poolLabel: 'Pool-Größe (aktive Wörter insgesamt)',
       sessionLabel: 'Wörter pro Runde',
       autoSpeakLabel: 'Bei Bewertung automatisch vorlesen',
@@ -1767,6 +1802,18 @@
       standardLabel: 'HSK standard',
       standardOptHsk2: 'HSK 2.0 — 6 levels, 5000 words',
       standardOptHsk3: 'HSK 3.0 — 7 levels (incl. 7–9), 9226 words',
+      learnModeLabel: 'Learning mode',
+      learnModeOptPunkte: 'Points mode — session rounds',
+      learnModeOptKarteikasten: 'Flashcard-box mode — classic SRS',
+      learnModeNote: 'Points mode: fixed rounds, points per card up to level 100. Flashcard-box mode: every card gets a due date — good ratings push the next review further out, "Again" brings the card back soon.',
+      srsNewPerDayLabel: 'New cards per day (flashcard-box mode)',
+      srsSessionBar: '{0} due · {1} new cards left today',
+      srsNothingDueTitle: 'All caught up! 🎉',
+      srsNothingDueDesc: "Nothing is due right now, or today's new-card limit is reached. Check back later.",
+      srsCheckAgainBtn: 'Check again',
+      srsBadgeNew: 'New',
+      srsBadgeLearning: 'Learning',
+      srsBadgeReview: 'Review',
       poolLabel: 'Pool size (total active words)',
       sessionLabel: 'Words per round',
       autoSpeakLabel: 'Automatically read aloud when rating',
@@ -1934,6 +1981,18 @@
       standardLabel: 'Norme HSK',
       standardOptHsk2: 'HSK 2.0 — 6 niveaux, 5000 mots',
       standardOptHsk3: 'HSK 3.0 — 7 niveaux (dont 7–9), 9226 mots',
+      learnModeLabel: "Mode d'apprentissage",
+      learnModeOptPunkte: 'Mode points — séries par session',
+      learnModeOptKarteikasten: 'Mode fichier de révision — SRS classique',
+      learnModeNote: "Mode points : séries fixes, points par carte jusqu'au niveau 100. Mode fichier de révision : chaque carte reçoit une date d'échéance — les bonnes réponses repoussent la prochaine révision, « Encore » la fait revenir bientôt.",
+      srsNewPerDayLabel: 'Nouvelles cartes par jour (mode fichier de révision)',
+      srsSessionBar: '{0} à réviser · {1} nouvelles cartes restantes aujourd’hui',
+      srsNothingDueTitle: 'Tout est à jour ! 🎉',
+      srsNothingDueDesc: 'Aucune carte à réviser pour le moment, ou la limite quotidienne de nouvelles cartes est atteinte. Reviens plus tard.',
+      srsCheckAgainBtn: 'Vérifier à nouveau',
+      srsBadgeNew: 'Nouveau',
+      srsBadgeLearning: 'Apprentissage',
+      srsBadgeReview: 'Révision',
       poolLabel: 'Taille du pool (mots actifs au total)',
       sessionLabel: 'Mots par série',
       autoSpeakLabel: 'Lire automatiquement à voix haute lors de l\'évaluation',
@@ -2101,6 +2160,18 @@
       standardLabel: 'Estándar HSK',
       standardOptHsk2: 'HSK 2.0 — 6 niveles, 5000 palabras',
       standardOptHsk3: 'HSK 3.0 — 7 niveles (incl. 7–9), 9226 palabras',
+      learnModeLabel: 'Modo de aprendizaje',
+      learnModeOptPunkte: 'Modo de puntos — rondas de sesión',
+      learnModeOptKarteikasten: 'Modo fichero — SRS clásico',
+      learnModeNote: 'Modo de puntos: rondas fijas, puntos por tarjeta hasta el nivel 100. Modo fichero: cada tarjeta recibe una fecha de vencimiento — las buenas respuestas alargan la pausa hasta la próxima repetición, "Otra vez" la muestra pronto de nuevo.',
+      srsNewPerDayLabel: 'Tarjetas nuevas por día (modo fichero)',
+      srsSessionBar: '{0} pendientes · {1} tarjetas nuevas restantes hoy',
+      srsNothingDueTitle: '¡Todo al día! 🎉',
+      srsNothingDueDesc: 'Ahora mismo no hay tarjetas pendientes, o se alcanzó el límite diario de tarjetas nuevas. Vuelve más tarde.',
+      srsCheckAgainBtn: 'Comprobar de nuevo',
+      srsBadgeNew: 'Nueva',
+      srsBadgeLearning: 'Aprendiendo',
+      srsBadgeReview: 'Repaso',
       poolLabel: 'Tamaño del pool (palabras activas en total)',
       sessionLabel: 'Palabras por ronda',
       autoSpeakLabel: 'Leer automáticamente en voz alta al evaluar',
@@ -2367,6 +2438,139 @@
   var HSK_ORDER = STANDARD_LEVELS[settings.standard];
   var generatedExamples = loadGeneratedExamples();
 
+  // ---------- Karteikasten-Modus (classic SRS) ----------
+  // A lightweight SM-2-style scheduler reusing the same 4 rating buttons
+  // (Nochmal=0 / Schwer=1 / Gut=2 / Leicht=5) as the Punkte-Modus, but instead
+  // of accumulating points it computes a due date. New/lapsed cards go through
+  // short "learning steps" (minutes) before graduating into day-based review
+  // intervals governed by an ease factor, like Anki's default scheduler.
+  var SRS_LEARNING_STEPS_MIN = [10, 24 * 60]; // 10 minutes, then 1 day
+  var SRS_DEFAULT_EASE = 2.5;
+  var SRS_MIN_EASE = 1.3;
+  var SRS_NEW_TODAY_KEY = 'hskflash_srs_new_today_v1';
+
+  function srsIsoPlusMinutes(nowMs, minutes){ return new Date(nowMs + minutes * 60000).toISOString(); }
+  function srsIsoPlusDays(nowMs, days){ return new Date(nowMs + days * 86400000).toISOString(); }
+
+  // Maps a card's existing Punkte-Modus level onto a starting SRS interval, so
+  // switching modes for the first time doesn't throw away existing progress.
+  function seedSrsFromLevel(lvl, nowMs){
+    var now = typeof nowMs === 'number' ? nowMs : Date.now();
+    if (lvl <= 24) return { state: 'review', step: 0, due: new Date(now).toISOString(), interval: 0.5, ease: SRS_DEFAULT_EASE, reps: 1 };
+    if (lvl <= 49) return { state: 'review', step: 0, due: srsIsoPlusDays(now, 3), interval: 3, ease: SRS_DEFAULT_EASE, reps: 1 };
+    if (lvl <= 74) return { state: 'review', step: 0, due: srsIsoPlusDays(now, 10), interval: 10, ease: SRS_DEFAULT_EASE, reps: 1 };
+    return { state: 'review', step: 0, due: srsIsoPlusDays(now, 30), interval: 30, ease: SRS_DEFAULT_EASE, reps: 1 };
+  }
+
+  // Returns (and lazily creates) the SRS state for a word's progress entry.
+  // A card that was never touched in either mode stays 'new' until first rated.
+  function ensureSrs(id){
+    var p = progress[id] || (progress[id] = { lvl: 0, lr: null, seen: false });
+    if (!p.srs) {
+      if (p.seen || (p.lvl || 0) > 0) {
+        p.srs = seedSrsFromLevel(p.lvl || 0);
+      } else {
+        p.srs = { state: 'new', step: 0, due: null, interval: 0, ease: SRS_DEFAULT_EASE, reps: 0 };
+      }
+    }
+    return p.srs;
+  }
+
+  // val: 0=Nochmal, 1=Schwer, 2=Gut, 5=Leicht (same values the rating buttons already send).
+  function applySrsRating(srs, val, nowMs){
+    var now = typeof nowMs === 'number' ? nowMs : Date.now();
+    var ease = srs.ease || SRS_DEFAULT_EASE;
+    var reps = srs.reps || 0;
+    if (srs.state !== 'review') {
+      if (val === 0) {
+        return { state: 'learning', step: 0, due: srsIsoPlusMinutes(now, SRS_LEARNING_STEPS_MIN[0]), interval: 0, ease: ease, reps: reps };
+      }
+      if (val === 1) {
+        var stepIdx = Math.max(0, srs.step || 0);
+        return { state: 'learning', step: stepIdx, due: srsIsoPlusMinutes(now, SRS_LEARNING_STEPS_MIN[stepIdx] * 1.5), interval: 0, ease: ease, reps: reps };
+      }
+      if (val === 5) {
+        return { state: 'review', step: 0, due: srsIsoPlusDays(now, 4), interval: 4, ease: ease + 0.15, reps: reps + 1 };
+      }
+      // val === 2 (Gut): advance through the learning steps, then graduate.
+      var nextStep = (srs.state === 'learning') ? (srs.step || 0) + 1 : 0;
+      if (nextStep < SRS_LEARNING_STEPS_MIN.length) {
+        return { state: 'learning', step: nextStep, due: srsIsoPlusMinutes(now, SRS_LEARNING_STEPS_MIN[nextStep]), interval: 0, ease: ease, reps: reps };
+      }
+      return { state: 'review', step: 0, due: srsIsoPlusDays(now, 1), interval: 1, ease: ease, reps: reps + 1 };
+    }
+    // state === 'review'
+    var interval = srs.interval || 1;
+    if (val === 0) {
+      return { state: 'learning', step: 0, due: srsIsoPlusMinutes(now, SRS_LEARNING_STEPS_MIN[0]), interval: 1, ease: Math.max(SRS_MIN_EASE, ease - 0.2), reps: reps, lapses: (srs.lapses || 0) + 1 };
+    }
+    if (val === 1) {
+      var ivHard = Math.max(1, interval * 1.2);
+      return { state: 'review', step: 0, due: srsIsoPlusDays(now, ivHard), interval: ivHard, ease: Math.max(SRS_MIN_EASE, ease - 0.15), reps: reps + 1 };
+    }
+    if (val === 5) {
+      var ivEasy = Math.max(1, interval * ease * 1.3);
+      return { state: 'review', step: 0, due: srsIsoPlusDays(now, ivEasy), interval: ivEasy, ease: ease + 0.15, reps: reps + 1 };
+    }
+    var ivGood = Math.max(1, interval * ease);
+    return { state: 'review', step: 0, due: srsIsoPlusDays(now, ivGood), interval: ivGood, ease: ease, reps: reps + 1 };
+  }
+
+  function loadSrsNewToday(){
+    try {
+      var raw = JSON.parse(localStorage.getItem(SRS_NEW_TODAY_KEY));
+      if (raw && raw.date === todayStr()) return raw;
+    } catch(e) {}
+    return { date: todayStr(), count: 0 };
+  }
+  function recordSrsNewIntroduced(){
+    var st = loadSrsNewToday();
+    st.count += 1;
+    try { localStorage.setItem(SRS_NEW_TODAY_KEY, JSON.stringify(st)); } catch(e) {}
+  }
+  function srsNewRemainingToday(){
+    var limit = typeof settings.srsNewPerDay === 'number' ? settings.srsNewPerDay : DEFAULT_SETTINGS.srsNewPerDay;
+    return Math.max(0, limit - loadSrsNewToday().count);
+  }
+
+  function isSrsCardNew(id){
+    var p = progress[id];
+    return !p || !p.srs || p.srs.state === 'new';
+  }
+
+  // All learning/review cards whose due date has passed, earliest-due first.
+  function srsDueQueue(){
+    var now = Date.now();
+    var due = [];
+    WORDS.forEach(function(w){
+      var p = progress[w.id];
+      if (p && p.srs && (p.srs.state === 'learning' || p.srs.state === 'review')) {
+        var dueMs = p.srs.due ? new Date(p.srs.due).getTime() : 0;
+        if (dueMs <= now) due.push({ id: w.id, due: dueMs });
+      }
+    });
+    due.sort(function(a, b){ return a.due - b.due; });
+    return due.map(function(d){ return d.id; });
+  }
+
+  // Picks the next card to show in Karteikasten-Modus: the most overdue
+  // learning/review card, or — if none is due — a fresh new card, as long as
+  // today's new-card limit isn't used up yet. Returns null when there's
+  // nothing left to do right now (all caught up).
+  function pickSrsNextId(excludeId){
+    var due = srsDueQueue();
+    if (due.length > 1 && excludeId != null) {
+      var withoutCurrent = due.filter(function(id){ return id !== excludeId; });
+      if (withoutCurrent.length > 0) due = withoutCurrent;
+    }
+    if (due.length > 0) return due[0];
+    if (srsNewRemainingToday() > 0) {
+      var novel = WORDS.filter(function(w){ return isSrsCardNew(w.id); }).sort(function(a, b){ return a.id - b.id; });
+      if (novel.length > 0) return novel[0].id;
+    }
+    return null;
+  }
+
   function examplesFor(wordId){
     var key = String(wordId);
     var base = EXAMPLES[key] || [];
@@ -2405,6 +2609,41 @@
   }
 
   function startSession(){
+    if (settings.learnMode === 'karteikasten') { startSessionSrs(); return; }
+    startSessionPunkte();
+  }
+
+  function startSessionSrs(){
+    session = {
+      srsMode: true,
+      currentId: null,
+      showPinyin: false,
+      showTranslationInExamples: false,
+      showExamples: false,
+      showSolution: false,
+      finished: false,
+      nothingDue: false
+    };
+    pickNextSrs();
+  }
+
+  function pickNextSrs(){
+    var nextId = pickSrsNextId(session.currentId);
+    if (nextId == null) {
+      session.finished = true;
+      session.nothingDue = true;
+      render();
+      return;
+    }
+    session.currentId = nextId;
+    session.showPinyin = false;
+    session.showTranslationInExamples = false;
+    session.showExamples = false;
+    session.showSolution = false;
+    render();
+  }
+
+  function startSessionPunkte(){
     ensurePoolFilled();
     var pool = activePool();
     if (pool.length === 0) { session = null; render(); return; }
@@ -2467,12 +2706,13 @@
       render();
       return;
     }
-    var idx = rnd(win.dictPart.length);
-    var candidate = win.dictPart[idx];
-    if (win.dictPart.length > 1 && candidate === session.currentId) {
-      idx = rnd(win.dictPart.length); // one retry, like the original
-      candidate = win.dictPart[idx];
+    var choices = win.dictPart;
+    if (choices.length > 1 && session.currentId != null) {
+      // Never repeat the card that's currently showing, unless it's the only one left.
+      var withoutCurrent = choices.filter(function(id){ return id !== session.currentId; });
+      if (withoutCurrent.length > 0) choices = withoutCurrent;
     }
+    var candidate = choices[rnd(choices.length)];
     session.currentId = candidate;
     session.showPinyin = false;
     session.showTranslationInExamples = false;
@@ -2483,6 +2723,11 @@
 
   function rate(val){
     if (!session || session.currentId == null) return;
+    if (session.srsMode) { rateSrs(val); return; }
+    ratePunkte(val);
+  }
+
+  function ratePunkte(val){
     var id = session.currentId;
     var p = progress[id] || { lvl: 0, lr: null, seen: false };
     p.lr = new Date().toISOString();
@@ -2506,6 +2751,35 @@
     setTimeout(function(){
       if (!session) return;
       pickNext();
+    }, 900);
+  }
+
+  function rateSrs(val){
+    var id = session.currentId;
+    var p = progress[id] || { lvl: 0, lr: null, seen: false };
+    var wasNew = isSrsCardNew(id);
+    var srs = ensureSrs(id);
+    p.srs = applySrsRating(srs, val);
+    p.lr = new Date().toISOString();
+    p.seen = true;
+    progress[id] = p;
+    saveProgress(progress);
+    updatePoolCell(id);
+    recordActivity();
+    if (wasNew) recordSrsNewIntroduced();
+
+    if (settings.autoSpeak) {
+      var w = WORD_BY_ID[id];
+      if (w) speak(w.h);
+    }
+
+    session.showPinyin = true;
+    session.showSolution = true;
+    render(true);
+
+    setTimeout(function(){
+      if (!session) return;
+      pickNextSrs();
     }, 900);
   }
 
@@ -4082,6 +4356,23 @@
     });
   }
 
+  // Word "level" for stats/coloring purposes: the raw Punkte-Modus lvl (0-100)
+  // in Punkte-Modus, or — in Karteikasten-Modus — a synthesized value on the
+  // same 0-100 scale derived from the card's SRS state/interval, so every band
+  // threshold, color and chart used elsewhere keeps working unchanged.
+  function effectiveLevel(id){
+    var p = progress[id];
+    if (settings.learnMode === 'karteikasten') {
+      var srs = p && p.srs;
+      if (!srs || srs.state === 'new') return 0;
+      if (srs.state === 'learning') return 10;
+      var iv = srs.interval || 0;
+      if (iv < 7) return 30;
+      if (iv < 30) return 60;
+      return 90;
+    }
+    return (p && p.lvl) || 0;
+  }
   function levelToColor(lvl){
     var stops = [
       { p: 0,   c: [192, 72, 58] },   // red
@@ -4114,10 +4405,16 @@
     var title = w.h + ' · ' + w.p + ' · ' + w.e;
     var ring = 'box-shadow:0 0 0 2px ' + (HSK_COLORS[w.hsk] || 'transparent') + ';';
     var fsize = 'font-size:' + hanziFontSizeFor(w.h.length) + 'px;';
-    var lvl = (p && p.lvl) || 0;
+    var lvl = effectiveLevel(w.id);
     if (p && p.seen && lvl > 0) {
+      var badge;
+      if (settings.learnMode === 'karteikasten' && p.srs) {
+        badge = p.srs.state === 'learning' ? '…' : Math.round(p.srs.interval || 0) + 'd';
+      } else {
+        badge = lvl;
+      }
       return '<div class="pool-cell learned" data-id="' + w.id + '" style="background:' + levelToColor(lvl) + ';' + ring + fsize + '" title="' + esc(title) + '">' +
-        esc(w.h) + '<span class="lvl-badge">' + lvl + '</span></div>';
+        esc(w.h) + '<span class="lvl-badge">' + badge + '</span></div>';
     }
     return '<div class="pool-cell" data-id="' + w.id + '" style="' + ring + '" title="' + esc(title) + '"></div>';
   }
@@ -4572,7 +4869,7 @@
 
   function renderStats(){
     var fw = filteredWords();
-    var mastered = fw.filter(function(w){ return progress[w.id] && progress[w.id].lvl >= 40; }).length;
+    var mastered = fw.filter(function(w){ return effectiveLevel(w.id) >= 40; }).length;
     statsStrip.innerHTML =
       '<span><b>' + settings.pool + '</b> / ' + WORDS.length + ' ' + esc(t('statsInPool')) + '</span>' +
       '<span><b>' + mastered + '</b> ' + esc(t('statsMastered')) + '</span>' +
@@ -4614,7 +4911,7 @@
     ];
     var counts = bandsDef.map(function(b){
       return fw.filter(function(w){
-        var lvl = (progress[w.id] && progress[w.id].lvl) || 0;
+        var lvl = effectiveLevel(w.id);
         return lvl >= b.min && lvl <= b.max;
       }).length;
     });
@@ -4771,12 +5068,31 @@
     if (series.length) series[series.length - 1].value = learnedTotal; // exact today, no rounding drift
     return { series: series, ceiling: mastery.total, mastery: mastery, learnedTotal: learnedTotal };
   }
+  function hskLevelThresholds(){
+    // Cumulative word counts per HSK level of the currently active standard,
+    // e.g. [150, 300, 600, ...] — the value at which that level is "complete".
+    var order = HSK_ORDER || [];
+    var counts = {};
+    order.forEach(function(lv){ counts[lv] = 0; });
+    WORDS.forEach(function(w){ if (counts.hasOwnProperty(w.hsk)) counts[w.hsk]++; });
+    var cum = 0;
+    return order.map(function(lv){ cum += counts[lv]; return { level: lv, upTo: cum }; });
+  }
   function buildCurveDetailHtml(){
     var data = buildEstimatedProgressSeries();
     var W = 300, H = 130, PAD_L = 4, PAD_R = 4, PAD_T = 6, PAD_B = 6;
     var innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
     var ceiling = data.ceiling || 1;
-    function yFor(v){ return PAD_T + innerH - (Math.max(0, Math.min(v, ceiling)) / ceiling) * innerH; }
+    var levels = hskLevelThresholds();
+
+    // Scale the y-axis so TODAY's value sits at 75% height instead of always
+    // stretching to the full 5000/9226 ceiling — that makes early progress
+    // visible instead of a flat line hugging the bottom. The real ceiling can
+    // end up above the visible area in that case (never below it).
+    var visualMax = Math.min(ceiling, Math.max(data.learnedTotal / 0.75, 1));
+    if (!isFinite(visualMax) || visualMax <= 0) visualMax = ceiling;
+
+    function yFor(v, max){ var mx = max || visualMax; return PAD_T + innerH - (Math.max(0, Math.min(v, mx)) / mx) * innerH; }
     var n = data.series.length;
     function xFor(i){ return n <= 1 ? PAD_L : PAD_L + (i / (n - 1)) * innerW; }
     var linePts = data.series.map(function(p, i){ return xFor(i) + ',' + yFor(p.value); }).join(' ');
@@ -4803,16 +5119,35 @@
       var yTop = yFor(b.to), yBot = yFor(b.from);
       return '<rect x="' + PAD_L + '" y="' + yTop + '" width="' + innerW + '" height="' + Math.max(0, yBot - yTop) + '" fill="' + b.color + '" clip-path="url(#' + clipId + ')"></rect>';
     }).join('');
-    var ceilingY = yFor(ceiling);
     var todayLabel = data.series.length ? new Date(data.series[data.series.length - 1].date).toLocaleDateString(calLocale(), { day: 'numeric', month: 'short' }) : '';
     var startLabel = data.series.length ? new Date(data.series[0].date).toLocaleDateString(calLocale(), { day: 'numeric', month: 'short' }) : '';
+
+    // HSK level reference lines — only the ones that fall within the visible
+    // (zoomed) range are drawn; higher levels (and the real ceiling, if it's
+    // above visualMax) are simply left off rather than compressing everything.
+    var levelLinesHtml = levels.map(function(lv, i){
+      if (lv.upTo > visualMax) return '';
+      var y = yFor(lv.upTo);
+      if (y < PAD_T + 1) return '';
+      var label = 'HSK' + (i + 1);
+      return (
+        '<line x1="' + PAD_L + '" y1="' + y + '" x2="' + (PAD_L + innerW) + '" y2="' + y + '" stroke="var(--hairline)" stroke-width="1" stroke-dasharray="2,3" opacity="0.9"></line>' +
+        '<text x="' + (PAD_L + innerW - 2) + '" y="' + (y - 2) + '" text-anchor="end" font-size="7" fill="var(--ink-faint)">' + esc(label) + '</text>'
+      );
+    }).join('');
+    var ceilingLineHtml = '';
+    if (ceiling <= visualMax + 0.0001) {
+      var ceilingY = yFor(ceiling);
+      ceilingLineHtml = '<line x1="' + PAD_L + '" y1="' + ceilingY + '" x2="' + (PAD_L + innerW) + '" y2="' + ceilingY + '" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="3,3"></line>';
+    }
 
     var svg =
       '<svg class="cal-curve-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
         '<defs><clipPath id="' + clipId + '"><polygon points="' + areaPts + '"></polygon></clipPath></defs>' +
         '<rect x="' + PAD_L + '" y="' + PAD_T + '" width="' + innerW + '" height="' + innerH + '" fill="var(--hairline)" opacity="0.35"></rect>' +
         bandRectsHtml +
-        '<line x1="' + PAD_L + '" y1="' + ceilingY + '" x2="' + (PAD_L + innerW) + '" y2="' + ceilingY + '" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="3,3"></line>' +
+        levelLinesHtml +
+        ceilingLineHtml +
         '<polyline points="' + linePts + '" fill="none" stroke="var(--ink)" stroke-width="2"></polyline>' +
       '</svg>';
 
@@ -4889,8 +5224,8 @@
     if (!root) return;
     var fw = WORDS; // active standard, unfiltered — the true full deck
     var total = fw.length;
-    var learned = fw.filter(function(w){ return progress[w.id] && progress[w.id].lvl > 0; }).length;
-    var mastered = fw.filter(function(w){ return progress[w.id] && progress[w.id].lvl >= 40; }).length;
+    var learned = fw.filter(function(w){ return effectiveLevel(w.id) > 0; }).length;
+    var mastered = fw.filter(function(w){ return effectiveLevel(w.id) >= 40; }).length;
     var streak = computeStreak();
     var totalRatings = loadTotalRatings();
     var learnedPct = total ? Math.round(learned / total * 100) : 0;
@@ -4904,7 +5239,7 @@
     ];
     var counts = bands.map(function(b){
       return fw.filter(function(w){
-        var lvl = (progress[w.id] && progress[w.id].lvl) || 0;
+        var lvl = effectiveLevel(w.id);
         return lvl >= b.min && lvl <= b.max;
       }).length;
     });
@@ -4918,13 +5253,13 @@
 
     var hskRowsHtml = HSK_ORDER.map(function(h){
       var wordsInLevel = fw.filter(function(w){ return w.hsk === h; });
-      var learnedInLevel = wordsInLevel.filter(function(w){ return progress[w.id] && progress[w.id].lvl > 0; }).length;
+      var learnedInLevel = wordsInLevel.filter(function(w){ return effectiveLevel(w.id) > 0; }).length;
       // Segmented bar: one colored piece per mastery band (same red/yellow/green/blue
       // scheme as the overall distribution chart), sized to that band's real share —
       // so e.g. "10 gemeistert" shows as an actual blue slice, not just one flat color.
       var levelBandCounts = bands.map(function(b){
         return wordsInLevel.filter(function(w){
-          var lvl = (progress[w.id] && progress[w.id].lvl) || 0;
+          var lvl = effectiveLevel(w.id);
           return lvl >= b.min && lvl <= b.max;
         }).length;
       });
@@ -4942,7 +5277,7 @@
     }).join('');
 
     // --- Word/character frequency coverage (SUBTLEX-CH corpus) ---
-    var learnedWordsList = fw.filter(function(w){ return progress[w.id] && progress[w.id].lvl > 0; });
+    var learnedWordsList = fw.filter(function(w){ return effectiveLevel(w.id) > 0; });
     var coveredWordCount = 0;
     learnedWordsList.forEach(function(w){
       var f = FREQ_DATA.wordFreq[w.h];
@@ -4962,7 +5297,7 @@
     var charCoveragePct = FREQ_DATA.totalCharCorpus ? (coveredCharCount / FREQ_DATA.totalCharCorpus * 100) : 0;
 
     var notLearnedWithFreq = fw.filter(function(w){
-      return !(progress[w.id] && progress[w.id].lvl > 0) && FREQ_DATA.wordFreq[w.h];
+      return !(effectiveLevel(w.id) > 0) && FREQ_DATA.wordFreq[w.h];
     });
     notLearnedWithFreq.sort(function(a, b){ return FREQ_DATA.wordFreq[b.h] - FREQ_DATA.wordFreq[a.h]; });
     var seenHanzi = {};
@@ -5048,6 +5383,16 @@
     }
 
     if (session.finished) {
+      if (session.srsMode && session.nothingDue) {
+        main.innerHTML =
+          '<div class="panel">' +
+            '<h2>' + esc(t('srsNothingDueTitle')) + '</h2>' +
+            '<p>' + esc(t('srsNothingDueDesc')) + '</p>' +
+            '<button class="btn-primary" id="btnAgain">' + esc(t('srsCheckAgainBtn')) + '</button>' +
+          '</div>';
+        document.getElementById('btnAgain').onclick = startSession;
+        return;
+      }
       main.innerHTML =
         '<div class="panel">' +
           '<h2>' + esc(t('finishedTitle')) + '</h2>' +
@@ -5059,15 +5404,30 @@
     }
 
     var w = WORD_BY_ID[session.currentId];
-    var win = session.lastWindow || activeWindow();
     var examples = examplesFor(w.id);
 
-    var dotsHtml = session.ids.slice(0, Math.min(session.ids.length, 20)).map(function(id){
-      var cls = 'dot';
-      if (session.sessionPts[id] >= 5) cls += ' done';
-      else if (id === session.currentId) cls += ' active';
-      return '<span class="' + cls + '"></span>';
-    }).join('');
+    var win, dotsHtml, sessionBarHtml;
+    if (session.srsMode) {
+      var srsState = (progress[w.id] && progress[w.id].srs && progress[w.id].srs.state) || 'new';
+      var srsBadgeKey = srsState === 'review' ? 'srsBadgeReview' : (srsState === 'learning' ? 'srsBadgeLearning' : 'srsBadgeNew');
+      var dueCount = srsDueQueue().length;
+      var newRemaining = srsNewRemainingToday();
+      sessionBarHtml =
+        '<span>' + esc(tf('srsSessionBar', dueCount, newRemaining)) + '</span>' +
+        '<span class="srs-state-badge">' + esc(t(srsBadgeKey)) + '</span>';
+      dotsHtml = '';
+    } else {
+      win = session.lastWindow || activeWindow();
+      dotsHtml = session.ids.slice(0, Math.min(session.ids.length, 20)).map(function(id){
+        var cls = 'dot';
+        if (session.sessionPts[id] >= 5) cls += ' done';
+        else if (id === session.currentId) cls += ' active';
+        return '<span class="' + cls + '"></span>';
+      }).join('');
+      sessionBarHtml =
+        '<span>' + esc(tf('sessionBar', win.prog, win.dictPart.length, session.ids.length)) + '</span>' +
+        '<span class="dots">' + dotsHtml + '</span>';
+    }
 
     var exHtml = '';
     if (examples.length) {
@@ -5094,8 +5454,7 @@
 
     main.innerHTML =
       '<div class="session-bar">' +
-        '<span>' + esc(tf('sessionBar', win.prog, win.dictPart.length, session.ids.length)) + '</span>' +
-        '<span class="dots">' + dotsHtml + '</span>' +
+        sessionBarHtml +
       '</div>' +
       '<div class="card">' +
         '<span class="hsk-badge">' + w.hsk.replace('hsk','HSK ') + '</span>' +
@@ -5199,8 +5558,10 @@
 
   function openDrawer(){
     document.getElementById('inpStandard').value = settings.standard;
+    document.getElementById('inpLearnMode').value = settings.learnMode;
     document.getElementById('inpPool').value = settings.pool;
     document.getElementById('inpSession').value = settings.sessionSize;
+    document.getElementById('inpSrsNewPerDay').value = settings.srsNewPerDay;
     document.getElementById('inpAutoSpeak').checked = !!settings.autoSpeak;
     document.getElementById('inpFontFamily').value = fonts.family;
     document.getElementById('inpHanziSize').value = fonts.hanziSize;
@@ -5225,8 +5586,11 @@
   document.getElementById('btnApplySettings').onclick = function(){
     var pool = parseInt(document.getElementById('inpPool').value, 10);
     var sess = parseInt(document.getElementById('inpSession').value, 10);
+    var newPerDay = parseInt(document.getElementById('inpSrsNewPerDay').value, 10);
     settings.pool = isNaN(pool) || pool < 1 ? DEFAULT_SETTINGS.pool : pool;
     settings.sessionSize = isNaN(sess) || sess < 1 ? DEFAULT_SETTINGS.sessionSize : sess;
+    settings.srsNewPerDay = isNaN(newPerDay) || newPerDay < 1 ? DEFAULT_SETTINGS.srsNewPerDay : newPerDay;
+    settings.learnMode = document.getElementById('inpLearnMode').value === 'karteikasten' ? 'karteikasten' : 'punkte';
     saveSettings(settings);
     closeDrawer();
     startSession();
