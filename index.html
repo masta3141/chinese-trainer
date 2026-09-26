@@ -8,12 +8,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HSK Vokabeltrainer">
 <meta name="theme-color" content="#a33b2c">
-<!-- Google Identity Services: used only for the optional Google Cloud TTS
-     backend, to get a short-lived OAuth2 access token via a sign-in popup.
-     No secret of any kind is ever embedded here — the client ID below is
-     public by design. Loaded async; if it fails (offline, blocked), Cloud
-     TTS sign-in simply reports an error and Gemini TTS is unaffected. -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <title>汉字 Karten — HSK Vokabeltrainer</title>
@@ -577,6 +571,95 @@
     margin-right: 4px;
     vertical-align: middle;
   }
+  .cal-widget {
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 10px 10px 12px;
+    margin-bottom: 6px;
+    background: var(--paper-raised);
+  }
+  .cal-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .cal-title {
+    flex: 1;
+    text-align: center;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .cal-nav-btn {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    flex: none;
+  }
+  .cal-detail-icons {
+    display: flex;
+    gap: 2px;
+    flex: none;
+  }
+  .cal-icon-btn {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    line-height: 1;
+    cursor: default;
+    opacity: 0.55;
+  }
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 4px;
+  }
+  .cal-weekday {
+    text-align: center;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ink-faint);
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    touch-action: pan-y;
+  }
+  .cal-day {
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    background: var(--paper);
+    border: 1px solid transparent;
+    position: relative;
+  }
+  .cal-day-empty { background: transparent; }
+  .cal-day-num { font-size: 10.5px; }
+  .cal-day-count {
+    font-size: 8px;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+  .cal-today { border-color: var(--seal); }
+  .cal-heat-0 { background: var(--paper); color: var(--ink-faint); }
+  .cal-heat-1 { background: color-mix(in srgb, var(--seal) 22%, var(--paper)); }
+  .cal-heat-2 { background: color-mix(in srgb, var(--seal) 45%, var(--paper)); }
+  .cal-heat-3 { background: color-mix(in srgb, var(--seal) 68%, var(--paper)); color: #fff; }
+  .cal-heat-4 { background: var(--seal); color: #fff; }
   .hsk-progress-row {
     display: flex;
     align-items: center;
@@ -1248,23 +1331,11 @@
     <button class="btn-secondary" id="btnSaveGeminiKey" style="margin-top:14px;" data-i18n="geminiSaveBtn">Key speichern</button>
     <p class="drawer-note" data-i18n="geminiKeyNote">Der Key verlässt diesen Browser nie außer in direkten Anfragen an Google — er wird nur lokal gespeichert, nicht in dieser Datei oder irgendwo sonst.</p>
 
-    <div class="field" style="margin-top:18px;margin-bottom:0;">
-      <label for="inpTtsService" data-i18n="audioServiceLabel">TTS-Dienst (Geschichten-Audio)</label>
-      <select id="inpTtsService">
-        <option value="gemini" data-i18n="audioServiceGemini">Gemini TTS</option>
-        <option value="cloud" data-i18n="audioServiceCloud">Google Cloud TTS</option>
-      </select>
-    </div>
-    <div class="field" style="margin-top:10px;">
+    <div class="field" style="margin-top:18px;">
       <label class="hsk-check" style="width:100%;justify-content:flex-start;">
         <input type="checkbox" id="inpTtsQuotaEnabled">
-        <span data-i18n="audioQuotaEnabledLabel">Kontingent-Begrenzung aktiv (2/Minute, 8/Tag)</span>
+        <span data-i18n="audioQuotaEnabledLabel">Kontingent-Begrenzung aktiv (2 Sätze, dann 2 Min. Pause; 8/Tag)</span>
       </label>
-    </div>
-    <div class="field" id="cloudAuthField" style="margin-top:10px;display:none;">
-      <button class="btn-secondary" id="btnCloudSignIn" data-i18n="audioCloudSignInBtn">Bei Google anmelden</button>
-      <button class="hint-btn" id="btnCloudSignOut" style="margin-left:8px;" data-i18n="audioCloudSignOutBtn">Abmelden</button>
-      <p class="drawer-note" id="cloudAuthStatus"></p>
     </div>
   </div>
 </div>
@@ -1299,10 +1370,18 @@
   var GENERATED_EX_KEY = 'hskflash_generated_examples_v1';
   var ACTIVITY_KEY = 'hskflash_activity_days_v1';
   var TOTAL_RATINGS_KEY = 'hskflash_total_ratings_v1';
+  var DAILY_COUNTS_KEY = 'hskflash_daily_counts_v1'; // { 'YYYY-MM-DD': count } — per-day cards-rated count for the stats calendar
   var EPOCH_LONG_AGO = '2000-01-01T00:00:00.000Z';
 
   function todayStr(){
     return new Date().toISOString().slice(0, 10);
+  }
+  // Local-noon date key for a given year/month(0-based)/day, used by the stats
+  // calendar. Using noon (rather than local midnight) avoids ever landing on
+  // a different UTC calendar day, so this lines up with todayStr()'s UTC-date
+  // convention for the vast majority of timezones/times.
+  function dateKeyForYMD(y, m, d){
+    return new Date(y, m, d, 12, 0, 0).toISOString().slice(0, 10);
   }
   function loadActivityDays(){
     try { return JSON.parse(localStorage.getItem(ACTIVITY_KEY)) || []; } catch(e) { return []; }
@@ -1316,8 +1395,15 @@
   function saveTotalRatings(n){
     try { localStorage.setItem(TOTAL_RATINGS_KEY, String(n)); } catch(e) {}
   }
-  // Called whenever the user rates a flashcard or a story sentence — feeds both
-  // the streak counter and the all-time "Karten beantwortet" total on the stats page.
+  function loadDailyCounts(){
+    try { return JSON.parse(localStorage.getItem(DAILY_COUNTS_KEY)) || {}; } catch(e) { return {}; }
+  }
+  function saveDailyCounts(counts){
+    try { localStorage.setItem(DAILY_COUNTS_KEY, JSON.stringify(counts)); } catch(e) {}
+  }
+  // Called whenever the user rates a flashcard or a story sentence — feeds
+  // the streak counter, the all-time "Karten beantwortet" total, and the
+  // per-day count shown in the stats calendar.
   function recordActivity(){
     var days = loadActivityDays();
     var t = todayStr();
@@ -1326,6 +1412,9 @@
       saveActivityDays(days);
     }
     saveTotalRatings(loadTotalRatings() + 1);
+    var counts = loadDailyCounts();
+    counts[t] = (counts[t] || 0) + 1;
+    saveDailyCounts(counts);
   }
   function computeStreak(){
     var days = loadActivityDays();
@@ -1477,12 +1566,8 @@
       funStyle_whisper: 'Flüstern', funStyle_gameshow: 'Show-Master', funStyle_posh: 'Adelig', funStyle_sleepy: 'Schläfrig',
       funStyle_robot: 'Roboter', funStyle_nervous: 'Nervös', funStyle_trailer: 'Trailer', funStyle_supervillain: 'Superschurke',
       funStyle_lovestruck: 'Verliebt', funStyle_sergeant: 'Feldwebel',
-      audioServiceLabel: 'TTS-Dienst (Geschichten-Audio)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
-      audioQuotaEnabledLabel: 'Kontingent-Begrenzung aktiv (2/Minute, 8/Tag)',
+      audioQuotaEnabledLabel: 'Kontingent-Begrenzung aktiv (2 Sätze, dann 2 Min. Pause; 8/Tag)',
       audioSpeedSlow: 'Langsam', audioSpeedNormal: 'Normal',
-      audioCloudSignInBtn: 'Bei Google anmelden', audioCloudSignOutBtn: 'Abmelden',
-      audioCloudSignedIn: 'Angemeldet — Token noch {0} Min. gültig.', audioCloudNotSignedIn: 'Noch nicht angemeldet. Nötig, bevor Cloud-TTS-Audio erzeugt werden kann.',
-      audioCloudGisError: 'Google-Anmeldedienst konnte nicht geladen werden (offline oder blockiert?).', audioCloudAuthCancelled: 'Google-Anmeldung abgebrochen oder fehlgeschlagen.',
       storiesUnderstandNo: 'Verstehe nicht', storiesUnderstandHalf: 'Halbwegs', storiesUnderstandYes: 'Gut',
       storiesPinyinShow: 'Pinyin zeigen', storiesPinyinHide: 'Pinyin ausblenden',
       storiesTranslationShow: 'Übersetzung zeigen', storiesTranslationHide: 'Übersetzung ausblenden',
@@ -1501,6 +1586,9 @@
       masteredLabel: 'gut gelernt (Level ≥ 40)',
       totalRatingsLabelLocal: 'Karten & Sätze insgesamt beantwortet',
       totalRatingsLabelPub: 'Karten insgesamt beantwortet',
+      calSectionTitle: 'Lernkalender', calPrevMonth: 'Vorheriger Monat', calNextMonth: 'Nächster Monat',
+      calDetailListTitle: 'Detaillierte Statistiken (Liste)', calDetailChartTitle: 'Detaillierte Statistiken (Diagramm)',
+      calCardsTooltip: '{0} Karten', calNoActivityTooltip: 'Keine Aktivität',
       distributionTitle: 'Fortschrittsverteilung',
       bandNotStarted: 'Nicht begonnen', bandStarted: 'Angefangen', bandOngoing: 'Im Gange', bandAdvanced: 'Fortgeschritten', bandMastered: 'Gemeistert',
       hskProgressTitle: 'Fortschritt je HSK-Stufe',
@@ -1642,12 +1730,8 @@
       funStyle_whisper: 'Whisper', funStyle_gameshow: 'Game Host', funStyle_posh: 'Posh', funStyle_sleepy: 'Sleepy',
       funStyle_robot: 'Robot', funStyle_nervous: 'Nervous', funStyle_trailer: 'Trailer', funStyle_supervillain: 'Supervillain',
       funStyle_lovestruck: 'Smitten', funStyle_sergeant: 'Sergeant',
-      audioServiceLabel: 'TTS service (story audio)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
-      audioQuotaEnabledLabel: 'Quota limit enabled (2/minute, 8/day)',
+      audioQuotaEnabledLabel: 'Quota limit enabled (2 sentences, then a 2-min. pause; 8/day)',
       audioSpeedSlow: 'Slow', audioSpeedNormal: 'Normal',
-      audioCloudSignInBtn: 'Sign in with Google', audioCloudSignOutBtn: 'Sign out',
-      audioCloudSignedIn: 'Signed in — token valid for {0} more min.', audioCloudNotSignedIn: 'Not signed in yet. Required before Cloud TTS audio can be generated.',
-      audioCloudGisError: 'Could not load the Google sign-in service (offline or blocked?).', audioCloudAuthCancelled: 'Google sign-in was cancelled or failed.',
       storiesUnderstandNo: 'Don\'t understand', storiesUnderstandHalf: 'Partly', storiesUnderstandYes: 'Understand',
       storiesPinyinShow: 'Show pinyin', storiesPinyinHide: 'Hide pinyin',
       storiesTranslationShow: 'Show translation', storiesTranslationHide: 'Hide translation',
@@ -1665,6 +1749,9 @@
       masteredLabel: 'well learned (level ≥ 40)',
       totalRatingsLabelLocal: 'Cards & sentences answered in total',
       totalRatingsLabelPub: 'Cards answered in total',
+      calSectionTitle: 'Learning calendar', calPrevMonth: 'Previous month', calNextMonth: 'Next month',
+      calDetailListTitle: 'Detailed stats (list)', calDetailChartTitle: 'Detailed stats (chart)',
+      calCardsTooltip: '{0} cards', calNoActivityTooltip: 'No activity',
       distributionTitle: 'Progress distribution',
       bandNotStarted: 'Not started', bandStarted: 'Started', bandOngoing: 'In progress', bandAdvanced: 'Advanced', bandMastered: 'Mastered',
       hskProgressTitle: 'Progress by HSK level',
@@ -1806,12 +1893,8 @@
       funStyle_whisper: 'Chuchoté', funStyle_gameshow: 'Animateur', funStyle_posh: 'Snob', funStyle_sleepy: 'Endormi',
       funStyle_robot: 'Robot', funStyle_nervous: 'Nerveux', funStyle_trailer: 'Bande-annonce', funStyle_supervillain: 'Super-vilain',
       funStyle_lovestruck: 'Amoureux', funStyle_sergeant: 'Sergent',
-      audioServiceLabel: 'Service TTS (audio des histoires)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
-      audioQuotaEnabledLabel: 'Limite de quota activée (2/minute, 8/jour)',
+      audioQuotaEnabledLabel: 'Limite de quota activée (2 phrases, puis pause de 2 min ; 8/jour)',
       audioSpeedSlow: 'Lent', audioSpeedNormal: 'Normal',
-      audioCloudSignInBtn: 'Se connecter avec Google', audioCloudSignOutBtn: 'Se déconnecter',
-      audioCloudSignedIn: 'Connecté — jeton valable encore {0} min.', audioCloudNotSignedIn: 'Pas encore connecté. Nécessaire avant de générer de l\'audio Cloud TTS.',
-      audioCloudGisError: 'Impossible de charger le service de connexion Google (hors ligne ou bloqué ?).', audioCloudAuthCancelled: 'Connexion Google annulée ou échouée.',
       storiesUnderstandNo: 'Je ne comprends pas', storiesUnderstandHalf: 'Partiellement', storiesUnderstandYes: 'Je comprends',
       storiesPinyinShow: 'Afficher le pinyin', storiesPinyinHide: 'Masquer le pinyin',
       storiesTranslationShow: 'Afficher la traduction', storiesTranslationHide: 'Masquer la traduction',
@@ -1829,6 +1912,9 @@
       masteredLabel: 'bien appris (niveau ≥ 40)',
       totalRatingsLabelLocal: 'Cartes et phrases répondues au total',
       totalRatingsLabelPub: 'Cartes répondues au total',
+      calSectionTitle: 'Calendrier d\'apprentissage', calPrevMonth: 'Mois précédent', calNextMonth: 'Mois suivant',
+      calDetailListTitle: 'Statistiques détaillées (liste)', calDetailChartTitle: 'Statistiques détaillées (graphique)',
+      calCardsTooltip: '{0} cartes', calNoActivityTooltip: 'Aucune activité',
       distributionTitle: 'Répartition de la progression',
       bandNotStarted: 'Pas commencé', bandStarted: 'Commencé', bandOngoing: 'En cours', bandAdvanced: 'Avancé', bandMastered: 'Maîtrisé',
       hskProgressTitle: 'Progression par niveau HSK',
@@ -1970,12 +2056,8 @@
       funStyle_whisper: 'Susurro', funStyle_gameshow: 'Presentador', funStyle_posh: 'Pijo', funStyle_sleepy: 'Somnoliento',
       funStyle_robot: 'Robot', funStyle_nervous: 'Nervioso', funStyle_trailer: 'Tráiler', funStyle_supervillain: 'Supervillano',
       funStyle_lovestruck: 'Enamorado', funStyle_sergeant: 'Sargento',
-      audioServiceLabel: 'Servicio TTS (audio de historias)', audioServiceGemini: 'Gemini TTS', audioServiceCloud: 'Google Cloud TTS',
-      audioQuotaEnabledLabel: 'Límite de cuota activado (2/minuto, 8/día)',
+      audioQuotaEnabledLabel: 'Límite de cuota activado (2 frases, luego pausa de 2 min; 8/día)',
       audioSpeedSlow: 'Lento', audioSpeedNormal: 'Normal',
-      audioCloudSignInBtn: 'Iniciar sesión con Google', audioCloudSignOutBtn: 'Cerrar sesión',
-      audioCloudSignedIn: 'Sesión iniciada — token válido {0} min más.', audioCloudNotSignedIn: 'Aún no iniciaste sesión. Necesario antes de generar audio con Cloud TTS.',
-      audioCloudGisError: '¿No se pudo cargar el servicio de inicio de sesión de Google (sin conexión o bloqueado)?', audioCloudAuthCancelled: 'Inicio de sesión de Google cancelado o fallido.',
       storiesUnderstandNo: 'No entiendo', storiesUnderstandHalf: 'Más o menos', storiesUnderstandYes: 'Entiendo',
       storiesPinyinShow: 'Mostrar pinyin', storiesPinyinHide: 'Ocultar pinyin',
       storiesTranslationShow: 'Mostrar traducción', storiesTranslationHide: 'Ocultar traducción',
@@ -1993,6 +2075,9 @@
       masteredLabel: 'bien aprendido (nivel ≥ 40)',
       totalRatingsLabelLocal: 'Tarjetas y frases respondidas en total',
       totalRatingsLabelPub: 'Tarjetas respondidas en total',
+      calSectionTitle: 'Calendario de aprendizaje', calPrevMonth: 'Mes anterior', calNextMonth: 'Mes siguiente',
+      calDetailListTitle: 'Estadísticas detalladas (lista)', calDetailChartTitle: 'Estadísticas detalladas (gráfico)',
+      calCardsTooltip: '{0} tarjetas', calNoActivityTooltip: 'Sin actividad',
       distributionTitle: 'Distribución del progreso',
       bandNotStarted: 'Sin empezar', bandStarted: 'Empezado', bandOngoing: 'En curso', bandAdvanced: 'Avanzado', bandMastered: 'Dominado',
       hskProgressTitle: 'Progreso por nivel HSK',
@@ -2495,28 +2580,11 @@
     { id: 'Zephyr', gender: 'f', fun: true }
   ];
   // Google Cloud TTS uses a separate, language-specific voice catalog (unlike
-  // Gemini, one voice can't speak both Chinese and English) — each entry also
-  // names the English voice used for the translation part of a sentence.
-  // Chirp3: HD is Google's newest, most natural-sounding tier, and — handily —
-  // uses the exact same persona names as Gemini's own voices (just with a
-  // '-Chirp3-HD-' model segment and a language prefix), so the same identity
-  // carries across both Chinese and English parts of a sentence.
-  var CLOUD_TTS_VOICES = [
-    { id: 'cmn-CN-Chirp3-HD-Puck', gender: 'm', enVoice: 'en-US-Chirp3-HD-Puck', label: 'Puck' },
-    { id: 'cmn-CN-Chirp3-HD-Charon', gender: 'm', enVoice: 'en-US-Chirp3-HD-Charon', label: 'Charon' },
-    { id: 'cmn-CN-Chirp3-HD-Kore', gender: 'f', enVoice: 'en-US-Chirp3-HD-Kore', label: 'Kore' },
-    { id: 'cmn-CN-Chirp3-HD-Leda', gender: 'f', enVoice: 'en-US-Chirp3-HD-Leda', label: 'Leda' }
-  ];
-  // Speed is simplified to two tiers, shared by both services. Gemini has no
-  // real speed parameter and only approximates it via a style description;
-  // Cloud TTS has a real numeric speakingRate.
+  // Speed is simplified to two tiers. Gemini has no real speed parameter and
+  // only approximates it via a style description.
   var TTS_SPEED_STYLES = {
     'slow': 'speaking slowly and clearly, like a teacher helping a language learner',
     'normal': 'speaking at a natural, normal conversational pace'
-  };
-  var TTS_SPEED_RATES = {
-    'slow': 0.8,
-    'normal': 1.0
   };
   // Delivery styles for the two "fun" Gemini voices (Orus/Zephyr). The user
   // picks ONE of these in the picker, and it then narrates the whole story
@@ -2560,16 +2628,25 @@
     if (sp === '1') return 'normal';
     return 'slow'; // '0.5', '0.75', or unset
   }
-  var TTS_MAX_PER_MINUTE = 2;
+  // Quota pacing: a "batch" of TTS_BATCH_SIZE sentence-generations is allowed
+  // back-to-back, then a mandatory TTS_BATCH_PAUSE_MS pause before the next
+  // batch — comfortably under Gemini's real per-minute quota. TTS_MAX_PER_DAY
+  // is a separate, always-on rolling 24h cap.
+  var TTS_BATCH_SIZE = 2;
+  var TTS_BATCH_PAUSE_MS = 2 * 60 * 1000; // 2 minutes
   var TTS_MAX_PER_DAY = 8; // rolling 24h window, not a midnight reset
   var TTS_LOG_KEY = 'hskflash_tts_call_log_v1';
-  var TTS_SERVICE_KEY = 'hskflash_tts_service_v1'; // 'gemini' | 'cloud'
+  var TTS_BATCH_KEY = 'hskflash_tts_batch_v1';
   var TTS_QUOTA_ENABLED_KEY = 'hskflash_tts_quota_enabled_v1';
-  function loadTtsService(){
-    try { return localStorage.getItem(TTS_SERVICE_KEY) || 'gemini'; } catch(e) { return 'gemini'; }
+  function loadTtsBatchState(){
+    try {
+      var v = JSON.parse(localStorage.getItem(TTS_BATCH_KEY));
+      if (v && typeof v.count === 'number' && typeof v.windowStart === 'number') return v;
+    } catch(e) {}
+    return { count: 0, windowStart: 0 };
   }
-  function saveTtsService(v){
-    try { localStorage.setItem(TTS_SERVICE_KEY, v === 'cloud' ? 'cloud' : 'gemini'); } catch(e) {}
+  function saveTtsBatchState(st){
+    try { localStorage.setItem(TTS_BATCH_KEY, JSON.stringify(st)); } catch(e) {}
   }
   function loadTtsQuotaEnabled(){
     try {
@@ -2700,8 +2777,10 @@
     });
   }
 
-  // ---- Rate limiter: max 2 calls/minute, max 8 calls per rolling 24h window,
-  // shared globally across all stories since it tracks the same API key. ----
+  // ---- Rate limiter: a batch of TTS_BATCH_SIZE calls back-to-back, then a
+  // mandatory TTS_BATCH_PAUSE_MS pause, plus a max of TTS_MAX_PER_DAY calls
+  // per rolling 24h window — shared globally across all stories since it
+  // tracks the same API key. ----
   function loadTtsLog(){
     try { return JSON.parse(localStorage.getItem(TTS_LOG_KEY)) || []; } catch(e) { return []; }
   }
@@ -2716,6 +2795,19 @@
     var log = pruneTtsLog(loadTtsLog());
     log.push(Date.now());
     saveTtsLog(log);
+    if (loadTtsQuotaEnabled()) {
+      var batch = loadTtsBatchState();
+      var now = Date.now();
+      // Start a fresh batch whenever the previous pause window has fully
+      // elapsed, or the batch was already full (defensive — shouldn't happen
+      // since checkTtsRateLimit would have blocked first).
+      if (now - batch.windowStart >= TTS_BATCH_PAUSE_MS || batch.count >= TTS_BATCH_SIZE) {
+        batch = { count: 1, windowStart: now };
+      } else {
+        batch.count += 1;
+      }
+      saveTtsBatchState(batch);
+    }
   }
   // Returns { canProceed:true } | { canProceed:false, dailyLimitReached:true, nextSlotAt } | { canProceed:false, waitMs }
   function checkTtsRateLimit(){
@@ -2726,13 +2818,11 @@
       var oldest = Math.min.apply(null, log);
       return { canProceed: false, dailyLimitReached: true, nextSlotAt: oldest + 24 * 60 * 60 * 1000 };
     }
-    var oneMinAgo = Date.now() - 60 * 1000;
-    var recent = log.filter(function(ts){ return ts > oneMinAgo; });
-    if (recent.length >= TTS_MAX_PER_MINUTE) {
-      var oldestRecent = Math.min.apply(null, recent);
-      return { canProceed: false, dailyLimitReached: false, waitMs: Math.max(500, (oldestRecent + 60 * 1000) - Date.now()) };
-    }
-    return { canProceed: true };
+    var batch = loadTtsBatchState();
+    var now = Date.now();
+    if (now - batch.windowStart >= TTS_BATCH_PAUSE_MS) return { canProceed: true }; // pause window elapsed (or no batch yet)
+    if (batch.count < TTS_BATCH_SIZE) return { canProceed: true }; // still room in the current batch
+    return { canProceed: false, dailyLimitReached: false, waitMs: Math.max(500, (batch.windowStart + TTS_BATCH_PAUSE_MS) - now) };
   }
 
   // One Gemini TTS call per sentence: 3 parts (slow Chinese, English, slow Chinese
@@ -2778,136 +2868,6 @@
     });
   }
 
-  // Concatenates several PCM chunks (same format) into one, optionally with a
-  // short silence gap between them — used to stitch Cloud TTS's 3 separate
-  // clips (one per API call) into a single continuous sentence recording,
-  // the same shape Gemini returns from its one bundled call.
-  function concatPcmChunks(chunks, fmt, gapMs){
-    var withGaps = [];
-    chunks.forEach(function(c, idx){
-      if (idx > 0 && gapMs) withGaps.push(silencePcm(gapMs, fmt));
-      withGaps.push(c);
-    });
-    var total = withGaps.reduce(function(sum, c){ return sum + c.length; }, 0);
-    var out = new Uint8Array(total);
-    var offset = 0;
-    withGaps.forEach(function(c){ out.set(c, offset); offset += c.length; });
-    return out;
-  }
-
-  // ---- Google Cloud TTS auth: Cloud Text-to-Speech is a full IAM-governed
-  // Cloud API and rejects plain API keys ("API keys are not supported by
-  // this API. Expected OAuth2 access token..."). Since this app has no
-  // backend, we use Google Identity Services' browser-side OAuth2 token
-  // flow: a sign-in popup hands us a short-lived (~1h) access token, and
-  // nothing long-lived or secret is ever stored. ----
-  var CLOUD_OAUTH_CLIENT_ID = '809843127262-3gqp0srglvpmrmnegi4jlfbf7llu0hfu.apps.googleusercontent.com';
-  var CLOUD_OAUTH_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
-  var cloudAuthState = { token: null, expiresAt: 0 };
-  var cloudTokenClient = null;
-  var cloudTokenPending = null; // { resolve, reject } while a requestAccessToken() is in flight
-
-  function isCloudTokenValid(){
-    return !!cloudAuthState.token && Date.now() < cloudAuthState.expiresAt;
-  }
-
-  function initCloudTokenClientIfNeeded(){
-    if (cloudTokenClient) return cloudTokenClient;
-    if (!window.google || !google.accounts || !google.accounts.oauth2) return null;
-    cloudTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLOUD_OAUTH_CLIENT_ID,
-      scope: CLOUD_OAUTH_SCOPE,
-      callback: function(resp){
-        if (resp && resp.access_token) {
-          cloudAuthState.token = resp.access_token;
-          cloudAuthState.expiresAt = Date.now() + ((resp.expires_in || 3600) * 1000) - 60000;
-          if (cloudTokenPending) { cloudTokenPending.resolve(resp.access_token); cloudTokenPending = null; }
-        } else {
-          var err = new Error((resp && resp.error) || 'oauth-failed');
-          if (cloudTokenPending) { cloudTokenPending.reject(err); cloudTokenPending = null; }
-        }
-      },
-      error_callback: function(err){
-        if (cloudTokenPending) { cloudTokenPending.reject(new Error((err && err.type) || 'oauth-error')); cloudTokenPending = null; }
-      }
-    });
-    return cloudTokenClient;
-  }
-
-  // Resolves immediately with a cached token when still valid; otherwise
-  // opens the Google sign-in popup. IMPORTANT: browsers only allow that
-  // popup when this runs synchronously inside a user click handler — so
-  // every caller of this must be invoked directly from a click, not from
-  // deep inside an async chain (recordTtsCall/idbGet/etc break that chain).
-  function ensureCloudToken(){
-    if (isCloudTokenValid()) return Promise.resolve(cloudAuthState.token);
-    var client = initCloudTokenClientIfNeeded();
-    if (!client) return Promise.reject(new Error('gis-not-loaded'));
-    return new Promise(function(resolve, reject){
-      cloudTokenPending = { resolve: resolve, reject: reject };
-      client.requestAccessToken({ prompt: cloudAuthState.token ? '' : 'consent' });
-    });
-  }
-
-  function signOutCloud(){
-    if (cloudAuthState.token && window.google && google.accounts && google.accounts.oauth2) {
-      try { google.accounts.oauth2.revoke(cloudAuthState.token, function(){}); } catch(e) {}
-    }
-    cloudAuthState.token = null;
-    cloudAuthState.expiresAt = 0;
-  }
-
-  // Google Cloud Text-to-Speech alternative backend. Unlike Gemini it can't
-  // bundle multiple styled parts into one request, so a sentence's 3 phases
-  // (slow Chinese / English / slow Chinese again) need 3 sequential calls —
-  // stitched together afterwards into one {fmt, pcm} record, same as Gemini's.
-  // All 3 share the one OAuth token fetched by the caller (see ensureCloudToken).
-  function callOneCloudTTS(token, text, languageCode, voiceName, speakingRate){
-    var url = 'https://texttospeech.googleapis.com/v1/text:synthesize';
-    var payload = {
-      input: { text: text },
-      voice: { languageCode: languageCode, name: voiceName },
-      audioConfig: { audioEncoding: 'LINEAR16', speakingRate: speakingRate }
-    };
-    return fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify(payload)
-    }).then(function(res){
-      if (!res.ok) return res.text().then(function(t){ throw new Error('HTTP ' + res.status + ': ' + t); });
-      return res.json();
-    }).then(function(data){
-      return parseWav(base64ToBytes(data.audioContent));
-    });
-  }
-
-  // Expects a valid token to already be in hand (see ensureCloudToken) —
-  // startOrResumeStoryAudio is only entered after the caller resolved one
-  // from the triggering click, so no popup is attempted from deep in the loop.
-  function callSentenceTTSCloud(sent, voiceId, speedKey){
-    if (!isCloudTokenValid()) return Promise.reject(new Error('no-cloud-token'));
-    var token = cloudAuthState.token;
-    var voiceEntry = CLOUD_TTS_VOICES.filter(function(v){ return v.id === voiceId; })[0] || CLOUD_TTS_VOICES[0];
-    var rate = TTS_SPEED_RATES[normalizeSpeedKey(speedKey)];
-    return callOneCloudTTS(token, sent.h, 'cmn-CN', voiceEntry.id, rate).then(function(r1){
-      return callOneCloudTTS(token, sent.e, 'en-US', voiceEntry.enVoice, 1.0).then(function(r2){
-        return callOneCloudTTS(token, sent.h, 'cmn-CN', voiceEntry.id, rate).then(function(r3){
-          var fmt = r1.fmt;
-          var pcm = concatPcmChunks([r1.pcm, r2.pcm, r3.pcm], fmt, 150);
-          return { fmt: fmt, pcm: pcm };
-        });
-      });
-    });
-  }
-
-  // Picks the active backend. Both quota-counted the same way: the caller
-  // (startOrResumeStoryAudio) records exactly one rate-limit "hit" per
-  // sentence regardless of how many underlying HTTP calls this makes.
-  function callSentenceTTSDispatch(sent, voiceId, speedKey, service, funStyleKey){
-    return (service || loadTtsService()) === 'cloud'
-      ? callSentenceTTSCloud(sent, voiceId, speedKey)
-      : callSentenceTTS(sent, voiceId, speedKey, funStyleKey);
-  }
 
   function findNextMissingSentenceIndex(story){
     var i = 0;
@@ -2923,10 +2883,10 @@
   }
 
   // Resumable, rate-limited generator: call once to start or continue a story's
-  // audio. Paces itself at TTS_MAX_PER_MINUTE within the current session, and
-  // stops cleanly (without erroring) once the rolling daily cap is hit — the
-  // caller can invoke this again later (e.g. next day, or next app open) to
-  // pick up exactly where it left off.
+  // audio. Paces itself in batches of TTS_BATCH_SIZE within the current
+  // session, and stops cleanly (without erroring) once the rolling daily cap
+  // is hit — the caller can invoke this again later (e.g. next day, or next
+  // app open) to pick up exactly where it left off.
   var audioGenActive = {}; // storyId -> true while a generation loop is running
   function isStoryAudioActive(storyId){ return !!audioGenActive[storyId]; }
 
@@ -2954,7 +2914,7 @@
           return;
         }
         recordTtsCall();
-        callSentenceTTSDispatch(story.sentences[idx], voiceId, speedKey, story.audioService, story.audioFunStyle).then(function(result){
+        callSentenceTTS(story.sentences[idx], voiceId, speedKey, story.audioFunStyle).then(function(result){
           return idbSet(story.id + ':' + idx, result).then(function(){
             callbacks.onProgress(idx + 1, story.sentences.length);
             setTimeout(loop, 300);
@@ -2978,16 +2938,14 @@
   // Cloud TTS voice ids are long/technical (cmn-CN-Chirp3-HD-Puck); shows the
   // short persona name where we have one, falling back to the raw id (older
   // saved stories may still carry a pre-Chirp3 Wavenet voice id).
-  function voiceDisplayLabel(voiceId, service){
-    var list = service === 'cloud' ? CLOUD_TTS_VOICES : TTS_VOICES;
-    var entry = list.filter(function(v){ return v.id === voiceId; })[0];
+  function voiceDisplayLabel(voiceId){
+    var entry = TTS_VOICES.filter(function(v){ return v.id === voiceId; })[0];
     return entry && entry.label ? entry.label : voiceId;
   }
 
   function buildAudioPickerHtml(s){
     var choice = storiesState.pickerChoice || { voice: null, speed: 'slow', funStyle: null };
-    var service = loadTtsService();
-    var voiceList = service === 'cloud' ? CLOUD_TTS_VOICES : TTS_VOICES;
+    var voiceList = TTS_VOICES;
     var voiceOpts = voiceList.map(function(v){
       var label = (v.fun ? '🎭 ' : '') + (v.label || v.id) + ' (' + t(v.gender === 'm' ? 'audioVoiceMale' : 'audioVoiceFemale') + ')';
       return '<button class="audio-opt' + (choice.voice === v.id ? ' selected' : '') + '" data-pick-voice="' + v.id + '">' + esc(label) + '</button>';
@@ -3043,12 +3001,8 @@
     };
   }
 
-  // Resolves the credential needed to start/resume a story's audio for the
-  // given backend: the Gemini API key (already in hand, no popup) or a
-  // Cloud TTS OAuth token (may open a Google sign-in popup — only safe to
-  // call this synchronously from within a click handler, see ensureCloudToken).
-  function ensureCloudAuthOrKey(service){
-    if (service === 'cloud') return ensureCloudToken();
+  // Resolves the Gemini API key needed to start/resume a story's audio.
+  function ensureGeminiKey(){
     var apiKey = loadGeminiKey();
     if (!apiKey) return Promise.reject(new Error('no-key'));
     return Promise.resolve(apiKey);
@@ -3062,13 +3016,7 @@
       if (f) f.focus();
       return;
     }
-    if (msg === 'gis-not-loaded') {
-      audioStatus[s.id] = { error: t('audioCloudGisError') };
-    } else if (msg === 'popup_closed' || msg === 'access_denied' || msg === 'oauth-error' || msg === 'oauth-failed') {
-      audioStatus[s.id] = { error: t('audioCloudAuthCancelled') };
-    } else {
-      audioStatus[s.id] = { error: msg || 'error' };
-    }
+    audioStatus[s.id] = { error: msg || 'error' };
     renderStories();
   }
 
@@ -3096,9 +3044,7 @@
         storiesState.pickerChoice.voice = newVoiceId;
         // Switching to a non-fun voice clears any previously chosen fun
         // style so a stale style can't silently carry over to Start.
-        var service = loadTtsService();
-        var voiceList = service === 'cloud' ? CLOUD_TTS_VOICES : TTS_VOICES;
-        var entry = voiceList.filter(function(v){ return v.id === newVoiceId; })[0];
+        var entry = TTS_VOICES.filter(function(v){ return v.id === newVoiceId; })[0];
         if (!entry || !entry.fun) storiesState.pickerChoice.funStyle = null;
         renderStories();
       };
@@ -3128,17 +3074,16 @@
         if (!s || !choice || !choice.voice) return;
         s.audioVoice = choice.voice;
         s.audioSpeed = choice.speed;
-        s.audioService = loadTtsService();
-        var voiceEntry = (s.audioService === 'cloud' ? CLOUD_TTS_VOICES : TTS_VOICES).filter(function(v){ return v.id === s.audioVoice; })[0];
+        var voiceEntry = TTS_VOICES.filter(function(v){ return v.id === s.audioVoice; })[0];
         var isFunChoice = !!(voiceEntry && voiceEntry.fun);
         if (isFunChoice && !choice.funStyle) return; // a style must be picked for fun voices
         s.audioFunStyle = isFunChoice ? choice.funStyle : null;
         saveStories(stories);
         storiesState.audioPickerFor = null;
-        // Must call ensureCloudAuthOrKey() synchronously right here (inside
-        // the click handler) — the Google sign-in popup it may open is only
-        // allowed by the browser directly off a user gesture like this click.
-        ensureCloudAuthOrKey(s.audioService).then(function(){
+        // Must call ensureGeminiKey() synchronously right here (inside the
+        // click handler) for consistency with the pattern used elsewhere,
+        // even though the Gemini key path never needs a popup.
+        ensureGeminiKey().then(function(){
           delete audioStatus[s.id];
           renderStories();
           startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
@@ -3153,7 +3098,7 @@
         var id = btn.getAttribute('data-audio-resume');
         var s = stories.filter(function(x){ return x.id === id; })[0];
         if (!s) return;
-        ensureCloudAuthOrKey(s.audioService || loadTtsService()).then(function(){
+        ensureGeminiKey().then(function(){
           delete audioStatus[s.id];
           renderStories();
           startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
@@ -3212,7 +3157,6 @@
           s.audioDone = 0;
           delete s.audioVoice;
           delete s.audioSpeed;
-          delete s.audioService;
           delete s.audioFunStyle;
           saveStories(stories);
           delete audioStatus[s.id];
@@ -3541,11 +3485,10 @@
 
   function buildAudioParamsLine(s){
     if (!s.audioVoice) return '';
-    var serviceLabel = t(s.audioService === 'cloud' ? 'audioServiceCloud' : 'audioServiceGemini');
-    var voiceLabel = voiceDisplayLabel(s.audioVoice, s.audioService);
+    var voiceLabel = voiceDisplayLabel(s.audioVoice);
     if (s.audioFunStyle) voiceLabel += ' 🎭 ' + funStyleLabel(s.audioFunStyle);
     var speedLabel = t(normalizeSpeedKey(s.audioSpeed) === 'slow' ? 'audioSpeedSlow' : 'audioSpeedNormal');
-    return '<div class="story-audio-params">' + esc(serviceLabel + ' · ' + voiceLabel + ' · ' + speedLabel) + '</div>';
+    return '<div class="story-audio-params">' + esc(voiceLabel + ' · ' + speedLabel) + '</div>';
   }
 
   function storyProgressLabel(s){
@@ -4521,6 +4464,112 @@
     return t('motivationDefault');
   }
 
+  // ---------- Stats calendar: one swipeable month, days heat-highlighted by
+  // how many cards were rated that day. Lives above the progress-distribution
+  // section on the Statistik tab. monthOffset is session-only (0 = current
+  // month, -1 = previous month, …), not persisted — always opens on today's
+  // month, matching the ephemeral "picker" state used elsewhere in the app. ----------
+  var calendarState = { monthOffset: 0 };
+  var CAL_LOCALE_MAP = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', es: 'es-ES' };
+  function calLocale(){
+    return CAL_LOCALE_MAP[(settings && settings.lang) || 'de'] || 'de-DE';
+  }
+  // Heat bucket for a day's count: 0 = no activity, 1-4 = light..heavy.
+  function calHeatBucket(count){
+    if (!count || count <= 0) return 0;
+    if (count < 5) return 1;
+    if (count < 10) return 2;
+    if (count < 20) return 3;
+    return 4;
+  }
+  function buildCalendarHtml(){
+    var counts = loadDailyCounts();
+    var legacyDays = {};
+    loadActivityDays().forEach(function(d){ legacyDays[d] = true; });
+    var now = new Date();
+    var base = new Date(now.getFullYear(), now.getMonth() + calendarState.monthOffset, 1);
+    var year = base.getFullYear();
+    var month = base.getMonth();
+    var monthTitle = base.toLocaleDateString(calLocale(), { month: 'long', year: 'numeric' });
+    var todayKey = dateKeyForYMD(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Monday-first weekday header, localized.
+    var weekdayFmt = new Intl.DateTimeFormat(calLocale(), { weekday: 'short' });
+    var weekdayLabels = [1,2,3,4,5,6,7].map(function(iso){
+      // 2024-01-01 is a Monday — a fixed, known-good anchor to read weekday names off.
+      return weekdayFmt.format(new Date(2024, 0, iso));
+    });
+    var weekdaysHtml = weekdayLabels.map(function(w){ return '<div class="cal-weekday">' + esc(w) + '</div>'; }).join('');
+
+    var firstOfMonth = new Date(year, month, 1);
+    var startWeekday = (firstOfMonth.getDay() + 6) % 7; // 0=Monday .. 6=Sunday
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    var cellsHtml = '';
+    for (var i = 0; i < startWeekday; i++) cellsHtml += '<div class="cal-day cal-day-empty"></div>';
+    for (var day = 1; day <= daysInMonth; day++) {
+      var key = dateKeyForYMD(year, month, day);
+      var count = counts[key] || 0;
+      var bucket = calHeatBucket(count);
+      if (bucket === 0 && legacyDays[key]) bucket = 1; // practiced before per-day counts existed: show a light mark
+      var isToday = key === todayKey;
+      var cls = 'cal-day cal-heat-' + bucket + (isToday ? ' cal-today' : '');
+      var titleAttr = count > 0 ? tf('calCardsTooltip', count) : t('calNoActivityTooltip');
+      cellsHtml +=
+        '<div class="' + cls + '" title="' + esc(titleAttr) + '">' +
+          '<span class="cal-day-num">' + day + '</span>' +
+          (count > 0 ? '<span class="cal-day-count">' + count + '</span>' : '') +
+        '</div>';
+    }
+
+    return (
+      '<div class="stats-section-title">' + esc(t('calSectionTitle')) + '</div>' +
+      '<div class="cal-widget" data-cal-widget>' +
+        '<div class="cal-header">' +
+          '<button class="cal-nav-btn" data-cal-prev aria-label="' + esc(t('calPrevMonth')) + '">‹</button>' +
+          '<div class="cal-title">' + esc(monthTitle) + '</div>' +
+          '<button class="cal-nav-btn" data-cal-next aria-label="' + esc(t('calNextMonth')) + '">›</button>' +
+          '<div class="cal-detail-icons">' +
+            '<button class="cal-icon-btn" title="' + esc(t('calDetailListTitle')) + '">📋</button>' +
+            '<button class="cal-icon-btn" title="' + esc(t('calDetailChartTitle')) + '">📈</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cal-weekdays">' + weekdaysHtml + '</div>' +
+        '<div class="cal-grid" data-cal-grid>' + cellsHtml + '</div>' +
+      '</div>'
+    );
+  }
+  function wireCalendarHandlers(root){
+    var widget = root.querySelector('[data-cal-widget]');
+    if (!widget) return;
+    var prevBtn = widget.querySelector('[data-cal-prev]');
+    var nextBtn = widget.querySelector('[data-cal-next]');
+    if (prevBtn) prevBtn.onclick = function(){ calendarState.monthOffset -= 1; renderStatsTab(); };
+    if (nextBtn) nextBtn.onclick = function(){ calendarState.monthOffset += 1; renderStatsTab(); };
+    // Basic horizontal-swipe support on the day grid: left = next month, right = previous.
+    var grid = widget.querySelector('[data-cal-grid]');
+    if (grid) {
+      var touchStartX = null, touchStartY = null;
+      grid.addEventListener('touchstart', function(e){
+        if (!e.touches || !e.touches.length) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+      grid.addEventListener('touchend', function(e){
+        if (touchStartX === null) return;
+        var endX = (e.changedTouches && e.changedTouches[0] && e.changedTouches[0].clientX) || touchStartX;
+        var endY = (e.changedTouches && e.changedTouches[0] && e.changedTouches[0].clientY) || touchStartY;
+        var dx = endX - touchStartX;
+        var dy = endY - touchStartY;
+        touchStartX = null; touchStartY = null;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          calendarState.monthOffset += (dx < 0 ? 1 : -1);
+          renderStatsTab();
+        }
+      }, { passive: true });
+    }
+  }
+
   function renderStatsTab(){
     var root = document.getElementById('statsPageView');
     if (!root) return;
@@ -4651,6 +4700,7 @@
           '<div class="stat-card"><div class="stat-value">' + mastered + '</div><div class="stat-label">' + esc(t('masteredLabel')) + '</div></div>' +
           '<div class="stat-card"><div class="stat-value">' + totalRatings + '</div><div class="stat-label">' + esc(t('totalRatingsLabelLocal')) + '</div></div>' +
         '</div>' +
+        buildCalendarHtml() +
         '<div class="stats-section-title">' + esc(t('distributionTitle')) + '</div>' +
         '<div class="level-dist-bar">' + barHtml + '</div>' +
         '<div class="level-dist-legend">' + legendHtml + '</div>' +
@@ -4659,6 +4709,7 @@
         freqHtml +
         storiesHtml +
       '</div>';
+    wireCalendarHandlers(root);
   }
 
   function esc(s){
@@ -4843,9 +4894,7 @@
     document.getElementById('exampleSizeVal').textContent = fonts.exampleSize + 'px';
     document.getElementById('inpGeminiKey').value = loadGeminiKey();
     document.getElementById('inpGeminiModel').value = loadGeminiModel();
-    document.getElementById('inpTtsService').value = loadTtsService();
     document.getElementById('inpTtsQuotaEnabled').checked = loadTtsQuotaEnabled();
-    updateCloudAuthUi();
     buildVoiceSelect();
     overlay.classList.add('show');
     drawer.classList.add('show');
@@ -4981,47 +5030,8 @@
     saveSettings(settings);
   };
 
-  document.getElementById('inpTtsService').onchange = function(e){
-    saveTtsService(e.target.value);
-    // switching service invalidates any in-progress voice/speed picker choice,
-    // since the two services have different voice catalogs
-    storiesState.pickerChoice = null;
-    updateCloudAuthUi();
-  };
-
   document.getElementById('inpTtsQuotaEnabled').onchange = function(e){
     saveTtsQuotaEnabled(e.target.checked);
-  };
-
-  // Shows the Cloud-TTS sign-in controls only while that service is selected,
-  // and reports whether we currently hold a valid (unexpired) access token.
-  function updateCloudAuthUi(){
-    var field = document.getElementById('cloudAuthField');
-    var status = document.getElementById('cloudAuthStatus');
-    if (!field || !status) return;
-    field.style.display = document.getElementById('inpTtsService').value === 'cloud' ? '' : 'none';
-    if (isCloudTokenValid()) {
-      var mins = Math.max(0, Math.round((cloudAuthState.expiresAt - Date.now()) / 60000));
-      status.textContent = tf('audioCloudSignedIn', mins);
-    } else {
-      status.textContent = t('audioCloudNotSignedIn');
-    }
-  }
-
-  document.getElementById('btnCloudSignIn').onclick = function(){
-    // Direct click handler — safe context for the Google sign-in popup.
-    ensureCloudToken().then(function(){
-      updateCloudAuthUi();
-    }).catch(function(err){
-      var status = document.getElementById('cloudAuthStatus');
-      var msg = err && err.message;
-      status.textContent = msg === 'gis-not-loaded' ? t('audioCloudGisError') : t('audioCloudAuthCancelled');
-    });
-  };
-
-  document.getElementById('btnCloudSignOut').onclick = function(){
-    signOutCloud();
-    updateCloudAuthUi();
   };
 
   document.getElementById('inpVoice').onchange = function(e){
