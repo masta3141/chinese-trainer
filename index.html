@@ -660,6 +660,114 @@
   .cal-heat-2 { background: color-mix(in srgb, var(--seal) 45%, var(--paper)); }
   .cal-heat-3 { background: color-mix(in srgb, var(--seal) 68%, var(--paper)); color: #fff; }
   .cal-heat-4 { background: var(--seal); color: #fff; }
+  .cal-icon-btn.active { opacity: 1; background: var(--hairline); }
+  .cal-detail-panel {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hairline);
+  }
+  .cal-detail-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .cal-detail-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .cal-detail-close {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    background: var(--paper);
+    color: var(--ink-faint);
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .cal-gran-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .cal-gran-btn {
+    flex: 1;
+    padding: 6px 0;
+    border-radius: 7px;
+    border: 1px solid var(--hairline);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .cal-gran-btn.selected {
+    background: var(--seal);
+    border-color: var(--seal);
+    color: #fff;
+  }
+  .cal-bars-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 120px;
+    overflow-x: auto;
+  }
+  .cal-bar-col {
+    flex: 1;
+    min-width: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+  }
+  .cal-bar-value {
+    font-size: 9px;
+    color: var(--ink-soft);
+    font-weight: 700;
+    margin-bottom: 2px;
+    white-space: nowrap;
+  }
+  .cal-bar-track {
+    width: 70%;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    background: var(--hairline);
+    border-radius: 3px 3px 0 0;
+    overflow: hidden;
+  }
+  .cal-bar-fill {
+    width: 100%;
+    background: var(--seal);
+    border-radius: 3px 3px 0 0;
+  }
+  .cal-bar-label {
+    font-size: 8px;
+    color: var(--ink-faint);
+    margin-top: 3px;
+    white-space: nowrap;
+  }
+  .cal-curve-svg {
+    width: 100%;
+    height: 130px;
+    display: block;
+  }
+  .cal-curve-ceiling {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    text-align: right;
+    margin-bottom: 2px;
+  }
+  .cal-curve-axis {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
   .hsk-progress-row {
     display: flex;
     align-items: center;
@@ -1587,7 +1695,11 @@
       totalRatingsLabelLocal: 'Karten & Sätze insgesamt beantwortet',
       totalRatingsLabelPub: 'Karten insgesamt beantwortet',
       calSectionTitle: 'Lernkalender', calPrevMonth: 'Vorheriger Monat', calNextMonth: 'Nächster Monat',
-      calDetailListTitle: 'Detaillierte Statistiken (Liste)', calDetailChartTitle: 'Detaillierte Statistiken (Diagramm)',
+      calDetailListTitle: 'Gelernte Karten (Balkendiagramm)', calDetailChartTitle: 'Gesamtfortschritt (Kurve)',
+      calBarsTitle: 'Gelernte Karten', calGranDay: 'Tag', calGranMonth: 'Monat', calGranYear: 'Jahr',
+      calBarsNoData: 'Noch keine Daten für diesen Zeitraum.',
+      calCurveTitle: 'Gesamtfortschritt', calCurveCeilingLabel: 'Ziel: {0} Wörter', calCloseDetail: 'Schließen',
+      calCurveEstimateNote: 'Geschätzter Verlauf: Vor dieser Statistik wurde nicht aufgezeichnet, wann genau einzelne Wörter gelernt wurden — die Kurve nähert sich daher der Vergangenheit nur an. Ab heute wächst sie exakt.',
       calCardsTooltip: '{0} Karten', calNoActivityTooltip: 'Keine Aktivität',
       distributionTitle: 'Fortschrittsverteilung',
       bandNotStarted: 'Nicht begonnen', bandStarted: 'Angefangen', bandOngoing: 'Im Gange', bandAdvanced: 'Fortgeschritten', bandMastered: 'Gemeistert',
@@ -1750,7 +1862,11 @@
       totalRatingsLabelLocal: 'Cards & sentences answered in total',
       totalRatingsLabelPub: 'Cards answered in total',
       calSectionTitle: 'Learning calendar', calPrevMonth: 'Previous month', calNextMonth: 'Next month',
-      calDetailListTitle: 'Detailed stats (list)', calDetailChartTitle: 'Detailed stats (chart)',
+      calDetailListTitle: 'Cards learned (bar chart)', calDetailChartTitle: 'Overall progress (curve)',
+      calBarsTitle: 'Cards learned', calGranDay: 'Day', calGranMonth: 'Month', calGranYear: 'Year',
+      calBarsNoData: 'No data yet for this period.',
+      calCurveTitle: 'Overall progress', calCurveCeilingLabel: 'Goal: {0} words', calCloseDetail: 'Close',
+      calCurveEstimateNote: 'Estimated timeline: before this statistic existed, exactly when each word was learned wasn\'t recorded — so the curve only approximates the past. From today on it grows exactly.',
       calCardsTooltip: '{0} cards', calNoActivityTooltip: 'No activity',
       distributionTitle: 'Progress distribution',
       bandNotStarted: 'Not started', bandStarted: 'Started', bandOngoing: 'In progress', bandAdvanced: 'Advanced', bandMastered: 'Mastered',
@@ -1913,7 +2029,11 @@
       totalRatingsLabelLocal: 'Cartes et phrases répondues au total',
       totalRatingsLabelPub: 'Cartes répondues au total',
       calSectionTitle: 'Calendrier d\'apprentissage', calPrevMonth: 'Mois précédent', calNextMonth: 'Mois suivant',
-      calDetailListTitle: 'Statistiques détaillées (liste)', calDetailChartTitle: 'Statistiques détaillées (graphique)',
+      calDetailListTitle: 'Cartes apprises (diagramme à barres)', calDetailChartTitle: 'Progression globale (courbe)',
+      calBarsTitle: 'Cartes apprises', calGranDay: 'Jour', calGranMonth: 'Mois', calGranYear: 'Année',
+      calBarsNoData: 'Pas encore de données pour cette période.',
+      calCurveTitle: 'Progression globale', calCurveCeilingLabel: 'Objectif : {0} mots', calCloseDetail: 'Fermer',
+      calCurveEstimateNote: 'Évolution estimée : avant cette statistique, la date exacte d\'apprentissage de chaque mot n\'était pas enregistrée — la courbe n\'est donc qu\'une approximation du passé. À partir d\'aujourd\'hui, elle progresse exactement.',
       calCardsTooltip: '{0} cartes', calNoActivityTooltip: 'Aucune activité',
       distributionTitle: 'Répartition de la progression',
       bandNotStarted: 'Pas commencé', bandStarted: 'Commencé', bandOngoing: 'En cours', bandAdvanced: 'Avancé', bandMastered: 'Maîtrisé',
@@ -2076,7 +2196,11 @@
       totalRatingsLabelLocal: 'Tarjetas y frases respondidas en total',
       totalRatingsLabelPub: 'Tarjetas respondidas en total',
       calSectionTitle: 'Calendario de aprendizaje', calPrevMonth: 'Mes anterior', calNextMonth: 'Mes siguiente',
-      calDetailListTitle: 'Estadísticas detalladas (lista)', calDetailChartTitle: 'Estadísticas detalladas (gráfico)',
+      calDetailListTitle: 'Tarjetas aprendidas (gráfico de barras)', calDetailChartTitle: 'Progreso general (curva)',
+      calBarsTitle: 'Tarjetas aprendidas', calGranDay: 'Día', calGranMonth: 'Mes', calGranYear: 'Año',
+      calBarsNoData: 'Aún no hay datos para este período.',
+      calCurveTitle: 'Progreso general', calCurveCeilingLabel: 'Meta: {0} palabras', calCloseDetail: 'Cerrar',
+      calCurveEstimateNote: 'Evolución estimada: antes de esta estadística no se registraba exactamente cuándo se aprendió cada palabra, así que la curva solo aproxima el pasado. A partir de hoy crece con exactitud.',
       calCardsTooltip: '{0} tarjetas', calNoActivityTooltip: 'Sin actividad',
       distributionTitle: 'Distribución del progreso',
       bandNotStarted: 'Sin empezar', bandStarted: 'Empezado', bandOngoing: 'En curso', bandAdvanced: 'Avanzado', bandMastered: 'Dominado',
@@ -4470,9 +4594,31 @@
   // month, -1 = previous month, …), not persisted — always opens on today's
   // month, matching the ephemeral "picker" state used elsewhere in the app. ----------
   var calendarState = { monthOffset: 0 };
+  // Which detail-stats panel (if any) is expanded below the calendar, plus the
+  // bar chart's granularity toggle. Session-only, like calendarState.
+  var statsDetailState = { open: null, barGranularity: 'day' }; // open: null | 'bars' | 'curve'
   var CAL_LOCALE_MAP = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', es: 'es-ES' };
   function calLocale(){
     return CAL_LOCALE_MAP[(settings && settings.lang) || 'de'] || 'de-DE';
+  }
+  // Same mastery bands as the "Fortschrittsverteilung" section, factored out
+  // so the progress curve chart uses exactly the same categorization/colors.
+  function computeMasteryBands(){
+    var fw = WORDS;
+    var bandsDef = [
+      { key: 'notStarted', label: t('bandNotStarted'), min: 0, max: 0, color: 'var(--hairline)' },
+      { key: 'started', label: t('bandStarted'), min: 1, max: 24, color: levelToColor(12) },
+      { key: 'ongoing', label: t('bandOngoing'), min: 25, max: 49, color: levelToColor(37) },
+      { key: 'advanced', label: t('bandAdvanced'), min: 50, max: 74, color: levelToColor(62) },
+      { key: 'mastered', label: t('bandMastered'), min: 75, max: 100, color: levelToColor(90) }
+    ];
+    var counts = bandsDef.map(function(b){
+      return fw.filter(function(w){
+        var lvl = (progress[w.id] && progress[w.id].lvl) || 0;
+        return lvl >= b.min && lvl <= b.max;
+      }).length;
+    });
+    return { bands: bandsDef, counts: counts, total: fw.length };
   }
   // Heat bucket for a day's count: 0 = no activity, 1-4 = light..heavy.
   function calHeatBucket(count){
@@ -4530,14 +4676,182 @@
           '<div class="cal-title">' + esc(monthTitle) + '</div>' +
           '<button class="cal-nav-btn" data-cal-next aria-label="' + esc(t('calNextMonth')) + '">›</button>' +
           '<div class="cal-detail-icons">' +
-            '<button class="cal-icon-btn" title="' + esc(t('calDetailListTitle')) + '">📋</button>' +
-            '<button class="cal-icon-btn" title="' + esc(t('calDetailChartTitle')) + '">📈</button>' +
+            '<button class="cal-icon-btn' + (statsDetailState.open === 'bars' ? ' active' : '') + '" data-cal-icon="bars" title="' + esc(t('calDetailListTitle')) + '">📊</button>' +
+            '<button class="cal-icon-btn' + (statsDetailState.open === 'curve' ? ' active' : '') + '" data-cal-icon="curve" title="' + esc(t('calDetailChartTitle')) + '">📈</button>' +
           '</div>' +
         '</div>' +
         '<div class="cal-weekdays">' + weekdaysHtml + '</div>' +
         '<div class="cal-grid" data-cal-grid>' + cellsHtml + '</div>' +
+        buildStatsDetailHtml() +
       '</div>'
     );
+  }
+
+  // ---------- Detail-stats panels opened from the calendar's 2 icons ----------
+  function aggregateDailyCounts(granularity){
+    var counts = loadDailyCounts();
+    var now = new Date();
+    var labelFmt, buckets = [];
+    if (granularity === 'month') {
+      var monthFmt = new Intl.DateTimeFormat(calLocale(), { month: 'short' });
+      for (var m = 11; m >= 0; m--) {
+        var d = new Date(now.getFullYear(), now.getMonth() - m, 1);
+        var prefix = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        var sum = 0;
+        Object.keys(counts).forEach(function(k){ if (k.indexOf(prefix) === 0) sum += counts[k]; });
+        buckets.push({ label: monthFmt.format(d), value: sum });
+      }
+    } else if (granularity === 'year') {
+      var years = {};
+      Object.keys(counts).forEach(function(k){ years[k.slice(0, 4)] = true; });
+      years[String(now.getFullYear())] = true;
+      Object.keys(years).sort().forEach(function(y){
+        var sum = 0;
+        Object.keys(counts).forEach(function(k){ if (k.indexOf(y) === 0) sum += counts[k]; });
+        buckets.push({ label: y, value: sum });
+      });
+    } else { // 'day' — last 14 days including today
+      var dayFmt = new Intl.DateTimeFormat(calLocale(), { day: 'numeric', month: 'numeric' });
+      for (var i = 13; i >= 0; i--) {
+        var dd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        var key = dateKeyForYMD(dd.getFullYear(), dd.getMonth(), dd.getDate());
+        buckets.push({ label: dayFmt.format(dd), value: counts[key] || 0 });
+      }
+    }
+    return buckets;
+  }
+  function buildBarsDetailHtml(){
+    var buckets = aggregateDailyCounts(statsDetailState.barGranularity);
+    var max = Math.max.apply(null, buckets.map(function(b){ return b.value; }).concat([1]));
+    var hasAny = buckets.some(function(b){ return b.value > 0; });
+    var barsHtml = buckets.map(function(b){
+      var pct = Math.max(2, Math.round(b.value / max * 100));
+      return (
+        '<div class="cal-bar-col">' +
+          '<div class="cal-bar-value">' + (b.value > 0 ? b.value : '') + '</div>' +
+          '<div class="cal-bar-track"><div class="cal-bar-fill" style="height:' + pct + '%;"></div></div>' +
+          '<div class="cal-bar-label">' + esc(b.label) + '</div>' +
+        '</div>'
+      );
+    }).join('');
+    var granOpts = ['day', 'month', 'year'].map(function(g){
+      var lbl = g === 'day' ? t('calGranDay') : (g === 'month' ? t('calGranMonth') : t('calGranYear'));
+      return '<button class="cal-gran-btn' + (statsDetailState.barGranularity === g ? ' selected' : '') + '" data-cal-gran="' + g + '">' + esc(lbl) + '</button>';
+    }).join('');
+    return (
+      '<div class="cal-detail-panel">' +
+        '<div class="cal-detail-head">' +
+          '<span class="cal-detail-title">' + esc(t('calBarsTitle')) + '</span>' +
+          '<button class="cal-detail-close" data-cal-close aria-label="' + esc(t('calCloseDetail')) + '">✕</button>' +
+        '</div>' +
+        '<div class="cal-gran-row">' + granOpts + '</div>' +
+        (hasAny
+          ? '<div class="cal-bars-row">' + barsHtml + '</div>'
+          : '<div class="empty-note" style="padding:10px 0;">' + esc(t('calBarsNoData')) + '</div>') +
+      '</div>'
+    );
+  }
+  function buildEstimatedProgressSeries(){
+    var counts = loadDailyCounts();
+    var allKeys = {};
+    loadActivityDays().forEach(function(d){ allKeys[d] = true; });
+    Object.keys(counts).forEach(function(d){ allKeys[d] = true; });
+    var today = todayStr();
+    allKeys[today] = true;
+    var sortedDays = Object.keys(allKeys).sort();
+    var weights = sortedDays.map(function(d){ return counts[d] || 1; });
+    var totalWeight = weights.reduce(function(a, b){ return a + b; }, 0) || 1;
+    var mastery = computeMasteryBands();
+    var learnedTotal = mastery.counts[1] + mastery.counts[2] + mastery.counts[3] + mastery.counts[4];
+    var cum = 0;
+    var series = sortedDays.map(function(d, i){
+      cum += weights[i];
+      return { date: d, value: Math.round(learnedTotal * cum / totalWeight) };
+    });
+    if (series.length) series[series.length - 1].value = learnedTotal; // exact today, no rounding drift
+    return { series: series, ceiling: mastery.total, mastery: mastery, learnedTotal: learnedTotal };
+  }
+  function buildCurveDetailHtml(){
+    var data = buildEstimatedProgressSeries();
+    var W = 300, H = 130, PAD_L = 4, PAD_R = 4, PAD_T = 6, PAD_B = 6;
+    var innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
+    var ceiling = data.ceiling || 1;
+    function yFor(v){ return PAD_T + innerH - (Math.max(0, Math.min(v, ceiling)) / ceiling) * innerH; }
+    var n = data.series.length;
+    function xFor(i){ return n <= 1 ? PAD_L : PAD_L + (i / (n - 1)) * innerW; }
+    var linePts = data.series.map(function(p, i){ return xFor(i) + ',' + yFor(p.value); }).join(' ');
+    var areaPts = linePts + ' ' + xFor(n - 1) + ',' + (PAD_T + innerH) + ' ' + xFor(0) + ',' + (PAD_T + innerH);
+
+    // Horizontal color bands under the curve, sized by TODAY's mastery composition
+    // (started/ongoing/advanced/mastered) — not a per-day historical breakdown,
+    // which isn't tracked, but the current proportional split, clipped to the
+    // area under the growth curve.
+    var m = data.mastery;
+    var cumStarted = m.counts[1];
+    var cumOngoing = cumStarted + m.counts[2];
+    var cumAdvanced = cumOngoing + m.counts[3];
+    var cumMastered = cumAdvanced + m.counts[4]; // === data.learnedTotal
+    var bandStops = [
+      { from: 0, to: cumStarted, color: m.bands[1].color },
+      { from: cumStarted, to: cumOngoing, color: m.bands[2].color },
+      { from: cumOngoing, to: cumAdvanced, color: m.bands[3].color },
+      { from: cumAdvanced, to: cumMastered, color: m.bands[4].color }
+    ];
+    var clipId = 'calCurveClip';
+    var bandRectsHtml = bandStops.map(function(b){
+      if (b.to <= b.from) return '';
+      var yTop = yFor(b.to), yBot = yFor(b.from);
+      return '<rect x="' + PAD_L + '" y="' + yTop + '" width="' + innerW + '" height="' + Math.max(0, yBot - yTop) + '" fill="' + b.color + '" clip-path="url(#' + clipId + ')"></rect>';
+    }).join('');
+    var ceilingY = yFor(ceiling);
+    var todayLabel = data.series.length ? new Date(data.series[data.series.length - 1].date).toLocaleDateString(calLocale(), { day: 'numeric', month: 'short' }) : '';
+    var startLabel = data.series.length ? new Date(data.series[0].date).toLocaleDateString(calLocale(), { day: 'numeric', month: 'short' }) : '';
+
+    var svg =
+      '<svg class="cal-curve-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+        '<defs><clipPath id="' + clipId + '"><polygon points="' + areaPts + '"></polygon></clipPath></defs>' +
+        '<rect x="' + PAD_L + '" y="' + PAD_T + '" width="' + innerW + '" height="' + innerH + '" fill="var(--hairline)" opacity="0.35"></rect>' +
+        bandRectsHtml +
+        '<line x1="' + PAD_L + '" y1="' + ceilingY + '" x2="' + (PAD_L + innerW) + '" y2="' + ceilingY + '" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="3,3"></line>' +
+        '<polyline points="' + linePts + '" fill="none" stroke="var(--ink)" stroke-width="2"></polyline>' +
+      '</svg>';
+
+    return (
+      '<div class="cal-detail-panel">' +
+        '<div class="cal-detail-head">' +
+          '<span class="cal-detail-title">' + esc(t('calCurveTitle')) + '</span>' +
+          '<button class="cal-detail-close" data-cal-close aria-label="' + esc(t('calCloseDetail')) + '">✕</button>' +
+        '</div>' +
+        '<div class="cal-curve-ceiling">' + esc(tf('calCurveCeilingLabel', ceiling)) + '</div>' +
+        svg +
+        '<div class="cal-curve-axis"><span>' + esc(startLabel) + '</span><span>' + esc(todayLabel) + '</span></div>' +
+        '<p class="drawer-note" style="margin-top:6px;">' + esc(t('calCurveEstimateNote')) + '</p>' +
+      '</div>'
+    );
+  }
+  function buildStatsDetailHtml(){
+    if (statsDetailState.open === 'bars') return buildBarsDetailHtml();
+    if (statsDetailState.open === 'curve') return buildCurveDetailHtml();
+    return '';
+  }
+  function wireStatsDetailHandlers(root){
+    var widget = root.querySelector('[data-cal-widget]');
+    if (!widget) return;
+    Array.prototype.forEach.call(widget.querySelectorAll('[data-cal-icon]'), function(btn){
+      btn.onclick = function(){
+        var which = btn.getAttribute('data-cal-icon');
+        statsDetailState.open = (statsDetailState.open === which) ? null : which;
+        renderStatsTab();
+      };
+    });
+    var closeBtn = widget.querySelector('[data-cal-close]');
+    if (closeBtn) closeBtn.onclick = function(){ statsDetailState.open = null; renderStatsTab(); };
+    Array.prototype.forEach.call(widget.querySelectorAll('[data-cal-gran]'), function(btn){
+      btn.onclick = function(){
+        statsDetailState.barGranularity = btn.getAttribute('data-cal-gran');
+        renderStatsTab();
+      };
+    });
   }
   function wireCalendarHandlers(root){
     var widget = root.querySelector('[data-cal-widget]');
@@ -4710,6 +5024,7 @@
         storiesHtml +
       '</div>';
     wireCalendarHandlers(root);
+    wireStatsDetailHandlers(root);
   }
 
   function esc(s){
