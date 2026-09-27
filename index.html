@@ -14,6 +14,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Ma+Shan+Zheng&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Pure-JS MP3 encoder, used only when downloading a narrated recording (see
+     buildRecordingMp3Blob below) — playback itself never needs this. If it
+     fails to load (offline, blocked), downloads fall back to WAV. -->
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js" defer></script>
 <style>
   :root {
     --paper: #efe8d8;
@@ -371,6 +375,8 @@
     gap: 12px;
   }
   .story-card:hover { border-color: var(--ink-faint); }
+  .audio-rec-playing { border-color: var(--seal); }
+  .audio-rec-check { width: 17px; height: 17px; margin-top: 2px; flex: 0 0 auto; cursor: pointer; }
   .story-card .story-title {
     font-family: var(--hanzi-font);
     font-size: 17px;
@@ -2790,12 +2796,12 @@
     if (sp === '1') return 'normal';
     return 'slow'; // '0.5', '0.75', or unset
   }
-  // Quota pacing: a "batch" of TTS_BATCH_SIZE sentence-generations is allowed
-  // back-to-back, then a mandatory TTS_BATCH_PAUSE_MS pause before the next
-  // batch — comfortably under Gemini's real per-minute quota. TTS_MAX_PER_DAY
-  // is a separate, always-on rolling 24h cap.
-  var TTS_BATCH_SIZE = 2;
-  var TTS_BATCH_PAUSE_MS = 2 * 60 * 1000; // 2 minutes
+  // Quota pacing: exactly one TTS generation (title or sentence) is allowed at
+  // a time, then a mandatory TTS_BATCH_PAUSE_MS pause before the next one —
+  // comfortably under Gemini's real per-minute quota (no more back-to-back
+  // bursts). TTS_MAX_PER_DAY is a separate, always-on rolling 24h cap.
+  var TTS_BATCH_SIZE = 1;
+  var TTS_BATCH_PAUSE_MS = 5 * 1000; // 5 seconds between every single generation call
   var TTS_MAX_PER_DAY = 8; // rolling 24h window, not a midnight reset
   var TTS_LOG_KEY = 'hskflash_tts_call_log_v1';
   var TTS_BATCH_KEY = 'hskflash_tts_batch_v1';
@@ -2939,10 +2945,9 @@
     });
   }
 
-  // ---- Rate limiter: a batch of TTS_BATCH_SIZE calls back-to-back, then a
-  // mandatory TTS_BATCH_PAUSE_MS pause, plus a max of TTS_MAX_PER_DAY calls
-  // per rolling 24h window — shared globally across all stories since it
-  // tracks the same API key. ----
+  // ---- Rate limiter: a mandatory TTS_BATCH_PAUSE_MS pause after every single
+  // call, plus a max of TTS_MAX_PER_DAY calls per rolling 24h window — shared
+  // globally across all stories/recordings since it tracks the same API key. ----
   function loadTtsLog(){
     try { return JSON.parse(localStorage.getItem(TTS_LOG_KEY)) || []; } catch(e) { return []; }
   }
@@ -3377,7 +3382,10 @@
   // Builds a full WAV Blob for a recording (title clip + gap + each sentence,
   // gapped) from whatever has been generated so far — works with a partially
   // completed recording, same contiguous-prefix approach as downloadStoryAudio.
-  function buildRecordingAudioBlob(rec){
+  // Gathers the raw PCM chunks (title clip + gapped sentences) for a
+  // recording — the shared groundwork behind both the WAV blob used for
+  // playback and the MP3 blob used for downloads.
+  function collectRecordingPcm(rec){
     var chunks = [];
     var fmt = { channels: 1, sampleRate: 24000, bitsPerSample: 16 };
     return idbGet(rec.id + ':title').then(function(titleVal){
@@ -3398,7 +3406,59 @@
       }
       return next();
     }).then(function(){
-      return buildWavBlob(chunks, fmt);
+      return { chunks: chunks, fmt: fmt };
+    });
+  }
+
+  function buildRecordingAudioBlob(rec){
+    return collectRecordingPcm(rec).then(function(res){
+      return buildWavBlob(res.chunks, res.fmt);
+    });
+  }
+
+  // Reads a little-endian 16-bit PCM byte buffer into an Int16Array, the
+  // sample format lamejs expects.
+  function pcmBytesToInt16Array(pcmBytes){
+    var n = Math.floor(pcmBytes.length / 2);
+    var out = new Int16Array(n);
+    var dv = new DataView(pcmBytes.buffer, pcmBytes.byteOffset, pcmBytes.byteLength);
+    for (var i = 0; i < n; i++) out[i] = dv.getInt16(i * 2, true);
+    return out;
+  }
+
+  var MP3_BITRATE_KBPS = 96; // plenty for spoken-word narration, ~6x smaller than the WAV
+
+  function encodePcmToMp3(samples, sampleRate, channels){
+    var encoder = new lamejs.Mp3Encoder(channels || 1, sampleRate, MP3_BITRATE_KBPS);
+    var blockSize = 1152; // lamejs's fixed per-frame sample count
+    var mp3Chunks = [];
+    for (var i = 0; i < samples.length; i += blockSize) {
+      var mp3buf = encoder.encodeBuffer(samples.subarray(i, i + blockSize));
+      if (mp3buf.length > 0) mp3Chunks.push(mp3buf);
+    }
+    var end = encoder.flush();
+    if (end.length > 0) mp3Chunks.push(end);
+    return new Blob(mp3Chunks, { type: 'audio/mpeg' });
+  }
+
+  // Builds a compressed MP3 download for a recording. Falls back to WAV
+  // (resolving with ext:'wav') if the lamejs encoder didn't load — e.g. the
+  // CDN script was blocked or the page is offline without it cached —
+  // so a download always succeeds, just uncompressed in that rare case.
+  function buildRecordingDownloadBlob(rec){
+    if (typeof lamejs === 'undefined' || !lamejs.Mp3Encoder) {
+      return buildRecordingAudioBlob(rec).then(function(blob){ return { blob: blob, ext: 'wav' }; });
+    }
+    return collectRecordingPcm(rec).then(function(res){
+      var totalLen = res.chunks.reduce(function(sum, c){ return sum + c.length; }, 0);
+      var pcmAll = new Uint8Array(totalLen);
+      var offset = 0;
+      res.chunks.forEach(function(c){ pcmAll.set(c, offset); offset += c.length; });
+      var samples = pcmBytesToInt16Array(pcmAll);
+      var blob = encodePcmToMp3(samples, res.fmt.sampleRate, res.fmt.channels);
+      return { blob: blob, ext: 'mp3' };
+    }).catch(function(){
+      return buildRecordingAudioBlob(rec).then(function(blob){ return { blob: blob, ext: 'wav' }; });
     });
   }
 
@@ -3572,13 +3632,25 @@
   }
 
   function updateTabsAndDots(view){
+    var activeTabEl = null;
     ['tabGrid', 'tabCards', 'tabStories', 'tabIslands', 'tabStats', 'tabAudio'].forEach(function(id, i){
       var el = document.getElementById(id);
-      if (el) el.classList.toggle('active', PAGE_NAMES[i] === view);
+      if (!el) return;
+      var isActive = PAGE_NAMES[i] === view;
+      el.classList.toggle('active', isActive);
+      if (isActive) activeTabEl = el;
     });
     Array.prototype.forEach.call(document.querySelectorAll('.swipe-dots .sdot'), function(dot){
       dot.classList.toggle('on', dot.getAttribute('data-dot') === String(PAGE_NAMES.indexOf(view)));
     });
+    // The tab bar itself scrolls horizontally (more tabs than fit on a phone
+    // screen) — without this it stays wherever the user last scrolled it, so
+    // swiping to a page like "Audio" can leave its own tab out of view even
+    // though the content is showing. Keep the active tab scrolled into view
+    // whenever the page changes, whether via tab tap or carousel swipe.
+    if (activeTabEl && activeTabEl.scrollIntoView) {
+      activeTabEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
   }
 
   function applyCarouselTransform(){
@@ -5094,21 +5166,33 @@
 
   if (audioPlayerEl) {
     audioPlayerEl.onended = function(){ advancePlayback(); };
-  }
-
-  // Starts playing `id`, then continues through the rest of `orderedIds`
-  // (the currently displayed list order) — satisfies "play several entries
-  // back to back" without any extra multi-select UI.
-  function playRecordingFrom(id, orderedIds){
-    var idx = orderedIds.indexOf(id);
-    if (idx === -1) return;
-    playbackState.queue = orderedIds.slice(idx);
-    playbackState.index = 0;
-    playCurrentInQueue();
+    // Keep the Audio tab's top play/pause button in sync even when playback
+    // is paused/resumed from outside the tab (lock screen, headset button,
+    // Media Session handlers).
+    audioPlayerEl.onplay = function(){ safeRenderAudioTab(); };
+    audioPlayerEl.onpause = function(){ safeRenderAudioTab(); };
   }
 
   function recordingMeta(rec){
     return (rec.hsk ? hskLabel(rec.hsk) : 'HSK') + ' · ' + tf('storiesSentencesCount', rec.sentences.length);
+  }
+
+  // Which completed recordings are checked for the "play checked entries
+  // back to back" playlist, keyed by recording id. Not persisted — a fresh
+  // session simply starts with everything checked (the common case: play
+  // everything). Session-only, like the other transient UI state above.
+  var audioTabChecked = {};
+  function isRecChecked(id){ return audioTabChecked[id] !== false; }
+
+  function playCheckedRecordings(orderedIds, list){
+    var checkedIds = orderedIds.filter(function(id){
+      var rec = list.filter(function(r){ return r.id === id; })[0];
+      return rec && rec.done >= rec.totalSteps && isRecChecked(id);
+    });
+    if (!checkedIds.length) return;
+    playbackState.queue = checkedIds;
+    playbackState.index = 0;
+    playCurrentInQueue();
   }
 
   function renderAudioTab(){
@@ -5116,6 +5200,8 @@
     if (!root) return;
     var list = recordings.slice().reverse(); // newest first
     var orderedIds = list.map(function(r){ return r.id; });
+    var isPlaybackActive = playbackState.index >= 0 && playbackState.queue.length > 0;
+    var isPaused = isPlaybackActive && audioPlayerEl && audioPlayerEl.paused;
 
     var itemsHtml = list.length
       ? list.map(function(rec){
@@ -5150,41 +5236,51 @@
           } else {
             actionsHtml =
               '<div class="story-audio-row" data-id="' + rec.id + '">' +
-                '<button class="audio-mini-btn hint-btn' + (isPlaying ? ' on' : '') + '" data-rec-play="' + rec.id + '" title="' + esc(t(isPlaying ? 'audioPauseTitle' : 'audioPlayTitle')) + '">' + (isPlaying ? '⏸' : '▶') + '</button>' +
                 '<button class="audio-mini-btn hint-btn" data-rec-download="' + rec.id + '" title="' + esc(t('audioDownloadTitle')) + '">⬇</button>' +
                 '<button class="audio-mini-btn hint-btn" data-rec-delete="' + rec.id + '" title="' + esc(t('audioDeleteTitle')) + '">✕</button>' +
               '</div>' +
               (isPlaying ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(t('audioPlayingNote')) + '</div>' : '');
           }
 
-          return '<div class="story-card" data-id="' + rec.id + '">' +
-            '<div class="story-card-toprow"><div>' +
-              '<div class="story-title-en" style="font-size:15px;font-weight:600;">' + esc(rec.titleE) + '</div>' +
-              '<div class="story-meta">' + subLine + '</div>' +
+          var checkboxHtml = complete
+            ? '<input type="checkbox" class="audio-rec-check" data-rec-check="' + rec.id + '"' + (isRecChecked(rec.id) ? ' checked' : '') + '>'
+            : '<span style="width:16px;display:inline-block;"></span>';
+
+          return '<div class="story-card' + (isPlaying ? ' audio-rec-playing' : '') + '" style="cursor:default;" data-id="' + rec.id + '">' +
+            '<div class="story-card-toprow"><div style="display:flex;align-items:flex-start;gap:10px;">' +
+              checkboxHtml +
+              '<div><div class="story-title-en" style="font-size:15px;font-weight:600;">' + esc(rec.titleE) + '</div>' +
+              '<div class="story-meta">' + subLine + '</div></div>' +
             '</div></div>' +
             actionsHtml +
           '</div>';
         }).join('')
       : '<div class="empty-note">' + esc(t('audioTabEmpty')) + '</div>';
 
+    var anyPlayable = list.some(function(r){ return r.done >= r.totalSteps; });
+    var playAllIcon = isPlaybackActive ? (isPaused ? '▶' : '⏸') : '▶';
+    var playAllTitle = isPlaybackActive ? (isPaused ? t('audioPlayTitle') : t('audioPauseTitle')) : t('audioPlayTitle');
+
     root.innerHTML = '<div class="stories-wrap">' +
-      '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">' + esc(t('tabAudio')) + '</h2></div>' +
+      '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">' + esc(t('tabAudio')) + '</h2>' +
+        '<button class="btn-primary" id="audioPlayAllBtn" title="' + esc(playAllTitle) + '" style="padding:9px 18px;font-size:15px;"' + (anyPlayable ? '' : ' disabled') + '>' + playAllIcon + '</button></div>' +
       itemsHtml +
     '</div>';
 
-    Array.prototype.forEach.call(root.querySelectorAll('[data-rec-play]'), function(btn){
-      btn.onclick = function(){
-        var id = btn.getAttribute('data-rec-play');
-        var isPlayingThis = playbackState.index >= 0 && playbackState.queue[playbackState.index] === id;
-        if (isPlayingThis) {
-          audioPlayerEl.pause();
-          safeRenderAudioTab();
-        } else if (playbackState.queue.indexOf(id) !== -1 && audioPlayerEl.src) {
-          audioPlayerEl.play();
+    var playAllBtn = document.getElementById('audioPlayAllBtn');
+    if (playAllBtn) {
+      playAllBtn.onclick = function(){
+        if (isPlaybackActive) {
+          if (isPaused) audioPlayerEl.play(); else audioPlayerEl.pause();
           safeRenderAudioTab();
         } else {
-          playRecordingFrom(id, orderedIds);
+          playCheckedRecordings(orderedIds, list);
         }
+      };
+    }
+    Array.prototype.forEach.call(root.querySelectorAll('[data-rec-check]'), function(box){
+      box.onchange = function(){
+        audioTabChecked[box.getAttribute('data-rec-check')] = box.checked;
       };
     });
     Array.prototype.forEach.call(root.querySelectorAll('[data-rec-download]'), function(btn){
@@ -5192,12 +5288,12 @@
         var id = btn.getAttribute('data-rec-download');
         var rec = recordings.filter(function(r){ return r.id === id; })[0];
         if (!rec) return;
-        buildRecordingAudioBlob(rec).then(function(blob){
-          var url = URL.createObjectURL(blob);
+        buildRecordingDownloadBlob(rec).then(function(res){
+          var url = URL.createObjectURL(res.blob);
           var a = document.createElement('a');
           var safeName = rec.titleH.replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'story';
           a.href = url;
-          a.download = 'hskflash-' + safeName + '.wav';
+          a.download = 'hskflash-' + safeName + '.' + res.ext;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
