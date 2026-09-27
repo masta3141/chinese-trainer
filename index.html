@@ -1454,8 +1454,9 @@
     <div class="field" style="margin-top:18px;">
       <label class="hsk-check" style="width:100%;justify-content:flex-start;">
         <input type="checkbox" id="inpTtsQuotaEnabled">
-        <span data-i18n="audioQuotaEnabledLabel">Kontingent-Begrenzung aktiv (2 Sätze, dann 2 Min. Pause; 8/Tag)</span>
+        <span data-i18n="audioQuotaEnabledLabel">Tageslimit aktiv (max. 8 Aufnahmen / 24 Std.)</span>
       </label>
+      <p class="drawer-note" data-i18n="audioQuotaHint">Zwischen je zwei Sätzen wird immer automatisch 7 Sekunden gewartet (unabhängig von diesem Häkchen), um Geminis Minutenlimit einzuhalten.</p>
     </div>
   </div>
 </div>
@@ -1677,6 +1678,7 @@
       storiesNarrateBtn: '🎧 Erzählen', storiesStopBtn: '⏹ Stopp',
       audioStartBtn: 'Starten', audioCancelBtn: 'Abbrechen', audioPickVoice: 'Stimme', audioPickSpeed: 'Tempo',
       audioDownloadTitle: 'Audio herunterladen', audioBlockedUntil: 'Tageslimit erreicht — weiter ab {0} Uhr', audioErrorPrefix: 'Fehler: ',
+      audioFailedShort: 'Fehlgeschlagen',
       audioDownloadedNote: 'Heruntergeladen ✓', audioResetTitle: 'Zurücksetzen (andere Stimme/Geschwindigkeit wählen)',
       audioResetConfirm: 'Bisher erzeugtes Audio für diese Geschichte löschen und neu mit anderen Optionen starten?',
       audioVoiceMale: 'männlich', audioVoiceFemale: 'weiblich',
@@ -1686,11 +1688,13 @@
       audioTabEmpty: 'Noch keine Aufnahmen. Vertone eine Geschichte im Tab „Geschichten“.',
       audioPlayTitle: 'Abspielen', audioPauseTitle: 'Pause', audioDeleteTitle: 'Löschen',
       audioDeleteConfirm: 'Diese Aufnahme wirklich löschen?', audioResumeTitle: 'Fortsetzen', audioPlayingNote: 'Wird abgespielt …',
+      audioStopTitle: 'Stopp', audioPausedNote: 'Pausiert',
       funStyle_villain: 'Bösewicht', funStyle_radio: 'Radio-DJ', funStyle_raspy: 'Heiser', funStyle_sick: 'Verschnupft',
       funStyle_whisper: 'Flüstern', funStyle_gameshow: 'Show-Master', funStyle_posh: 'Adelig', funStyle_sleepy: 'Schläfrig',
       funStyle_robot: 'Roboter', funStyle_nervous: 'Nervös', funStyle_trailer: 'Trailer', funStyle_supervillain: 'Superschurke',
       funStyle_lovestruck: 'Verliebt', funStyle_sergeant: 'Feldwebel',
-      audioQuotaEnabledLabel: 'Kontingent-Begrenzung aktiv (2 Sätze, dann 2 Min. Pause; 8/Tag)',
+      audioQuotaEnabledLabel: 'Tageslimit aktiv (max. 8 Aufnahmen / 24 Std.)',
+      audioQuotaHint: 'Zwischen je zwei Sätzen wird immer automatisch 7 Sekunden gewartet (unabhängig von diesem Häkchen), um Geminis Minutenlimit einzuhalten.',
       audioSpeedSlow: 'Langsam', audioSpeedNormal: 'Normal',
       storiesUnderstandNo: 'Verstehe nicht', storiesUnderstandHalf: 'Halbwegs', storiesUnderstandYes: 'Gut',
       storiesPinyinShow: 'Pinyin zeigen', storiesPinyinHide: 'Pinyin ausblenden',
@@ -1849,6 +1853,7 @@
       storiesNarrateBtn: '🎧 Narrate', storiesStopBtn: '⏹ Stop',
       audioStartBtn: 'Start', audioCancelBtn: 'Cancel', audioPickVoice: 'Voice', audioPickSpeed: 'Speed',
       audioDownloadTitle: 'Download audio', audioBlockedUntil: 'Daily limit reached — resumes at {0}', audioErrorPrefix: 'Error: ',
+      audioFailedShort: 'Failed',
       audioDownloadedNote: 'Downloaded ✓', audioResetTitle: 'Reset (choose a different voice/speed)',
       audioResetConfirm: 'Delete the audio generated so far for this story and start over with different options?',
       audioVoiceMale: 'male', audioVoiceFemale: 'female',
@@ -1858,11 +1863,13 @@
       audioTabEmpty: 'No recordings yet. Narrate a story in the Stories tab.',
       audioPlayTitle: 'Play', audioPauseTitle: 'Pause', audioDeleteTitle: 'Delete',
       audioDeleteConfirm: 'Delete this recording?', audioResumeTitle: 'Resume', audioPlayingNote: 'Playing…',
+      audioStopTitle: 'Stop', audioPausedNote: 'Paused',
       funStyle_villain: 'Villain', funStyle_radio: 'Radio DJ', funStyle_raspy: 'Raspy', funStyle_sick: 'Stuffy',
       funStyle_whisper: 'Whisper', funStyle_gameshow: 'Game Host', funStyle_posh: 'Posh', funStyle_sleepy: 'Sleepy',
       funStyle_robot: 'Robot', funStyle_nervous: 'Nervous', funStyle_trailer: 'Trailer', funStyle_supervillain: 'Supervillain',
       funStyle_lovestruck: 'Smitten', funStyle_sergeant: 'Sergeant',
-      audioQuotaEnabledLabel: 'Quota limit enabled (2 sentences, then a 2-min. pause; 8/day)',
+      audioQuotaEnabledLabel: 'Daily limit enabled (max. 8 recordings / 24h)',
+      audioQuotaHint: 'A 7-second pause is always applied automatically between every two sentences (regardless of this checkbox) to stay within Gemini\'s per-minute limit.',
       audioSpeedSlow: 'Slow', audioSpeedNormal: 'Normal',
       storiesUnderstandNo: 'Don\'t understand', storiesUnderstandHalf: 'Partly', storiesUnderstandYes: 'Understand',
       storiesPinyinShow: 'Show pinyin', storiesPinyinHide: 'Hide pinyin',
@@ -2020,6 +2027,7 @@
       storiesNarrateBtn: '🎧 Raconter', storiesStopBtn: '⏹ Arrêter',
       audioStartBtn: 'Démarrer', audioCancelBtn: 'Annuler', audioPickVoice: 'Voix', audioPickSpeed: 'Vitesse',
       audioDownloadTitle: 'Télécharger l\'audio', audioBlockedUntil: 'Limite quotidienne atteinte — reprise à {0}', audioErrorPrefix: 'Erreur : ',
+      audioFailedShort: 'Échec',
       audioDownloadedNote: 'Téléchargé ✓', audioResetTitle: 'Réinitialiser (choisir une autre voix/vitesse)',
       audioResetConfirm: 'Supprimer l\'audio déjà généré pour cette histoire et recommencer avec d\'autres options ?',
       audioVoiceMale: 'masculine', audioVoiceFemale: 'féminine',
@@ -2029,11 +2037,13 @@
       audioTabEmpty: "Aucun enregistrement pour l'instant. Vocalisez une histoire dans l'onglet Histoires.",
       audioPlayTitle: 'Lire', audioPauseTitle: 'Pause', audioDeleteTitle: 'Supprimer',
       audioDeleteConfirm: 'Supprimer cet enregistrement ?', audioResumeTitle: 'Reprendre', audioPlayingNote: 'Lecture en cours…',
+      audioStopTitle: 'Arrêter', audioPausedNote: 'En pause',
       funStyle_villain: 'Méchant', funStyle_radio: 'DJ radio', funStyle_raspy: 'Rocailleuse', funStyle_sick: 'Enrhumé',
       funStyle_whisper: 'Chuchoté', funStyle_gameshow: 'Animateur', funStyle_posh: 'Snob', funStyle_sleepy: 'Endormi',
       funStyle_robot: 'Robot', funStyle_nervous: 'Nerveux', funStyle_trailer: 'Bande-annonce', funStyle_supervillain: 'Super-vilain',
       funStyle_lovestruck: 'Amoureux', funStyle_sergeant: 'Sergent',
-      audioQuotaEnabledLabel: 'Limite de quota activée (2 phrases, puis pause de 2 min ; 8/jour)',
+      audioQuotaEnabledLabel: 'Limite quotidienne activée (max. 8 enregistrements / 24 h)',
+      audioQuotaHint: 'Une pause automatique de 7 secondes est toujours appliquée entre chaque phrase (indépendamment de cette case) afin de respecter la limite par minute de Gemini.',
       audioSpeedSlow: 'Lent', audioSpeedNormal: 'Normal',
       storiesUnderstandNo: 'Je ne comprends pas', storiesUnderstandHalf: 'Partiellement', storiesUnderstandYes: 'Je comprends',
       storiesPinyinShow: 'Afficher le pinyin', storiesPinyinHide: 'Masquer le pinyin',
@@ -2191,6 +2201,7 @@
       storiesNarrateBtn: '🎧 Narrar', storiesStopBtn: '⏹ Detener',
       audioStartBtn: 'Iniciar', audioCancelBtn: 'Cancelar', audioPickVoice: 'Voz', audioPickSpeed: 'Velocidad',
       audioDownloadTitle: 'Descargar audio', audioBlockedUntil: 'Límite diario alcanzado — continúa a las {0}', audioErrorPrefix: 'Error: ',
+      audioFailedShort: 'Fallido',
       audioDownloadedNote: 'Descargado ✓', audioResetTitle: 'Restablecer (elegir otra voz/velocidad)',
       audioResetConfirm: '¿Eliminar el audio generado hasta ahora para esta historia y empezar de nuevo con otras opciones?',
       audioVoiceMale: 'masculina', audioVoiceFemale: 'femenina',
@@ -2200,11 +2211,13 @@
       audioTabEmpty: 'Aún no hay grabaciones. Narra una historia en la pestaña Historias.',
       audioPlayTitle: 'Reproducir', audioPauseTitle: 'Pausa', audioDeleteTitle: 'Eliminar',
       audioDeleteConfirm: '¿Eliminar esta grabación?', audioResumeTitle: 'Reanudar', audioPlayingNote: 'Reproduciendo…',
+      audioStopTitle: 'Detener', audioPausedNote: 'En pausa',
       funStyle_villain: 'Villano', funStyle_radio: 'DJ radio', funStyle_raspy: 'Ronca', funStyle_sick: 'Resfriado',
       funStyle_whisper: 'Susurro', funStyle_gameshow: 'Presentador', funStyle_posh: 'Pijo', funStyle_sleepy: 'Somnoliento',
       funStyle_robot: 'Robot', funStyle_nervous: 'Nervioso', funStyle_trailer: 'Tráiler', funStyle_supervillain: 'Supervillano',
       funStyle_lovestruck: 'Enamorado', funStyle_sergeant: 'Sargento',
-      audioQuotaEnabledLabel: 'Límite de cuota activado (2 frases, luego pausa de 2 min; 8/día)',
+      audioQuotaEnabledLabel: 'Límite diario activado (máx. 8 grabaciones / 24 h)',
+      audioQuotaHint: 'Entre cada dos frases siempre se espera automáticamente 7 segundos (independientemente de esta casilla) para respetar el límite por minuto de Gemini.',
       audioSpeedSlow: 'Lento', audioSpeedNormal: 'Normal',
       storiesUnderstandNo: 'No entiendo', storiesUnderstandHalf: 'Más o menos', storiesUnderstandYes: 'Entiendo',
       storiesPinyinShow: 'Mostrar pinyin', storiesPinyinHide: 'Ocultar pinyin',
@@ -2799,10 +2812,14 @@
   // Quota pacing: exactly one TTS generation (title or sentence) is allowed at
   // a time, then a mandatory TTS_BATCH_PAUSE_MS pause before the next one —
   // comfortably under Gemini's real per-minute quota (no more back-to-back
-  // bursts). TTS_MAX_PER_DAY is a separate, always-on rolling 24h cap.
+  // bursts). This pause is UNCONDITIONAL — it applies no matter what the
+  // "quota enabled" setting says, because Gemini enforces its own per-minute
+  // limit regardless of any setting in this app. TTS_MAX_PER_DAY is a
+  // separate, optional rolling-24h cap that the "quota enabled" setting does
+  // control (see checkTtsRateLimit / loadTtsQuotaEnabled).
   var TTS_BATCH_SIZE = 1;
-  var TTS_BATCH_PAUSE_MS = 5 * 1000; // 5 seconds between every single generation call
-  var TTS_MAX_PER_DAY = 8; // rolling 24h window, not a midnight reset
+  var TTS_BATCH_PAUSE_MS = 7 * 1000; // 7 seconds between every single generation call, always enforced
+  var TTS_MAX_PER_DAY = 8; // rolling 24h window, not a midnight reset — optional, tied to the setting
   var TTS_LOG_KEY = 'hskflash_tts_call_log_v1';
   var TTS_BATCH_KEY = 'hskflash_tts_batch_v1';
   var TTS_QUOTA_ENABLED_KEY = 'hskflash_tts_quota_enabled_v1';
@@ -2962,33 +2979,28 @@
     var log = pruneTtsLog(loadTtsLog());
     log.push(Date.now());
     saveTtsLog(log);
-    if (loadTtsQuotaEnabled()) {
-      var batch = loadTtsBatchState();
-      var now = Date.now();
-      // Start a fresh batch whenever the previous pause window has fully
-      // elapsed, or the batch was already full (defensive — shouldn't happen
-      // since checkTtsRateLimit would have blocked first).
-      if (now - batch.windowStart >= TTS_BATCH_PAUSE_MS || batch.count >= TTS_BATCH_SIZE) {
-        batch = { count: 1, windowStart: now };
-      } else {
-        batch.count += 1;
-      }
-      saveTtsBatchState(batch);
-    }
+    // The pacing window is tracked unconditionally — it always starts a
+    // fresh TTS_BATCH_PAUSE_MS window after every single call, regardless of
+    // the optional "quota enabled" setting (that setting only affects the
+    // TTS_MAX_PER_DAY check below in checkTtsRateLimit).
+    saveTtsBatchState({ count: 1, windowStart: Date.now() });
   }
   // Returns { canProceed:true } | { canProceed:false, dailyLimitReached:true, nextSlotAt } | { canProceed:false, waitMs }
   function checkTtsRateLimit(){
-    if (!loadTtsQuotaEnabled()) return { canProceed: true };
-    var log = pruneTtsLog(loadTtsLog());
-    saveTtsLog(log);
-    if (log.length >= TTS_MAX_PER_DAY) {
-      var oldest = Math.min.apply(null, log);
-      return { canProceed: false, dailyLimitReached: true, nextSlotAt: oldest + 24 * 60 * 60 * 1000 };
+    // Optional daily cap — only enforced when the user has turned it on.
+    if (loadTtsQuotaEnabled()) {
+      var log = pruneTtsLog(loadTtsLog());
+      saveTtsLog(log);
+      if (log.length >= TTS_MAX_PER_DAY) {
+        var oldest = Math.min.apply(null, log);
+        return { canProceed: false, dailyLimitReached: true, nextSlotAt: oldest + 24 * 60 * 60 * 1000 };
+      }
     }
+    // Mandatory per-call pacing — always enforced, independent of the setting
+    // above, because Gemini's own per-minute limit applies either way.
     var batch = loadTtsBatchState();
     var now = Date.now();
-    if (now - batch.windowStart >= TTS_BATCH_PAUSE_MS) return { canProceed: true }; // pause window elapsed (or no batch yet)
-    if (batch.count < TTS_BATCH_SIZE) return { canProceed: true }; // still room in the current batch
+    if (now - batch.windowStart >= TTS_BATCH_PAUSE_MS) return { canProceed: true }; // pause window elapsed (or no call yet)
     return { canProceed: false, dailyLimitReached: false, waitMs: Math.max(500, (batch.windowStart + TTS_BATCH_PAUSE_MS) - now) };
   }
 
@@ -3203,6 +3215,20 @@
         renderStories();
       };
     });
+    // Shown in place of the hourglass whenever the last attempt failed —
+    // lets the person just tap ▶ to pick up right where it left off,
+    // instead of having to switch to the Audio tab.
+    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-resume]'), function(btn){
+      btn.onclick = function(e){
+        e.stopPropagation();
+        var id = btn.getAttribute('data-audio-resume');
+        var rec = recordings.filter(function(r){ return r.id === id; })[0];
+        if (!rec) return;
+        delete recordingStatus[rec.id];
+        renderStories();
+        startOrResumeRecordingAudio(rec, makeRecordingCallbacks(rec));
+      };
+    });
   }
 
   // ---------- Audio tab: independently-kept narration recordings ----------
@@ -3368,13 +3394,16 @@
       onBlocked: function(nextSlotAt){
         recordingStatus[rec.id] = { blockedUntil: nextSlotAt };
         safeRenderAudioTab();
+        safeRenderStories();
       },
       onWaiting: function(){
         safeRenderAudioTab();
+        safeRenderStories();
       },
       onError: function(err){
         recordingStatus[rec.id] = { error: err.message };
         safeRenderAudioTab();
+        safeRenderStories();
       }
     };
   }
@@ -3848,9 +3877,11 @@
             } else if (hasActiveTracking) {
               topRightHtml += active
                 ? '<button class="audio-mini-btn hint-btn on" data-audio-cancel="' + activeRec.id + '">⏸</button>'
-                : (activeRec.done >= activeRec.totalSteps
-                    ? '<span class="audio-mini-done">✓</span>'
-                    : '<span class="audio-mini-note" title="' + esc(t('audioSeeAudioTab')) + '">⏳</span>');
+                : (errMsg
+                    ? '<button class="audio-mini-btn hint-btn" data-audio-resume="' + activeRec.id + '" title="' + esc(t('audioResumeTitle')) + '">▶</button>'
+                    : (activeRec.done >= activeRec.totalSteps
+                        ? '<span class="audio-mini-done">✓</span>'
+                        : '<span class="audio-mini-note" title="' + esc(t('audioSeeAudioTab')) + '">⏳</span>'));
             } else {
               topRightHtml += '<button class="audio-mini-btn hint-btn" data-audio-open-picker="' + s.id + '" title="' + esc(t('audioNarrateBtn')) + '">🔊</button>';
             }
@@ -3866,7 +3897,7 @@
                 '</div>' +
                 buildAudioParamsLine(activeRec.voiceId, activeRec.speed, activeRec.funStyle) +
                 (blockedUntil ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(tf('audioBlockedUntil', new Date(blockedUntil).toLocaleString())) + '</div>' : '') +
-                (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioErrorPrefix')) + esc(errMsg) + '</div>' : '');
+                (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioFailedShort')) + '</div>' : '');
             }
             audioRowHtml += (showPicker ? buildAudioPickerHtml(s) : '');
 
@@ -5234,7 +5265,9 @@
           var active = isRecordingAudioActive(rec.id);
           var blockedUntil = recordingStatus[rec.id] && recordingStatus[rec.id].blockedUntil;
           var errMsg = recordingStatus[rec.id] && recordingStatus[rec.id].error;
-          var isPlaying = playbackState.index >= 0 && playbackState.queue[playbackState.index] === rec.id;
+          var isCurrentInQueue = playbackState.index >= 0 && playbackState.queue[playbackState.index] === rec.id;
+          var isPlaying = isCurrentInQueue && audioPlayerEl && !audioPlayerEl.paused;
+          var isPausedHere = isCurrentInQueue && audioPlayerEl && audioPlayerEl.paused;
           var dateLabel = new Date(rec.createdAt).toLocaleDateString(calLocale ? calLocale() : undefined, { year: 'numeric', month: 'short', day: 'numeric' });
           var subLine = esc(rec.titleH) + ' · ' + esc(recordingMeta(rec)) + '<br>' +
             esc(dateLabel + (rec.voiceId ? ' · ' : '')) + esc(rec.voiceId ? (function(){
@@ -5260,12 +5293,13 @@
                 '<span class="story-audio-label">' + rec.done + ' / ' + rec.totalSteps + '</span>' +
               '</div>' +
               (blockedUntil ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(tf('audioBlockedUntil', new Date(blockedUntil).toLocaleString())) + '</div>' : '') +
-              (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioErrorPrefix')) + esc(errMsg) + '</div>' : '');
+              (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioFailedShort')) + '</div>' : '');
           } else {
             topRightHtml +=
               '<button class="audio-mini-btn hint-btn" data-rec-download="' + rec.id + '" title="' + esc(t('audioDownloadTitle')) + '">⬇</button>' +
               '<button class="audio-mini-btn hint-btn" data-rec-delete="' + rec.id + '" title="' + esc(t('audioDeleteTitle')) + '">✕</button>';
             if (isPlaying) audioRowHtml = '<div class="audio-mini-note" style="padding:0 2px;">' + esc(t('audioPlayingNote')) + '</div>';
+            else if (isPausedHere) audioRowHtml = '<div class="audio-mini-note" style="padding:0 2px;">' + esc(t('audioPausedNote')) + '</div>';
           }
           topRightHtml += '</div>';
 
@@ -5273,7 +5307,7 @@
             ? '<input type="checkbox" class="audio-rec-check" data-rec-check="' + rec.id + '"' + (isRecChecked(rec.id) ? ' checked' : '') + '>'
             : '<span style="width:16px;display:inline-block;"></span>';
 
-          return '<div class="story-card' + (isPlaying ? ' audio-rec-playing' : '') + '" style="cursor:default;" data-id="' + rec.id + '">' +
+          return '<div class="story-card' + (isCurrentInQueue ? ' audio-rec-playing' : '') + '" style="cursor:default;" data-id="' + rec.id + '">' +
             '<div class="story-card-toprow">' +
               '<div style="display:flex;align-items:flex-start;gap:10px;min-width:0;">' +
                 checkboxHtml +
@@ -5293,7 +5327,10 @@
 
     root.innerHTML = '<div class="stories-wrap">' +
       '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">' + esc(t('tabAudio')) + '</h2>' +
-        '<button class="btn-primary" id="audioPlayAllBtn" title="' + esc(playAllTitle) + '" style="padding:9px 18px;font-size:15px;"' + (anyPlayable ? '' : ' disabled') + '>' + playAllIcon + '</button></div>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        (isPlaybackActive ? '<button class="btn-primary" id="audioStopBtn" title="' + esc(t('audioStopTitle')) + '" style="padding:9px 14px;font-size:15px;">⏹</button>' : '') +
+        '<button class="btn-primary" id="audioPlayAllBtn" title="' + esc(playAllTitle) + '" style="padding:9px 18px;font-size:15px;"' + (anyPlayable ? '' : ' disabled') + '>' + playAllIcon + '</button>' +
+        '</div></div>' +
       itemsHtml +
     '</div>';
 
@@ -5307,6 +5344,10 @@
           playCheckedRecordings(orderedIds, list);
         }
       };
+    }
+    var stopBtn = document.getElementById('audioStopBtn');
+    if (stopBtn) {
+      stopBtn.onclick = function(){ stopPlayback(); };
     }
     Array.prototype.forEach.call(root.querySelectorAll('[data-rec-check]'), function(box){
       box.onchange = function(){
