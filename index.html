@@ -230,7 +230,7 @@
   main#main {
     min-width: 0;
   }
-  /* ---- mobile: 5-page swipe carousel (Vokabeln | Karten | Geschichten | Satzinseln | Statistiken) ---- */
+  /* ---- mobile: 6-page swipe carousel (Vokabeln | Karten | Geschichten | Satzinseln | Statistiken | Audio) ---- */
   @media (max-width: 820px) {
     /* Move .app's own horizontal padding onto the header/tabs/dots individually,
        so the carousel track's clip boundary sits exactly at the viewport edge —
@@ -244,15 +244,15 @@
     }
     .learn-area.carousel {
       flex-wrap: nowrap;
-      width: 500%;
+      width: 600%;
       transition: transform 0.28s cubic-bezier(.2,.7,.3,1);
       gap: 0;
       touch-action: pan-y;
     }
     /* content-col itself must not take a carousel slot — it only exists for the
        desktop layout. In carousel mode its children (cardsView/storiesView/
-       islandsView/statsPageView) are promoted to act as direct flex items of
-       .learn-area, each its own page. */
+       islandsView/statsPageView/audioView) are promoted to act as direct flex
+       items of .learn-area, each its own page. */
     .learn-area.carousel > .content-col {
       display: contents;
     }
@@ -260,10 +260,11 @@
     .learn-area.carousel #cardsView,
     .learn-area.carousel #storiesView,
     .learn-area.carousel #islandsView,
-    .learn-area.carousel #statsPageView {
-      flex: 0 0 20%;
-      width: 20%;
-      max-width: 20%;
+    .learn-area.carousel #statsPageView,
+    .learn-area.carousel #audioView {
+      flex: 0 0 16.6667%;
+      width: 16.6667%;
+      max-width: 16.6667%;
       min-width: 0;
       box-sizing: border-box;
       padding: 0 8px;
@@ -275,7 +276,8 @@
     .learn-area.carousel #cardsView,
     .learn-area.carousel #storiesView,
     .learn-area.carousel #islandsView,
-    .learn-area.carousel #statsPageView {
+    .learn-area.carousel #statsPageView,
+    .learn-area.carousel #audioView {
       display: block !important;
     }
     .swipe-dots {
@@ -1315,6 +1317,7 @@
     <button class="tab-btn" id="tabStories" data-view="stories" data-i18n="tabStories">Geschichten</button>
     <button class="tab-btn" id="tabIslands" data-view="islands" data-i18n="tabIslands">Satzinseln</button>
     <button class="tab-btn" id="tabStats" data-view="stats" data-i18n="tabStats">Statistiken</button>
+    <button class="tab-btn" id="tabAudio" data-view="audio" data-i18n="tabAudio">Audio</button>
   </div>
   <div class="swipe-dots" id="swipeDots">
     <span class="sdot" data-dot="0"></span>
@@ -1322,6 +1325,7 @@
     <span class="sdot" data-dot="2"></span>
     <span class="sdot" data-dot="3"></span>
     <span class="sdot" data-dot="4"></span>
+    <span class="sdot" data-dot="5"></span>
   </div>
 
   <div class="learn-area" id="learnArea">
@@ -1337,9 +1341,11 @@
       <div id="storiesView" style="display:none;"></div>
       <div id="islandsView" style="display:none;"></div>
       <div id="statsPageView" style="display:none;"></div>
+      <div id="audioView" style="display:none;"></div>
     </div>
   </div>
 </div>
+<audio id="audioPlayer" style="display:none;"></audio>
 
 <div class="grid-info-toast" id="gridInfoToast"></div>
 
@@ -1547,7 +1553,7 @@
   var I18N = {
     de: {
       appTitle: 'HSK Vokabeltrainer',
-      tabGrid: 'Vokabeln', tabCards: 'Karten', tabStories: 'Geschichten', tabIslands: 'Satzinseln', tabStats: 'Statistiken',
+      tabGrid: 'Vokabeln', tabCards: 'Karten', tabStories: 'Geschichten', tabIslands: 'Satzinseln', tabStats: 'Statistiken', tabAudio: 'Audio',
       islandsLibraryTitle: 'Meine Satzinseln',
       islandsNewBtn: '+ Neue Insel',
       islandsEmpty: 'Noch keine Satzinseln angelegt.',
@@ -1670,6 +1676,10 @@
       audioVoiceMale: 'männlich', audioVoiceFemale: 'weiblich',
       audioFunVoiceNote: '🎭 Überraschungsstimme: wähle einen Stil, in dem die ganze Geschichte erzählt wird — nur zum Spaß!',
       audioPickFunStyle: 'Stil',
+      audioNarrateBtn: 'Vertonen', audioSeeAudioTab: 'Weiter im Tab „Audio“',
+      audioTabEmpty: 'Noch keine Aufnahmen. Vertone eine Geschichte im Tab „Geschichten“.',
+      audioPlayTitle: 'Abspielen', audioPauseTitle: 'Pause', audioDeleteTitle: 'Löschen',
+      audioDeleteConfirm: 'Diese Aufnahme wirklich löschen?', audioResumeTitle: 'Fortsetzen', audioPlayingNote: 'Wird abgespielt …',
       funStyle_villain: 'Bösewicht', funStyle_radio: 'Radio-DJ', funStyle_raspy: 'Heiser', funStyle_sick: 'Verschnupft',
       funStyle_whisper: 'Flüstern', funStyle_gameshow: 'Show-Master', funStyle_posh: 'Adelig', funStyle_sleepy: 'Schläfrig',
       funStyle_robot: 'Roboter', funStyle_nervous: 'Nervös', funStyle_trailer: 'Trailer', funStyle_supervillain: 'Superschurke',
@@ -1718,7 +1728,7 @@
     },
     en: {
       appTitle: 'HSK Flashcards',
-      tabGrid: 'Vocabulary', tabCards: 'Cards', tabStories: 'Stories', tabIslands: 'Phrase Islands', tabStats: 'Stats',
+      tabGrid: 'Vocabulary', tabCards: 'Cards', tabStories: 'Stories', tabIslands: 'Phrase Islands', tabStats: 'Stats', tabAudio: 'Audio',
       islandsLibraryTitle: 'My Phrase Islands',
       islandsNewBtn: '+ New Island',
       islandsEmpty: 'No phrase islands yet.',
@@ -1838,6 +1848,10 @@
       audioVoiceMale: 'male', audioVoiceFemale: 'female',
       audioFunVoiceNote: '🎭 Surprise voice: pick a style the whole story will be narrated in — just for fun!',
       audioPickFunStyle: 'Style',
+      audioNarrateBtn: 'Narrate', audioSeeAudioTab: 'Continue in the Audio tab',
+      audioTabEmpty: 'No recordings yet. Narrate a story in the Stories tab.',
+      audioPlayTitle: 'Play', audioPauseTitle: 'Pause', audioDeleteTitle: 'Delete',
+      audioDeleteConfirm: 'Delete this recording?', audioResumeTitle: 'Resume', audioPlayingNote: 'Playing…',
       funStyle_villain: 'Villain', funStyle_radio: 'Radio DJ', funStyle_raspy: 'Raspy', funStyle_sick: 'Stuffy',
       funStyle_whisper: 'Whisper', funStyle_gameshow: 'Game Host', funStyle_posh: 'Posh', funStyle_sleepy: 'Sleepy',
       funStyle_robot: 'Robot', funStyle_nervous: 'Nervous', funStyle_trailer: 'Trailer', funStyle_supervillain: 'Supervillain',
@@ -1885,7 +1899,7 @@
     },
     fr: {
       appTitle: 'Cartes HSK',
-      tabGrid: 'Vocabulaire', tabCards: 'Cartes', tabStories: 'Histoires', tabIslands: 'Îlots de phrases', tabStats: 'Statistiques',
+      tabGrid: 'Vocabulaire', tabCards: 'Cartes', tabStories: 'Histoires', tabIslands: 'Îlots de phrases', tabStats: 'Statistiques', tabAudio: 'Audio',
       islandsLibraryTitle: 'Mes îlots de phrases',
       islandsNewBtn: '+ Nouvel îlot',
       islandsEmpty: 'Aucun îlot de phrases pour l\'instant.',
@@ -2005,6 +2019,10 @@
       audioVoiceMale: 'masculine', audioVoiceFemale: 'féminine',
       audioFunVoiceNote: '🎭 Voix surprise : choisis un style dans lequel toute l\'histoire sera racontée — juste pour rire !',
       audioPickFunStyle: 'Style',
+      audioNarrateBtn: 'Vocaliser', audioSeeAudioTab: "Continuer dans l'onglet Audio",
+      audioTabEmpty: "Aucun enregistrement pour l'instant. Vocalisez une histoire dans l'onglet Histoires.",
+      audioPlayTitle: 'Lire', audioPauseTitle: 'Pause', audioDeleteTitle: 'Supprimer',
+      audioDeleteConfirm: 'Supprimer cet enregistrement ?', audioResumeTitle: 'Reprendre', audioPlayingNote: 'Lecture en cours…',
       funStyle_villain: 'Méchant', funStyle_radio: 'DJ radio', funStyle_raspy: 'Rocailleuse', funStyle_sick: 'Enrhumé',
       funStyle_whisper: 'Chuchoté', funStyle_gameshow: 'Animateur', funStyle_posh: 'Snob', funStyle_sleepy: 'Endormi',
       funStyle_robot: 'Robot', funStyle_nervous: 'Nerveux', funStyle_trailer: 'Bande-annonce', funStyle_supervillain: 'Super-vilain',
@@ -2052,7 +2070,7 @@
     },
     es: {
       appTitle: 'Tarjetas HSK',
-      tabGrid: 'Vocabulario', tabCards: 'Tarjetas', tabStories: 'Historias', tabIslands: 'Islas de frases', tabStats: 'Estadísticas',
+      tabGrid: 'Vocabulario', tabCards: 'Tarjetas', tabStories: 'Historias', tabIslands: 'Islas de frases', tabStats: 'Estadísticas', tabAudio: 'Audio',
       islandsLibraryTitle: 'Mis islas de frases',
       islandsNewBtn: '+ Nueva isla',
       islandsEmpty: 'Aún no hay islas de frases.',
@@ -2172,6 +2190,10 @@
       audioVoiceMale: 'masculina', audioVoiceFemale: 'femenina',
       audioFunVoiceNote: '🎭 Voz sorpresa: elige un estilo en el que se narrará toda la historia — ¡solo por diversión!',
       audioPickFunStyle: 'Estilo',
+      audioNarrateBtn: 'Narrar', audioSeeAudioTab: 'Continuar en la pestaña Audio',
+      audioTabEmpty: 'Aún no hay grabaciones. Narra una historia en la pestaña Historias.',
+      audioPlayTitle: 'Reproducir', audioPauseTitle: 'Pausa', audioDeleteTitle: 'Eliminar',
+      audioDeleteConfirm: '¿Eliminar esta grabación?', audioResumeTitle: 'Reanudar', audioPlayingNote: 'Reproduciendo…',
       funStyle_villain: 'Villano', funStyle_radio: 'DJ radio', funStyle_raspy: 'Ronca', funStyle_sick: 'Resfriado',
       funStyle_whisper: 'Susurro', funStyle_gameshow: 'Presentador', funStyle_posh: 'Pijo', funStyle_sleepy: 'Somnoliento',
       funStyle_robot: 'Robot', funStyle_nervous: 'Nervioso', funStyle_trailer: 'Tráiler', funStyle_supervillain: 'Supervillano',
@@ -2628,7 +2650,8 @@
     generateError: null,
     draft: null,           // { title:{h,p,e}, sentences:[{h,p,e},...], hsk, count }
     selectedId: null,
-    audioPickerFor: null    // story id currently showing the voice/speed picker, or null
+    audioPickerFor: null,   // story id currently showing the voice/speed picker, or null
+    activeRecordingFor: {}  // storyId -> recordingId of the narration this story card is currently tracking
   };
 
   function hskPromptLabel(key){
@@ -2727,7 +2750,7 @@
   };
   // Delivery styles for the two "fun" Gemini voices (Orus/Zephyr). The user
   // picks ONE of these in the picker, and it then narrates the whole story
-  // consistently (stored per-story as s.audioFunStyle) — applied to all 3
+  // consistently (stored per-recording as rec.funStyle) — applied to all 3
   // parts of every sentence via speech_metadata.style, overriding the
   // normal slow/normal pacing style. `label` is the short, i18n'd tag shown
   // both as the picker button text and in the tiny params line under the
@@ -2964,31 +2987,16 @@
     return { canProceed: false, dailyLimitReached: false, waitMs: Math.max(500, (batch.windowStart + TTS_BATCH_PAUSE_MS) - now) };
   }
 
-  // One Gemini TTS call per sentence: 3 parts (slow Chinese, English, slow Chinese
-  // again), each with its own speech_metadata.style — the model returns one
-  // continuous WAV covering all three in order.
-  function callSentenceTTS(sent, voiceId, speedKey, funStyleKey){
+  // Shared low-level Gemini TTS call: sends an arbitrary list of
+  // {text, speech_metadata} parts in one request and returns the parsed WAV
+  // (fmt + pcm) of the single continuous audio response covering all parts
+  // in order. Both per-sentence narration and the English title clip use this.
+  function callGeminiTTSParts(parts, voiceId){
     var apiKey = loadGeminiKey();
     if (!apiKey) return Promise.reject(new Error('no-key'));
     var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(GEMINI_TTS_MODEL) + ':generateContent?key=' + encodeURIComponent(apiKey);
-    var voiceEntry = TTS_VOICES.filter(function(v){ return v.id === voiceId; })[0];
-    var isFun = !!(voiceEntry && voiceEntry.fun);
-    // Fun voices ignore the normal slow/normal pacing style and instead use
-    // the one style the user picked for this story (falling back to the
-    // first style for older stories saved before this was selectable),
-    // applied to all 3 parts (both Chinese repetitions and the English
-    // translation) so the whole story keeps one consistent "character".
-    var slowStyle = isFun ? ('speaking ' + funStyleDirective(funStyleKey || TTS_FUN_STYLE_DEFAULT)) : TTS_SPEED_STYLES[normalizeSpeedKey(speedKey)];
-    var enStyle = isFun ? slowStyle : 'natural conversational pace';
     var payload = {
-      contents: [{
-        role: 'user',
-        parts: [
-          { text: sent.h, speech_metadata: { style: slowStyle } },
-          { text: sent.e, speech_metadata: { style: enStyle } },
-          { text: sent.h, speech_metadata: { style: slowStyle } }
-        ]
-      }],
+      contents: [{ role: 'user', parts: parts }],
       generationConfig: {
         responseModalities: ['AUDIO'],
         speechConfig: { voiceConfig: { voice: voiceId || 'Kore' } }
@@ -3007,68 +3015,43 @@
     });
   }
 
-
-  function findNextMissingSentenceIndex(story){
-    var i = 0;
-    function check(){
-      if (i >= story.sentences.length) return Promise.resolve(-1);
-      return idbGet(story.id + ':' + i).then(function(val){
-        if (!val) return i;
-        i++;
-        return check();
-      });
-    }
-    return check();
+  // One Gemini TTS call per sentence: 3 parts (slow Chinese, English, slow Chinese
+  // again), each with its own speech_metadata.style — the model returns one
+  // continuous WAV covering all three in order.
+  function callSentenceTTS(sent, voiceId, speedKey, funStyleKey){
+    var voiceEntry = TTS_VOICES.filter(function(v){ return v.id === voiceId; })[0];
+    var isFun = !!(voiceEntry && voiceEntry.fun);
+    // Fun voices ignore the normal slow/normal pacing style and instead use
+    // the one style the user picked for this story (falling back to the
+    // first style for older stories saved before this was selectable),
+    // applied to all 3 parts (both Chinese repetitions and the English
+    // translation) so the whole story keeps one consistent "character".
+    var slowStyle = isFun ? ('speaking ' + funStyleDirective(funStyleKey || TTS_FUN_STYLE_DEFAULT)) : TTS_SPEED_STYLES[normalizeSpeedKey(speedKey)];
+    var enStyle = isFun ? slowStyle : 'natural conversational pace';
+    return callGeminiTTSParts([
+      { text: sent.h, speech_metadata: { style: slowStyle } },
+      { text: sent.e, speech_metadata: { style: enStyle } },
+      { text: sent.h, speech_metadata: { style: slowStyle } }
+    ], voiceId);
   }
 
-  // Resumable, rate-limited generator: call once to start or continue a story's
-  // audio. Paces itself in batches of TTS_BATCH_SIZE within the current
-  // session, and stops cleanly (without erroring) once the rolling daily cap
-  // is hit — the caller can invoke this again later (e.g. next day, or next
-  // app open) to pick up exactly where it left off.
-  var audioGenActive = {}; // storyId -> true while a generation loop is running
-  function isStoryAudioActive(storyId){ return !!audioGenActive[storyId]; }
-
-  function startOrResumeStoryAudio(story, voiceId, speedKey, callbacks){
-    if (audioGenActive[story.id]) return;
-    audioGenActive[story.id] = true;
-
-    function loop(){
-      if (!audioGenActive[story.id]) return; // was cancelled
-      findNextMissingSentenceIndex(story).then(function(idx){
-        if (idx === -1) {
-          audioGenActive[story.id] = false;
-          callbacks.onDone();
-          return;
-        }
-        var rl = checkTtsRateLimit();
-        if (!rl.canProceed) {
-          if (rl.dailyLimitReached) {
-            audioGenActive[story.id] = false;
-            callbacks.onBlocked(rl.nextSlotAt);
-          } else {
-            callbacks.onWaiting(rl.waitMs);
-            setTimeout(loop, rl.waitMs);
-          }
-          return;
-        }
-        recordTtsCall();
-        callSentenceTTS(story.sentences[idx], voiceId, speedKey, story.audioFunStyle).then(function(result){
-          return idbSet(story.id + ':' + idx, result).then(function(){
-            callbacks.onProgress(idx + 1, story.sentences.length);
-            setTimeout(loop, 300);
-          });
-        }).catch(function(err){
-          audioGenActive[story.id] = false;
-          callbacks.onError(err);
-        });
-      });
-    }
-    loop();
+  // Single-part call that reads just the story's English title aloud — used
+  // to prefix every narrated recording with a spoken title before the
+  // sentences begin.
+  function callTitleTTS(titleEn, voiceId, speedKey, funStyleKey){
+    var voiceEntry = TTS_VOICES.filter(function(v){ return v.id === voiceId; })[0];
+    var isFun = !!(voiceEntry && voiceEntry.fun);
+    var style = isFun ? ('speaking ' + funStyleDirective(funStyleKey || TTS_FUN_STYLE_DEFAULT)) : TTS_SPEED_STYLES[normalizeSpeedKey(speedKey)];
+    return callGeminiTTSParts([
+      { text: titleEn, speech_metadata: { style: style } }
+    ], voiceId);
   }
-  function cancelStoryAudio(storyId){
-    audioGenActive[storyId] = false;
-  }
+
+
+  // Per-story narration state now lives entirely in the recordings module
+  // below (findNextMissingRecordingStep / startOrResumeRecordingAudio) —
+  // every 🔊 click creates and drives its own recording rather than a single
+  // per-story generation loop.
 
   // Transient (non-persisted) per-story UI status: blocked-until time or last
   // error, shown under the progress row. Cleared on the next successful step.
@@ -3114,33 +3097,7 @@
     '</div>';
   }
 
-  function makeAudioCallbacks(s){
-    return {
-      onProgress: function(current, total){
-        s.audioDone = current;
-        saveStories(stories);
-        delete audioStatus[s.id];
-        renderStories();
-      },
-      onDone: function(){
-        delete audioStatus[s.id];
-        renderStories();
-      },
-      onBlocked: function(nextSlotAt){
-        audioStatus[s.id] = { blockedUntil: nextSlotAt };
-        renderStories();
-      },
-      onWaiting: function(){
-        renderStories(); // keeps the pause/active state visible during the short inter-call pacing wait
-      },
-      onError: function(err){
-        audioStatus[s.id] = { error: err.message };
-        renderStories();
-      }
-    };
-  }
-
-  // Resolves the Gemini API key needed to start/resume a story's audio.
+  // Resolves the Gemini API key needed to start/resume a recording's audio.
   function ensureGeminiKey(){
     var apiKey = loadGeminiKey();
     if (!apiKey) return Promise.reject(new Error('no-key'));
@@ -3204,6 +3161,10 @@
         renderStories();
       };
     });
+    // Starting narration creates a brand-new, independent recording (rather
+    // than mutating the story) so the same story can be narrated again later
+    // with a different voice/speed without losing the earlier version — all
+    // generated recordings are listed and managed in the Audio tab.
     Array.prototype.forEach.call(root.querySelectorAll('[data-audio-start]'), function(btn){
       btn.onclick = function(e){
         e.stopPropagation();
@@ -3211,36 +3172,20 @@
         var s = stories.filter(function(x){ return x.id === id; })[0];
         var choice = storiesState.pickerChoice;
         if (!s || !choice || !choice.voice) return;
-        s.audioVoice = choice.voice;
-        s.audioSpeed = choice.speed;
-        var voiceEntry = TTS_VOICES.filter(function(v){ return v.id === s.audioVoice; })[0];
+        var voiceEntry = TTS_VOICES.filter(function(v){ return v.id === choice.voice; })[0];
         var isFunChoice = !!(voiceEntry && voiceEntry.fun);
         if (isFunChoice && !choice.funStyle) return; // a style must be picked for fun voices
-        s.audioFunStyle = isFunChoice ? choice.funStyle : null;
-        saveStories(stories);
         storiesState.audioPickerFor = null;
         // Must call ensureGeminiKey() synchronously right here (inside the
         // click handler) for consistency with the pattern used elsewhere,
         // even though the Gemini key path never needs a popup.
         ensureGeminiKey().then(function(){
-          delete audioStatus[s.id];
+          var rec = createRecording(s, choice.voice, choice.speed, isFunChoice ? choice.funStyle : null);
+          storiesState.activeRecordingFor = storiesState.activeRecordingFor || {};
+          storiesState.activeRecordingFor[s.id] = rec.id;
+          delete recordingStatus[rec.id];
           renderStories();
-          startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
-        }).catch(function(err){
-          reportAudioAuthError(s, err);
-        });
-      };
-    });
-    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-resume]'), function(btn){
-      btn.onclick = function(e){
-        e.stopPropagation();
-        var id = btn.getAttribute('data-audio-resume');
-        var s = stories.filter(function(x){ return x.id === id; })[0];
-        if (!s) return;
-        ensureGeminiKey().then(function(){
-          delete audioStatus[s.id];
-          renderStories();
-          startOrResumeStoryAudio(s, s.audioVoice, s.audioSpeed, makeAudioCallbacks(s));
+          startOrResumeRecordingAudio(rec, makeRecordingCallbacks(rec));
         }).catch(function(err){
           reportAudioAuthError(s, err);
         });
@@ -3249,87 +3194,220 @@
     Array.prototype.forEach.call(root.querySelectorAll('[data-audio-cancel]'), function(btn){
       btn.onclick = function(e){
         e.stopPropagation();
-        cancelStoryAudio(btn.getAttribute('data-audio-cancel'));
+        cancelRecordingAudio(btn.getAttribute('data-audio-cancel'));
         renderStories();
-      };
-    });
-    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-download]'), function(btn){
-      btn.onclick = function(e){
-        e.stopPropagation();
-        var id = btn.getAttribute('data-audio-download');
-        var s = stories.filter(function(x){ return x.id === id; })[0];
-        if (!s) return;
-        downloadStoryAudio(s).then(function(blob){
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          var safeName = s.title.h.replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'story';
-          a.href = url;
-          a.download = 'hskflash-' + safeName + '.wav';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-          // brief "downloaded ✓" feedback under the progress row, self-clears
-          audioStatus[s.id] = { downloaded: true };
-          renderStories();
-          setTimeout(function(){
-            if (audioStatus[s.id] && audioStatus[s.id].downloaded) {
-              delete audioStatus[s.id];
-              renderStories();
-            }
-          }, 2200);
-        }).catch(function(err){
-          audioStatus[s.id] = { error: err.message };
-          renderStories();
-        });
-      };
-    });
-    Array.prototype.forEach.call(root.querySelectorAll('[data-audio-reset]'), function(btn){
-      btn.onclick = function(e){
-        e.stopPropagation();
-        var id = btn.getAttribute('data-audio-reset');
-        var s = stories.filter(function(x){ return x.id === id; })[0];
-        if (!s) return;
-        if (!confirm(t('audioResetConfirm'))) return;
-        cancelStoryAudio(s.id);
-        idbDeletePrefix(s.id + ':').then(function(){
-          s.audioDone = 0;
-          delete s.audioVoice;
-          delete s.audioSpeed;
-          delete s.audioFunStyle;
-          saveStories(stories);
-          delete audioStatus[s.id];
-          if (storiesState.audioPickerFor === s.id) storiesState.audioPickerFor = null;
-          renderStories();
-        });
       };
     });
   }
 
-  // Builds a downloadable WAV from whatever sentences already have audio saved
-  // (a contiguous prefix, since generation always proceeds in order) — works
-  // fine with a partially-completed story.
-  function downloadStoryAudio(story){
-    var chunks = [];
-    var fmt = { channels: 1, sampleRate: 24000, bitsPerSample: 16 };
-    var i = 0;
-    function next(){
-      if (i >= story.sentences.length) return Promise.resolve();
-      return idbGet(story.id + ':' + i).then(function(val){
-        if (!val) return; // stop at first missing sentence
-        // Gap goes BEFORE this chunk (only once we know there IS a next chunk to
-        // separate) — inserting it as a suffix after the previous one instead
-        // would leave a trailing silent tail on a partially-generated story.
-        if (chunks.length) chunks.push(silencePcm(STORY_SENTENCE_GAP_MS, fmt));
-        fmt = val.fmt;
-        chunks.push(val.pcm);
-        i++;
-        return next();
+  // ---------- Audio tab: independently-kept narration recordings ----------
+  // Each time a story is narrated (🔊 in the Geschichten tab), a new, fully
+  // self-contained "recording" entry is created here — decoupled from the
+  // live `stories` array so the same story can be narrated multiple times
+  // (different voice/speed/style) with every generation kept as its own
+  // entry, and so a recording keeps working even if the source story is
+  // later edited or deleted. IndexedDB audio bytes live under
+  // `recording.id + ':title'` (the spoken English title) and
+  // `recording.id + ':' + sentenceIndex`, parallel to (and reusing) the
+  // existing idbGet/idbSet/idbDeletePrefix helpers.
+  var AUDIO_RECORDINGS_KEY = 'hskflash_audio_recordings_v1';
+  function loadRecordings(){
+    try { return JSON.parse(localStorage.getItem(AUDIO_RECORDINGS_KEY)) || []; } catch(e) { return []; }
+  }
+  function saveRecordings(list){
+    try { localStorage.setItem(AUDIO_RECORDINGS_KEY, JSON.stringify(list)); } catch(e) {}
+  }
+  var recordings = loadRecordings();
+
+  function newRecordingId(){
+    return 'rec_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  }
+
+  // Creates a new, independent recording entry for a story (snapshotting its
+  // title + sentence text so the recording survives story edits/deletion),
+  // and persists it. Does not start generation — call
+  // startOrResumeRecordingAudio() for that.
+  function createRecording(story, voiceId, speedKey, funStyleKey){
+    var rec = {
+      id: newRecordingId(),
+      storyId: story.id,
+      titleH: story.title.h,
+      titleE: story.title.e,
+      hsk: story.hsk,
+      sentences: story.sentences.map(function(s){ return { h: s.h, e: s.e }; }),
+      voiceId: voiceId,
+      speed: speedKey,
+      funStyle: funStyleKey || null,
+      createdAt: Date.now(),
+      done: 0, // number of completed steps (0 = title, 1..N = sentences)
+      totalSteps: 1 + story.sentences.length
+    };
+    recordings.push(rec);
+    saveRecordings(recordings);
+    return rec;
+  }
+
+  // Migrates the OLD single-recording-per-story audio fields (s.audioVoice /
+  // s.audioSpeed / s.audioFunStyle / s.audioDone) — from before the Audio tab
+  // existed — into a recording entry, reusing the story's id as the
+  // recording id so its already-generated sentence audio (stored under
+  // `story.id + ':' + idx` in IndexedDB) is found unchanged. The English
+  // title clip didn't exist yet under the old scheme, so it's simply missing
+  // and gets generated (or backfilled) the next time this recording resumes.
+  function migrateLegacyStoryAudio(){
+    var changed = false;
+    stories.forEach(function(s){
+      if (!s.audioVoice) return;
+      var alreadyMigrated = recordings.some(function(r){ return r.id === s.id; });
+      if (alreadyMigrated) return;
+      recordings.push({
+        id: s.id,
+        storyId: s.id,
+        titleH: s.title.h,
+        titleE: s.title.e,
+        hsk: s.hsk,
+        sentences: s.sentences.map(function(x){ return { h: x.h, e: x.e }; }),
+        voiceId: s.audioVoice,
+        speed: s.audioSpeed,
+        funStyle: s.audioFunStyle || null,
+        createdAt: Date.now(),
+        done: s.audioDone || 0,
+        totalSteps: 1 + s.sentences.length
+      });
+      changed = true;
+    });
+    if (changed) saveRecordings(recordings);
+  }
+  migrateLegacyStoryAudio();
+
+  // Resolves the next missing IndexedDB step for a recording: the title clip
+  // first (step 0), then each sentence in order (step 1..N).
+  function findNextMissingRecordingStep(rec){
+    return idbGet(rec.id + ':title').then(function(titleVal){
+      if (!titleVal) return 0;
+      var i = 0;
+      function check(){
+        if (i >= rec.sentences.length) return -1;
+        return idbGet(rec.id + ':' + i).then(function(val){
+          if (!val) return i + 1;
+          i++;
+          return check();
+        });
+      }
+      return check();
+    });
+  }
+
+  var recordingGenActive = {}; // recordingId -> true while a generation loop is running
+  function isRecordingAudioActive(id){ return !!recordingGenActive[id]; }
+
+  function startOrResumeRecordingAudio(rec, callbacks){
+    if (recordingGenActive[rec.id]) return;
+    recordingGenActive[rec.id] = true;
+
+    function loop(){
+      if (!recordingGenActive[rec.id]) return; // was cancelled
+      findNextMissingRecordingStep(rec).then(function(step){
+        if (step === -1) {
+          recordingGenActive[rec.id] = false;
+          callbacks.onDone();
+          return;
+        }
+        var rl = checkTtsRateLimit();
+        if (!rl.canProceed) {
+          if (rl.dailyLimitReached) {
+            recordingGenActive[rec.id] = false;
+            callbacks.onBlocked(rl.nextSlotAt);
+          } else {
+            callbacks.onWaiting(rl.waitMs);
+            setTimeout(loop, rl.waitMs);
+          }
+          return;
+        }
+        recordTtsCall();
+        var call = step === 0
+          ? callTitleTTS(rec.titleE, rec.voiceId, rec.speed, rec.funStyle).then(function(result){ return idbSet(rec.id + ':title', result); })
+          : callSentenceTTS(rec.sentences[step - 1], rec.voiceId, rec.speed, rec.funStyle).then(function(result){ return idbSet(rec.id + ':' + (step - 1), result); });
+        call.then(function(){
+          callbacks.onProgress(step + 1, rec.totalSteps);
+          setTimeout(loop, 300);
+        }).catch(function(err){
+          recordingGenActive[rec.id] = false;
+          callbacks.onError(err);
+        });
       });
     }
-    return next().then(function(){
-      if (!chunks.length) throw new Error('nothing generated yet');
+    loop();
+  }
+  function cancelRecordingAudio(id){
+    recordingGenActive[id] = false;
+  }
+
+  // Transient (non-persisted) per-recording UI status, mirroring audioStatus.
+  var recordingStatus = {};
+
+  function makeRecordingCallbacks(rec){
+    return {
+      onProgress: function(current, total){
+        rec.done = current;
+        saveRecordings(recordings);
+        delete recordingStatus[rec.id];
+        safeRenderAudioTab();
+        safeRenderStories();
+      },
+      onDone: function(){
+        delete recordingStatus[rec.id];
+        safeRenderAudioTab();
+        safeRenderStories();
+      },
+      onBlocked: function(nextSlotAt){
+        recordingStatus[rec.id] = { blockedUntil: nextSlotAt };
+        safeRenderAudioTab();
+      },
+      onWaiting: function(){
+        safeRenderAudioTab();
+      },
+      onError: function(err){
+        recordingStatus[rec.id] = { error: err.message };
+        safeRenderAudioTab();
+      }
+    };
+  }
+
+  // Builds a full WAV Blob for a recording (title clip + gap + each sentence,
+  // gapped) from whatever has been generated so far — works with a partially
+  // completed recording, same contiguous-prefix approach as downloadStoryAudio.
+  function buildRecordingAudioBlob(rec){
+    var chunks = [];
+    var fmt = { channels: 1, sampleRate: 24000, bitsPerSample: 16 };
+    return idbGet(rec.id + ':title').then(function(titleVal){
+      if (!titleVal) throw new Error('nothing generated yet');
+      fmt = titleVal.fmt;
+      chunks.push(titleVal.pcm);
+      var i = 0;
+      function next(){
+        if (i >= rec.sentences.length) return Promise.resolve();
+        return idbGet(rec.id + ':' + i).then(function(val){
+          if (!val) return; // stop at first missing sentence
+          chunks.push(silencePcm(STORY_SENTENCE_GAP_MS, fmt));
+          fmt = val.fmt;
+          chunks.push(val.pcm);
+          i++;
+          return next();
+        });
+      }
+      return next();
+    }).then(function(){
       return buildWavBlob(chunks, fmt);
+    });
+  }
+
+  function deleteRecording(id){
+    cancelRecordingAudio(id);
+    return idbDeletePrefix(id + ':').then(function(){
+      recordings = recordings.filter(function(r){ return r.id !== id; });
+      saveRecordings(recordings);
+      delete recordingStatus[id];
     });
   }
 
@@ -3447,8 +3525,8 @@
   }
 
 
-  // ---------- mobile swipe carousel (Vokabeln | Karten | Geschichten | Statistiken) ----------
-  var PAGE_NAMES = ['grid', 'cards', 'stories', 'islands', 'stats'];
+  // ---------- mobile swipe carousel (Vokabeln | Karten | Geschichten | Satzinseln | Statistiken | Audio) ----------
+  var PAGE_NAMES = ['grid', 'cards', 'stories', 'islands', 'stats', 'audio'];
   var currentPage = 1; // start centered on Karten
   var learnArea = document.getElementById('learnArea');
 
@@ -3483,9 +3561,18 @@
         esc(e.message) + '<br><br>' + esc(t('storiesErrorNote')) + '</div></div>';
     }
   }
+  function safeRenderAudioTab(){
+    try {
+      renderAudioTab();
+    } catch (e) {
+      document.getElementById('audioView').innerHTML =
+        '<div class="stories-wrap"><div class="empty-note">' + esc(t('audioErrorPrefix')) +
+        esc(e.message) + '<br><br>' + esc(t('storiesErrorNote')) + '</div></div>';
+    }
+  }
 
   function updateTabsAndDots(view){
-    ['tabGrid', 'tabCards', 'tabStories', 'tabIslands', 'tabStats'].forEach(function(id, i){
+    ['tabGrid', 'tabCards', 'tabStories', 'tabIslands', 'tabStats', 'tabAudio'].forEach(function(id, i){
       var el = document.getElementById(id);
       if (el) el.classList.toggle('active', PAGE_NAMES[i] === view);
     });
@@ -3499,11 +3586,12 @@
     var mobile = isMobileLayout();
     learnArea.classList.toggle('carousel', mobile);
     if (mobile) {
-      learnArea.style.transform = 'translateX(-' + (currentPage * 20) + '%)';
+      learnArea.style.transform = 'translateX(-' + (currentPage * (100 / PAGE_NAMES.length)) + '%)';
       document.getElementById('cardsView').style.display = '';
       document.getElementById('storiesView').style.display = '';
       document.getElementById('islandsView').style.display = '';
       document.getElementById('statsPageView').style.display = '';
+      document.getElementById('audioView').style.display = '';
     } else {
       // Restore proper desktop show/hide state — otherwise a view left visible
       // for the mobile carousel (display:'') stays visible on multiple panes at once.
@@ -3513,6 +3601,7 @@
       document.getElementById('storiesView').style.display = desktopView === 'stories' ? '' : 'none';
       document.getElementById('islandsView').style.display = desktopView === 'islands' ? '' : 'none';
       document.getElementById('statsPageView').style.display = desktopView === 'stats' ? '' : 'none';
+      document.getElementById('audioView').style.display = desktopView === 'audio' ? '' : 'none';
       updateTabsAndDots(desktopView);
     }
   }
@@ -3526,6 +3615,7 @@
     if (view === 'stories') safeRenderStories();
     if (view === 'islands') safeRenderIslands();
     if (view === 'stats') safeRenderStatsTab();
+    if (view === 'audio') safeRenderAudioTab();
   }
 
   function switchView(view){
@@ -3541,13 +3631,16 @@
     document.getElementById('tabStories').classList.toggle('active', view === 'stories');
     document.getElementById('tabIslands').classList.toggle('active', view === 'islands');
     document.getElementById('tabStats').classList.toggle('active', view === 'stats');
+    document.getElementById('tabAudio').classList.toggle('active', view === 'audio');
     document.getElementById('cardsView').style.display = view === 'cards' ? '' : 'none';
     document.getElementById('storiesView').style.display = view === 'stories' ? '' : 'none';
     document.getElementById('islandsView').style.display = view === 'islands' ? '' : 'none';
     document.getElementById('statsPageView').style.display = view === 'stats' ? '' : 'none';
+    document.getElementById('audioView').style.display = view === 'audio' ? '' : 'none';
     if (view === 'stories') safeRenderStories();
     if (view === 'islands') safeRenderIslands();
     if (view === 'stats') safeRenderStatsTab();
+    if (view === 'audio') safeRenderAudioTab();
   }
 
   // Swipe / drag detection anywhere on screen (not just over the carousel track).
@@ -3622,11 +3715,11 @@
     return (s.hsk ? hskLabel(s.hsk) : 'HSK') + ' · ' + tf('storiesSentencesCount', s.count);
   }
 
-  function buildAudioParamsLine(s){
-    if (!s.audioVoice) return '';
-    var voiceLabel = voiceDisplayLabel(s.audioVoice);
-    if (s.audioFunStyle) voiceLabel += ' 🎭 ' + funStyleLabel(s.audioFunStyle);
-    var speedLabel = t(normalizeSpeedKey(s.audioSpeed) === 'slow' ? 'audioSpeedSlow' : 'audioSpeedNormal');
+  function buildAudioParamsLine(voiceId, speed, funStyle){
+    if (!voiceId) return '';
+    var voiceLabel = voiceDisplayLabel(voiceId);
+    if (funStyle) voiceLabel += ' 🎭 ' + funStyleLabel(funStyle);
+    var speedLabel = t(normalizeSpeedKey(speed) === 'slow' ? 'audioSpeedSlow' : 'audioSpeedNormal');
     return '<div class="story-audio-params">' + esc(voiceLabel + ' · ' + speedLabel) + '</div>';
   }
 
@@ -3644,45 +3737,39 @@
     if (st.view === 'library') {
       var listHtml = stories.length
         ? stories.slice().reverse().map(function(s){
-            var done = s.audioDone || 0;
-            var total = s.sentences.length;
-            var pct = total ? (done / total * 100) : 0;
-            var active = isStoryAudioActive(s.id);
-            var blockedUntil = audioStatus[s.id] && audioStatus[s.id].blockedUntil;
-            var errMsg = audioStatus[s.id] && audioStatus[s.id].error;
-            var justDownloaded = audioStatus[s.id] && audioStatus[s.id].downloaded;
+            // The story card only tracks whichever recording it most recently
+            // started (if any) — everything else about past narrations lives
+            // in the Audio tab. This keeps re-narrating a story as simple as
+            // "tap 🔊, pick options, watch it generate", every time.
+            var activeRecId = (st.activeRecordingFor || {})[s.id];
+            var activeRec = activeRecId ? recordings.filter(function(r){ return r.id === activeRecId; })[0] : null;
+            var active = !!(activeRec && isRecordingAudioActive(activeRec.id));
+            var blockedUntil = activeRec && recordingStatus[activeRec.id] && recordingStatus[activeRec.id].blockedUntil;
+            var errMsg = activeRec && recordingStatus[activeRec.id] && recordingStatus[activeRec.id].error;
             var showPicker = st.audioPickerFor === s.id;
 
-            var actionBtnHtml;
-            if (done >= total) {
-              actionBtnHtml = '<span class="audio-mini-done">✓</span>';
-            } else if (active) {
-              actionBtnHtml = '<button class="audio-mini-btn hint-btn on" data-audio-cancel="' + s.id + '">⏸</button>';
-            } else if (s.audioVoice) {
-              actionBtnHtml = '<button class="audio-mini-btn hint-btn" data-audio-resume="' + s.id + '">▶</button>';
+            var audioRowHtml = '';
+            if (activeRec && (active || blockedUntil || errMsg || activeRec.done < activeRec.totalSteps)) {
+              var pct = activeRec.totalSteps ? (activeRec.done / activeRec.totalSteps * 100) : 0;
+              var actionBtnHtml = active
+                ? '<button class="audio-mini-btn hint-btn on" data-audio-cancel="' + activeRec.id + '">⏸</button>'
+                : (activeRec.done >= activeRec.totalSteps ? '<span class="audio-mini-done">✓</span>' : '<span class="audio-mini-note">' + esc(t('audioSeeAudioTab')) + '</span>');
+              audioRowHtml =
+                '<div class="story-audio-row" data-id="' + s.id + '">' +
+                  '<div class="story-audio-bar"><div class="story-audio-fill" style="width:' + pct + '%"></div></div>' +
+                  '<span class="story-audio-label">' + activeRec.done + ' / ' + activeRec.totalSteps + '</span>' +
+                  actionBtnHtml +
+                '</div>' +
+                buildAudioParamsLine(activeRec.voiceId, activeRec.speed, activeRec.funStyle) +
+                (blockedUntil ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(tf('audioBlockedUntil', new Date(blockedUntil).toLocaleString())) + '</div>' : '') +
+                (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioErrorPrefix')) + esc(errMsg) + '</div>' : '');
             } else {
-              actionBtnHtml = '<button class="audio-mini-btn hint-btn" data-audio-open-picker="' + s.id + '">🔊</button>';
+              audioRowHtml =
+                '<div class="story-audio-row" data-id="' + s.id + '">' +
+                  '<button class="audio-mini-btn hint-btn" data-audio-open-picker="' + s.id + '">🔊 ' + esc(t('audioNarrateBtn')) + '</button>' +
+                '</div>';
             }
-            var downloadBtnHtml = done > 0
-              ? '<button class="audio-mini-btn hint-btn" data-audio-download="' + s.id + '" title="' + esc(t('audioDownloadTitle')) + '">⬇</button>'
-              : '';
-            // Reset ("start over with different voice/speed/service") is offered
-            // whenever any audio choice has been made, even mid-generation —
-            // resetting cancels an active run first.
-            var resetBtnHtml = s.audioVoice
-              ? '<button class="audio-mini-btn hint-btn" data-audio-reset="' + s.id + '" title="' + esc(t('audioResetTitle')) + '">✕</button>'
-              : '';
-            var audioRowHtml =
-              '<div class="story-audio-row" data-id="' + s.id + '">' +
-                '<div class="story-audio-bar"><div class="story-audio-fill" style="width:' + pct + '%"></div></div>' +
-                '<span class="story-audio-label">' + done + ' / ' + total + '</span>' +
-                downloadBtnHtml + actionBtnHtml + resetBtnHtml +
-              '</div>' +
-              buildAudioParamsLine(s) +
-              (blockedUntil ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(tf('audioBlockedUntil', new Date(blockedUntil).toLocaleString())) + '</div>' : '') +
-              (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioErrorPrefix')) + esc(errMsg) + '</div>' : '') +
-              (justDownloaded ? '<div class="audio-mini-success" style="padding:0 2px;">' + esc(t('audioDownloadedNote')) + '</div>' : '') +
-              (showPicker ? buildAudioPickerHtml(s) : '');
+            audioRowHtml += (showPicker ? buildAudioPickerHtml(s) : '');
 
             return '<div class="story-card" data-id="' + s.id + '">' +
               '<div class="story-card-toprow" data-toprow-id="' + s.id + '">' +
@@ -4021,11 +4108,13 @@
   var tabStoriesBtn = document.getElementById('tabStories');
   var tabIslandsBtn = document.getElementById('tabIslands');
   var tabStatsBtn = document.getElementById('tabStats');
+  var tabAudioBtn = document.getElementById('tabAudio');
   if (tabGridBtn) tabGridBtn.onclick = function(){ switchView('grid'); };
   if (tabCardsBtn) tabCardsBtn.onclick = function(){ switchView('cards'); };
   if (tabStoriesBtn) tabStoriesBtn.onclick = function(){ switchView('stories'); };
   if (tabIslandsBtn) tabIslandsBtn.onclick = function(){ switchView('islands'); };
   if (tabStatsBtn) tabStatsBtn.onclick = function(){ switchView('stats'); };
+  if (tabAudioBtn) tabAudioBtn.onclick = function(){ switchView('audio'); };
 
   // ---------- pool overview (left panel) ----------
   var HSK_COLORS = {
@@ -4935,6 +5024,222 @@
         }
       }, { passive: true });
     }
+  }
+
+  // ---------- Audio tab: playback + list rendering ----------
+  // A single persistent <audio> element drives real background/lock-screen
+  // playback (unlike the Web Speech API used for "Vorlesen" elsewhere in the
+  // app), paired with the Media Session API so play/pause/next/previous work
+  // from the lock screen or notification shade even with the screen off —
+  // this is well supported on Desktop/Android; iOS Safari/PWA is more
+  // restrictive about backgrounded tabs, a platform limitation, not a bug here.
+  var audioPlayerEl = document.getElementById('audioPlayer');
+  var playbackState = { queue: [], index: -1, blobUrl: null, loading: false };
+
+  function stopPlayback(){
+    if (audioPlayerEl) audioPlayerEl.pause();
+    if (playbackState.blobUrl) { URL.revokeObjectURL(playbackState.blobUrl); playbackState.blobUrl = null; }
+    playbackState.queue = [];
+    playbackState.index = -1;
+    playbackState.loading = false;
+    safeRenderAudioTab();
+  }
+
+  function updateMediaSession(rec){
+    if (!('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: rec.titleE,
+        artist: rec.titleH,
+        album: 'HSK Flashcards'
+      });
+      navigator.mediaSession.setActionHandler('play', function(){ if (audioPlayerEl) audioPlayerEl.play(); });
+      navigator.mediaSession.setActionHandler('pause', function(){ if (audioPlayerEl) audioPlayerEl.pause(); });
+      navigator.mediaSession.setActionHandler('previoustrack', function(){
+        if (playbackState.index > 0) { playbackState.index--; playCurrentInQueue(); }
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', function(){ advancePlayback(); });
+    } catch(e) { /* Media Session not fully supported — playback itself still works */ }
+  }
+
+  function playCurrentInQueue(){
+    var id = playbackState.queue[playbackState.index];
+    var rec = recordings.filter(function(r){ return r.id === id; })[0];
+    if (!rec) { advancePlayback(); return; }
+    playbackState.loading = true;
+    safeRenderAudioTab();
+    buildRecordingAudioBlob(rec).then(function(blob){
+      if (playbackState.blobUrl) URL.revokeObjectURL(playbackState.blobUrl);
+      playbackState.blobUrl = URL.createObjectURL(blob);
+      playbackState.loading = false;
+      audioPlayerEl.src = playbackState.blobUrl;
+      audioPlayerEl.play().catch(function(){ /* autoplay may need a user gesture; the click that got us here counts as one */ });
+      updateMediaSession(rec);
+      safeRenderAudioTab();
+    }).catch(function(err){
+      recordingStatus[rec.id] = { error: err.message };
+      playbackState.loading = false;
+      advancePlayback();
+    });
+  }
+
+  function advancePlayback(){
+    playbackState.index++;
+    if (playbackState.index >= playbackState.queue.length) {
+      stopPlayback();
+      return;
+    }
+    playCurrentInQueue();
+  }
+
+  if (audioPlayerEl) {
+    audioPlayerEl.onended = function(){ advancePlayback(); };
+  }
+
+  // Starts playing `id`, then continues through the rest of `orderedIds`
+  // (the currently displayed list order) — satisfies "play several entries
+  // back to back" without any extra multi-select UI.
+  function playRecordingFrom(id, orderedIds){
+    var idx = orderedIds.indexOf(id);
+    if (idx === -1) return;
+    playbackState.queue = orderedIds.slice(idx);
+    playbackState.index = 0;
+    playCurrentInQueue();
+  }
+
+  function recordingMeta(rec){
+    return (rec.hsk ? hskLabel(rec.hsk) : 'HSK') + ' · ' + tf('storiesSentencesCount', rec.sentences.length);
+  }
+
+  function renderAudioTab(){
+    var root = document.getElementById('audioView');
+    if (!root) return;
+    var list = recordings.slice().reverse(); // newest first
+    var orderedIds = list.map(function(r){ return r.id; });
+
+    var itemsHtml = list.length
+      ? list.map(function(rec){
+          var complete = rec.done >= rec.totalSteps;
+          var active = isRecordingAudioActive(rec.id);
+          var blockedUntil = recordingStatus[rec.id] && recordingStatus[rec.id].blockedUntil;
+          var errMsg = recordingStatus[rec.id] && recordingStatus[rec.id].error;
+          var isPlaying = playbackState.index >= 0 && playbackState.queue[playbackState.index] === rec.id;
+          var dateLabel = new Date(rec.createdAt).toLocaleDateString(calLocale ? calLocale() : undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+          var subLine = esc(rec.titleH) + ' · ' + esc(recordingMeta(rec)) + '<br>' +
+            esc(dateLabel + (rec.voiceId ? ' · ' : '')) + esc(rec.voiceId ? (function(){
+              var v = voiceDisplayLabel(rec.voiceId);
+              if (rec.funStyle) v += ' 🎭 ' + funStyleLabel(rec.funStyle);
+              return v + ' · ' + t(normalizeSpeedKey(rec.speed) === 'slow' ? 'audioSpeedSlow' : 'audioSpeedNormal');
+            })() : '');
+
+          var actionsHtml;
+          if (!complete) {
+            var pct = rec.totalSteps ? (rec.done / rec.totalSteps * 100) : 0;
+            var genBtn = active
+              ? '<button class="audio-mini-btn hint-btn on" data-rec-cancel="' + rec.id + '">⏸</button>'
+              : '<button class="audio-mini-btn hint-btn" data-rec-resume="' + rec.id + '" title="' + esc(t('audioResumeTitle')) + '">▶</button>';
+            actionsHtml =
+              '<div class="story-audio-row" data-id="' + rec.id + '">' +
+                '<div class="story-audio-bar"><div class="story-audio-fill" style="width:' + pct + '%"></div></div>' +
+                '<span class="story-audio-label">' + rec.done + ' / ' + rec.totalSteps + '</span>' +
+                genBtn +
+                (rec.done > 0 ? '<button class="audio-mini-btn hint-btn" data-rec-delete="' + rec.id + '" title="' + esc(t('audioDeleteTitle')) + '">✕</button>' : '') +
+              '</div>' +
+              (blockedUntil ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(tf('audioBlockedUntil', new Date(blockedUntil).toLocaleString())) + '</div>' : '') +
+              (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioErrorPrefix')) + esc(errMsg) + '</div>' : '');
+          } else {
+            actionsHtml =
+              '<div class="story-audio-row" data-id="' + rec.id + '">' +
+                '<button class="audio-mini-btn hint-btn' + (isPlaying ? ' on' : '') + '" data-rec-play="' + rec.id + '" title="' + esc(t(isPlaying ? 'audioPauseTitle' : 'audioPlayTitle')) + '">' + (isPlaying ? '⏸' : '▶') + '</button>' +
+                '<button class="audio-mini-btn hint-btn" data-rec-download="' + rec.id + '" title="' + esc(t('audioDownloadTitle')) + '">⬇</button>' +
+                '<button class="audio-mini-btn hint-btn" data-rec-delete="' + rec.id + '" title="' + esc(t('audioDeleteTitle')) + '">✕</button>' +
+              '</div>' +
+              (isPlaying ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(t('audioPlayingNote')) + '</div>' : '');
+          }
+
+          return '<div class="story-card" data-id="' + rec.id + '">' +
+            '<div class="story-card-toprow"><div>' +
+              '<div class="story-title-en" style="font-size:15px;font-weight:600;">' + esc(rec.titleE) + '</div>' +
+              '<div class="story-meta">' + subLine + '</div>' +
+            '</div></div>' +
+            actionsHtml +
+          '</div>';
+        }).join('')
+      : '<div class="empty-note">' + esc(t('audioTabEmpty')) + '</div>';
+
+    root.innerHTML = '<div class="stories-wrap">' +
+      '<div class="story-toprow"><h2 style="margin:0;font-size:16px;">' + esc(t('tabAudio')) + '</h2></div>' +
+      itemsHtml +
+    '</div>';
+
+    Array.prototype.forEach.call(root.querySelectorAll('[data-rec-play]'), function(btn){
+      btn.onclick = function(){
+        var id = btn.getAttribute('data-rec-play');
+        var isPlayingThis = playbackState.index >= 0 && playbackState.queue[playbackState.index] === id;
+        if (isPlayingThis) {
+          audioPlayerEl.pause();
+          safeRenderAudioTab();
+        } else if (playbackState.queue.indexOf(id) !== -1 && audioPlayerEl.src) {
+          audioPlayerEl.play();
+          safeRenderAudioTab();
+        } else {
+          playRecordingFrom(id, orderedIds);
+        }
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-rec-download]'), function(btn){
+      btn.onclick = function(){
+        var id = btn.getAttribute('data-rec-download');
+        var rec = recordings.filter(function(r){ return r.id === id; })[0];
+        if (!rec) return;
+        buildRecordingAudioBlob(rec).then(function(blob){
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          var safeName = rec.titleH.replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'story';
+          a.href = url;
+          a.download = 'hskflash-' + safeName + '.wav';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+        }).catch(function(err){
+          recordingStatus[id] = { error: err.message };
+          safeRenderAudioTab();
+        });
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-rec-delete]'), function(btn){
+      btn.onclick = function(){
+        var id = btn.getAttribute('data-rec-delete');
+        if (!confirm(t('audioDeleteConfirm'))) return;
+        if (playbackState.queue.indexOf(id) !== -1) stopPlayback();
+        deleteRecording(id).then(safeRenderAudioTab);
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-rec-resume]'), function(btn){
+      btn.onclick = function(){
+        var id = btn.getAttribute('data-rec-resume');
+        var rec = recordings.filter(function(r){ return r.id === id; })[0];
+        if (!rec) return;
+        ensureGeminiKey().then(function(){
+          delete recordingStatus[rec.id];
+          safeRenderAudioTab();
+          startOrResumeRecordingAudio(rec, makeRecordingCallbacks(rec));
+        }).catch(function(err){
+          if (err && err.message === 'no-key') {
+            openDrawer();
+            var f = document.getElementById('inpGeminiKey');
+            if (f) f.focus();
+          }
+        });
+      };
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-rec-cancel]'), function(btn){
+      btn.onclick = function(){
+        cancelRecordingAudio(btn.getAttribute('data-rec-cancel'));
+        safeRenderAudioTab();
+      };
+    });
   }
 
   function renderStatsTab(){
