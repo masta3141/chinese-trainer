@@ -360,13 +360,13 @@
   .story-card {
     background: var(--paper-raised);
     border: 1px solid var(--hairline);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
+    border-radius: 10px;
+    padding: 9px 13px;
+    margin-bottom: 6px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
   }
   .story-card-toprow {
     display: flex;
@@ -376,21 +376,22 @@
   }
   .story-card:hover { border-color: var(--ink-faint); }
   .audio-rec-playing { border-color: var(--seal); }
-  .audio-rec-check { width: 17px; height: 17px; margin-top: 2px; flex: 0 0 auto; cursor: pointer; }
+  .audio-rec-check { width: 16px; height: 16px; margin-top: 1px; flex: 0 0 auto; cursor: pointer; }
   .story-card .story-title {
     font-family: var(--hanzi-font);
-    font-size: 17px;
-    margin-bottom: 3px;
+    font-size: 15.5px;
+    margin-bottom: 1px;
   }
   .story-card .story-title-en {
-    font-size: 12.5px;
+    font-size: 11.5px;
     font-style: italic;
     color: var(--ink-soft);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   .story-card .story-meta {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--ink-faint);
+    line-height: 1.35;
   }
   .story-card .story-arrow { color: var(--ink-faint); font-size: 16px; }
   .story-audio-row {
@@ -398,12 +399,12 @@
     align-items: center;
     gap: 8px;
     border-top: 1px dashed var(--hairline);
-    padding-top: 9px;
+    padding-top: 6px;
     cursor: default;
   }
   .story-audio-bar {
     flex: 1;
-    height: 6px;
+    height: 5px;
     border-radius: 4px;
     background: var(--hairline);
     overflow: hidden;
@@ -415,14 +416,14 @@
     transition: width .3s;
   }
   .story-audio-label {
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--ink-faint);
     min-width: 40px;
     text-align: right;
   }
   .audio-mini-btn {
-    padding: 5px 9px;
-    font-size: 13px;
+    padding: 3px 7px;
+    font-size: 12.5px;
     min-width: auto;
     flex: 0 0 auto;
   }
@@ -3648,8 +3649,18 @@
     // swiping to a page like "Audio" can leave its own tab out of view even
     // though the content is showing. Keep the active tab scrolled into view
     // whenever the page changes, whether via tab tap or carousel swipe.
-    if (activeTabEl && activeTabEl.scrollIntoView) {
-      activeTabEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    // Scrolled manually (NOT via scrollIntoView): scrollIntoView walks up
+    // every scrollable ancestor, and .app — clipped with overflow-x:hidden
+    // so the carousel track's translateX positioning works — technically
+    // counts as one, since its .learn-area child is laid out 600% wide.
+    // scrollIntoView would happily give .app itself a nonzero scrollLeft,
+    // which silently shifts the entire carousel out of alignment.
+    var tabsContainer = document.querySelector('.view-tabs');
+    if (activeTabEl && tabsContainer) {
+      var target = activeTabEl.offsetLeft - (tabsContainer.clientWidth - activeTabEl.offsetWidth) / 2;
+      target = Math.max(0, Math.min(target, tabsContainer.scrollWidth - tabsContainer.clientWidth));
+      if (tabsContainer.scrollTo) tabsContainer.scrollTo({ left: target, behavior: 'smooth' });
+      else tabsContainer.scrollLeft = target;
     }
   }
 
@@ -3807,8 +3818,15 @@
     var st = storiesState;
 
     if (st.view === 'library') {
+      // Higher HSK levels float to the top, HSK1 sinks to the bottom; within
+      // the same level, the most recently created story comes first.
+      var sortedStories = stories.map(function(s, idx){ return { s: s, idx: idx }; }).sort(function(a, b){
+        var rankA = HSK_ORDER.indexOf(a.s.hsk), rankB = HSK_ORDER.indexOf(b.s.hsk);
+        if (rankA !== rankB) return rankB - rankA;
+        return b.idx - a.idx;
+      }).map(function(x){ return x.s; });
       var listHtml = stories.length
-        ? stories.slice().reverse().map(function(s){
+        ? sortedStories.map(function(s){
             // The story card only tracks whichever recording it most recently
             // started (if any) — everything else about past narrations lives
             // in the Audio tab. This keeps re-narrating a story as simple as
@@ -5249,7 +5267,7 @@
           return '<div class="story-card' + (isPlaying ? ' audio-rec-playing' : '') + '" style="cursor:default;" data-id="' + rec.id + '">' +
             '<div class="story-card-toprow"><div style="display:flex;align-items:flex-start;gap:10px;">' +
               checkboxHtml +
-              '<div><div class="story-title-en" style="font-size:15px;font-weight:600;">' + esc(rec.titleE) + '</div>' +
+              '<div><div class="story-title-en" style="font-size:13.5px;font-weight:600;margin-bottom:1px;">' + esc(rec.titleE) + '</div>' +
               '<div class="story-meta">' + subLine + '</div></div>' +
             '</div></div>' +
             actionsHtml +
