@@ -393,7 +393,6 @@
     color: var(--ink-faint);
     line-height: 1.35;
   }
-  .story-card .story-arrow { color: var(--ink-faint); font-size: 16px; }
   .story-audio-row {
     display: flex;
     align-items: center;
@@ -3838,26 +3837,36 @@
             var errMsg = activeRec && recordingStatus[activeRec.id] && recordingStatus[activeRec.id].error;
             var showPicker = st.audioPickerFor === s.id;
 
-            var audioRowHtml = '';
-            if (activeRec && (active || blockedUntil || errMsg || activeRec.done < activeRec.totalSteps)) {
-              var pct = activeRec.totalSteps ? (activeRec.done / activeRec.totalSteps * 100) : 0;
-              var actionBtnHtml = active
+            // The narrate/status control lives up in the top row now (icon-only,
+            // to stay on one line with the title); only an in-progress bar (no
+            // button of its own) drops to a second, slim row when there's
+            // something to show progress on.
+            var hasActiveTracking = !!(activeRec && (active || blockedUntil || errMsg || activeRec.done < activeRec.totalSteps));
+            var topRightHtml = '<div style="display:flex;align-items:center;gap:8px;">';
+            if (showPicker) {
+              // Start/Cancel live in the picker panel below — nothing extra needed here.
+            } else if (hasActiveTracking) {
+              topRightHtml += active
                 ? '<button class="audio-mini-btn hint-btn on" data-audio-cancel="' + activeRec.id + '">⏸</button>'
-                : (activeRec.done >= activeRec.totalSteps ? '<span class="audio-mini-done">✓</span>' : '<span class="audio-mini-note">' + esc(t('audioSeeAudioTab')) + '</span>');
+                : (activeRec.done >= activeRec.totalSteps
+                    ? '<span class="audio-mini-done">✓</span>'
+                    : '<span class="audio-mini-note" title="' + esc(t('audioSeeAudioTab')) + '">⏳</span>');
+            } else {
+              topRightHtml += '<button class="audio-mini-btn hint-btn" data-audio-open-picker="' + s.id + '" title="' + esc(t('audioNarrateBtn')) + '">🔊</button>';
+            }
+            topRightHtml += '<button class="hint-btn" data-restart-id="' + s.id + '" title="' + esc(t('storiesRestartBtn')) + '">↺</button></div>';
+
+            var audioRowHtml = '';
+            if (hasActiveTracking) {
+              var pct = activeRec.totalSteps ? (activeRec.done / activeRec.totalSteps * 100) : 0;
               audioRowHtml =
                 '<div class="story-audio-row" data-id="' + s.id + '">' +
                   '<div class="story-audio-bar"><div class="story-audio-fill" style="width:' + pct + '%"></div></div>' +
                   '<span class="story-audio-label">' + activeRec.done + ' / ' + activeRec.totalSteps + '</span>' +
-                  actionBtnHtml +
                 '</div>' +
                 buildAudioParamsLine(activeRec.voiceId, activeRec.speed, activeRec.funStyle) +
                 (blockedUntil ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(tf('audioBlockedUntil', new Date(blockedUntil).toLocaleString())) + '</div>' : '') +
                 (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioErrorPrefix')) + esc(errMsg) + '</div>' : '');
-            } else {
-              audioRowHtml =
-                '<div class="story-audio-row" data-id="' + s.id + '">' +
-                  '<button class="audio-mini-btn hint-btn" data-audio-open-picker="' + s.id + '">🔊 ' + esc(t('audioNarrateBtn')) + '</button>' +
-                '</div>';
             }
             audioRowHtml += (showPicker ? buildAudioPickerHtml(s) : '');
 
@@ -3865,10 +3874,7 @@
               '<div class="story-card-toprow" data-toprow-id="' + s.id + '">' +
                 '<div><div class="story-title">' + esc(s.title.h) + '</div><div class="story-title-en">' + esc(s.title.e) + '</div>' +
                 '<div class="story-meta">' + esc(storyMeta(s)) + ' · ' + esc(storyProgressLabel(s)) + '</div></div>' +
-                '<div style="display:flex;align-items:center;gap:10px;">' +
-                  '<button class="hint-btn" data-restart-id="' + s.id + '" title="' + esc(t('storiesRestartBtn')) + '">↺</button>' +
-                  '<span class="story-arrow">→</span>' +
-                '</div>' +
+                topRightHtml +
               '</div>' +
               audioRowHtml +
             '</div>';
@@ -4363,9 +4369,10 @@
       var listHtml = islands.length
         ? islands.slice().reverse().map(function(isl){
             return '<div class="story-card" data-id="' + isl.id + '">' +
-              '<div><div class="story-title" style="font-family:inherit;font-size:15px;">' + esc(isl.name) + '</div>' +
-              '<div class="story-meta">' + esc(tf('islandsSentenceCount', isl.sentences.length)) + '</div></div>' +
-              '<span class="story-arrow">→</span>' +
+              '<div class="story-card-toprow">' +
+                '<span class="story-title" style="font-family:inherit;font-size:14.5px;font-weight:600;">' + esc(isl.name) + '</span>' +
+                '<span class="story-meta" style="white-space:nowrap;">' + esc(tf('islandsSentenceCount', isl.sentences.length)) + '</span>' +
+              '</div>' +
             '</div>';
           }).join('')
         : '<div class="empty-note">' + esc(t('islandsEmpty')) + '</div>';
@@ -5236,41 +5243,46 @@
               return v + ' · ' + t(normalizeSpeedKey(rec.speed) === 'slow' ? 'audioSpeedSlow' : 'audioSpeedNormal');
             })() : '');
 
-          var actionsHtml;
+          // Every button lives in the top row now, right next to the title —
+          // only a bare progress bar (no controls of its own) drops to a
+          // second, slim row while a recording is still generating.
+          var topRightHtml = '<div style="display:flex;align-items:center;gap:8px;">';
+          var audioRowHtml = '';
           if (!complete) {
-            var pct = rec.totalSteps ? (rec.done / rec.totalSteps * 100) : 0;
-            var genBtn = active
+            topRightHtml += active
               ? '<button class="audio-mini-btn hint-btn on" data-rec-cancel="' + rec.id + '">⏸</button>'
               : '<button class="audio-mini-btn hint-btn" data-rec-resume="' + rec.id + '" title="' + esc(t('audioResumeTitle')) + '">▶</button>';
-            actionsHtml =
+            if (rec.done > 0) topRightHtml += '<button class="audio-mini-btn hint-btn" data-rec-delete="' + rec.id + '" title="' + esc(t('audioDeleteTitle')) + '">✕</button>';
+            var pct = rec.totalSteps ? (rec.done / rec.totalSteps * 100) : 0;
+            audioRowHtml =
               '<div class="story-audio-row" data-id="' + rec.id + '">' +
                 '<div class="story-audio-bar"><div class="story-audio-fill" style="width:' + pct + '%"></div></div>' +
                 '<span class="story-audio-label">' + rec.done + ' / ' + rec.totalSteps + '</span>' +
-                genBtn +
-                (rec.done > 0 ? '<button class="audio-mini-btn hint-btn" data-rec-delete="' + rec.id + '" title="' + esc(t('audioDeleteTitle')) + '">✕</button>' : '') +
               '</div>' +
               (blockedUntil ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(tf('audioBlockedUntil', new Date(blockedUntil).toLocaleString())) + '</div>' : '') +
               (errMsg ? '<div class="audio-mini-note" style="padding:0 2px;color:var(--seal);">' + esc(t('audioErrorPrefix')) + esc(errMsg) + '</div>' : '');
           } else {
-            actionsHtml =
-              '<div class="story-audio-row" data-id="' + rec.id + '">' +
-                '<button class="audio-mini-btn hint-btn" data-rec-download="' + rec.id + '" title="' + esc(t('audioDownloadTitle')) + '">⬇</button>' +
-                '<button class="audio-mini-btn hint-btn" data-rec-delete="' + rec.id + '" title="' + esc(t('audioDeleteTitle')) + '">✕</button>' +
-              '</div>' +
-              (isPlaying ? '<div class="audio-mini-note" style="padding:0 2px;">' + esc(t('audioPlayingNote')) + '</div>' : '');
+            topRightHtml +=
+              '<button class="audio-mini-btn hint-btn" data-rec-download="' + rec.id + '" title="' + esc(t('audioDownloadTitle')) + '">⬇</button>' +
+              '<button class="audio-mini-btn hint-btn" data-rec-delete="' + rec.id + '" title="' + esc(t('audioDeleteTitle')) + '">✕</button>';
+            if (isPlaying) audioRowHtml = '<div class="audio-mini-note" style="padding:0 2px;">' + esc(t('audioPlayingNote')) + '</div>';
           }
+          topRightHtml += '</div>';
 
           var checkboxHtml = complete
             ? '<input type="checkbox" class="audio-rec-check" data-rec-check="' + rec.id + '"' + (isRecChecked(rec.id) ? ' checked' : '') + '>'
             : '<span style="width:16px;display:inline-block;"></span>';
 
           return '<div class="story-card' + (isPlaying ? ' audio-rec-playing' : '') + '" style="cursor:default;" data-id="' + rec.id + '">' +
-            '<div class="story-card-toprow"><div style="display:flex;align-items:flex-start;gap:10px;">' +
-              checkboxHtml +
-              '<div><div class="story-title-en" style="font-size:13.5px;font-weight:600;margin-bottom:1px;">' + esc(rec.titleE) + '</div>' +
-              '<div class="story-meta">' + subLine + '</div></div>' +
-            '</div></div>' +
-            actionsHtml +
+            '<div class="story-card-toprow">' +
+              '<div style="display:flex;align-items:flex-start;gap:10px;min-width:0;">' +
+                checkboxHtml +
+                '<div style="min-width:0;"><div class="story-title-en" style="font-size:13.5px;font-weight:600;margin-bottom:1px;">' + esc(rec.titleE) + '</div>' +
+                '<div class="story-meta">' + subLine + '</div></div>' +
+              '</div>' +
+              topRightHtml +
+            '</div>' +
+            audioRowHtml +
           '</div>';
         }).join('')
       : '<div class="empty-note">' + esc(t('audioTabEmpty')) + '</div>';
