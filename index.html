@@ -1107,6 +1107,17 @@
     color: var(--ink-soft);
     font-style: italic;
   }
+  .try-box {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border: 1px dashed var(--hairline);
+    border-radius: 10px;
+  }
+  .try-box .try-label { font-size: 12px; color: var(--ink-faint); }
+  .try-box .try-h { font-family: var(--hanzi-font); font-size: 22px; line-height: 1.5; margin-top: 2px; min-height: 33px; }
+  .try-box .try-p { color: var(--seal); font-size: 14px; margin-top: 2px; }
+  .try-box .try-e { color: var(--ink-soft); font-size: 13.5px; font-style: italic; margin-top: 2px; }
+  .try-box .try-msg { color: var(--ink-faint); font-size: 12.5px; margin-top: 4px; }
   .examples-box {
     margin-top: 18px;
     text-align: left;
@@ -1601,6 +1612,7 @@
       generateExamplesBtn: '✨ Beispielsätze generieren',
       translationInExamples: 'Übersetzung in Beispielen',
       savedToast: 'Gespeichert — nächste Karte kommt gleich.',
+      tryBtn: '🎤 Selbst versuchen', tryStopBtn: '⏹ Fertig', tryListening: '🎙 Ich höre zu … sprich den Satz.', tryHeardLabel: 'Verstanden:', tryProcessing: 'Pinyin & Übersetzung werden geholt …', tryNoSpeech: 'Nichts verstanden – versuch es nochmal.', tryMicDenied: 'Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.', tryError: 'Spracherkennung fehlgeschlagen: {0}', tryNoKey: 'Für Pinyin & Übersetzung einen Gemini-API-Key in den Einstellungen eintragen.',
       sentenceSpeak: 'Satz vorlesen', speakTitle: 'Zum Vorlesen antippen',
       sessionBar: '{0} gemeistert · {1} im Fokus · {2} in dieser Runde',
       rateNochmal: 'Nochmal', rateSchwer: 'Schwer', rateGut: 'Gut', rateLeicht: 'Leicht',
@@ -1779,6 +1791,7 @@
       generateExamplesBtn: '✨ Generate example sentences',
       translationInExamples: 'Translation in examples',
       savedToast: 'Saved — next card coming up.',
+      tryBtn: '🎤 Try it yourself', tryStopBtn: '⏹ Done', tryListening: '🎙 Listening … say the sentence.', tryHeardLabel: 'Heard:', tryProcessing: 'Fetching pinyin & translation …', tryNoSpeech: 'Didn\'t catch anything – try again.', tryMicDenied: 'No microphone access – please allow it in the browser.', tryError: 'Speech recognition failed: {0}', tryNoKey: 'Add a Gemini API key in the settings for pinyin & translation.',
       sentenceSpeak: 'Read sentence aloud', speakTitle: 'Tap to hear it read aloud',
       sessionBar: '{0} mastered · {1} in focus · {2} in this round',
       rateNochmal: 'Again', rateSchwer: 'Hard', rateGut: 'Good', rateLeicht: 'Easy',
@@ -1953,6 +1966,7 @@
       generateExamplesBtn: '✨ Générer des phrases d\'exemple',
       translationInExamples: 'Traduction dans les exemples',
       savedToast: 'Enregistré — carte suivante dans un instant.',
+      tryBtn: '🎤 Essayer soi-même', tryStopBtn: '⏹ Terminé', tryListening: '🎙 J\'écoute … dis la phrase.', tryHeardLabel: 'Compris :', tryProcessing: 'Récupération du pinyin et de la traduction …', tryNoSpeech: 'Rien compris – réessaie.', tryMicDenied: 'Pas d\'accès au micro – autorise-le dans le navigateur.', tryError: 'Échec de la reconnaissance vocale : {0}', tryNoKey: 'Ajoute une clé API Gemini dans les réglages pour le pinyin et la traduction.',
       sentenceSpeak: 'Lire la phrase', speakTitle: 'Appuyer pour écouter',
       sessionBar: '{0} maîtrisés · {1} en cours · {2} dans cette série',
       rateNochmal: 'Encore', rateSchwer: 'Difficile', rateGut: 'Bien', rateLeicht: 'Facile',
@@ -2127,6 +2141,7 @@
       generateExamplesBtn: '✨ Generar frases de ejemplo',
       translationInExamples: 'Traducción en los ejemplos',
       savedToast: 'Guardado — la siguiente tarjeta llega enseguida.',
+      tryBtn: '🎤 Pruébalo tú', tryStopBtn: '⏹ Listo', tryListening: '🎙 Escuchando … di la frase.', tryHeardLabel: 'Entendido:', tryProcessing: 'Obteniendo pinyin y traducción …', tryNoSpeech: 'No se entendió nada – inténtalo de nuevo.', tryMicDenied: 'Sin acceso al micrófono – permítelo en el navegador.', tryError: 'Falló el reconocimiento de voz: {0}', tryNoKey: 'Añade una clave API de Gemini en los ajustes para pinyin y traducción.',
       sentenceSpeak: 'Leer frase en voz alta', speakTitle: 'Toca para escuchar',
       sessionBar: '{0} dominadas · {1} en foco · {2} en esta ronda',
       rateNochmal: 'De nuevo', rateSchwer: 'Difícil', rateGut: 'Bien', rateLeicht: 'Fácil',
@@ -4068,7 +4083,7 @@
               '<p>' + esc(tf('storiesFinishedDesc', story.title.h)) + '</p>' +
               '<button class="btn-primary" id="btnReadAgain">' + esc(t('storiesRestartBtn')) + '</button></div>' +
           '</div>';
-        document.getElementById('btnBackToLibrary2').onclick = function(){ stopNarration(); st.view = 'library'; renderStories(); };
+        document.getElementById('btnBackToLibrary2').onclick = function(){ stopNarration(); stopTryListening(); st.tryResult = null; st.view = 'library'; renderStories(); };
         document.getElementById('btnDeleteStory').onclick = function(){
           stopNarration();
           if (!confirm(t('storiesDeleteConfirm'))) return;
@@ -4095,6 +4110,8 @@
       var current = typeof st.readCurrent === 'number' ? st.readCurrent : 0;
       var sent = story.sentences[idx];
       var isCurrent = idx === current;
+      var tryHere = st.tryResult && st.tryResult.storyId === story.id && st.tryResult.idx === idx;
+      var tryListening = tryHere && st.tryResult.status === 'listening';
       var dotsHtml = story.sentences.map(function(s, i){
         var cls = 'dot';
         if (i < current) cls += ' done';
@@ -4126,8 +4143,10 @@
               '<button class="hint-btn' + (st.readShowPinyin ? ' on' : '') + '" id="btnToggleReadPinyin">' + esc(st.readShowPinyin ? t('storiesPinyinHide') : t('storiesPinyinShow')) + '</button>' +
               '<button class="hint-btn' + (st.readShowTranslation ? ' on' : '') + '" id="btnToggleReadTranslation">' + esc(st.readShowTranslation ? t('storiesTranslationHide') : t('storiesTranslationShow')) + '</button>' +
               '<button class="hint-btn" id="btnReadSpeak">' + esc(t('readBtn')) + '</button>' +
+              (SpeechRec ? '<button class="hint-btn' + (tryListening ? ' on' : '') + '" id="btnTrySpeak">' + esc(tryListening ? t('tryStopBtn') : t('tryBtn')) + '</button>' : '') +
             '</div>' +
             '<div class="solution-line">' + (st.readShowTranslation ? esc(sent.e) : '') + '</div>' +
+            (tryHere ? renderTryBox(st.tryResult) : '') +
             (isCurrent ? '' : '<div class="empty-note" style="padding:8px 0;">' + esc(t('storiesRatingOnlyCurrent')) + '</div>') +
             '<div class="rate-row" style="grid-template-columns:repeat(3,1fr);">' +
               '<button class="rate-btn' + (isCurrent ? '' : ' disabled') + '" style="background:' + levelToColor(4) + '" data-val="0"' + (isCurrent ? '' : ' disabled') + '>' + esc(t('storiesUnderstandNo')) + '<span class="val">+0</span></button>' +
@@ -4137,7 +4156,7 @@
           '</div>' +
         '</div>';
 
-      document.getElementById('btnBackToLibrary2').onclick = function(){ stopNarration(); st.view = 'library'; renderStories(); };
+      document.getElementById('btnBackToLibrary2').onclick = function(){ stopNarration(); stopTryListening(); st.tryResult = null; st.view = 'library'; renderStories(); };
       document.getElementById('btnDeleteStory').onclick = function(){
         stopNarration();
         if (!confirm(t('storiesDeleteConfirm'))) return;
@@ -4147,6 +4166,7 @@
         renderStories();
       };
       document.getElementById('btnNarrate').onclick = function(){
+        stopTryListening();
         if (narrating) {
           stopNarration();
           renderStories();
@@ -4163,7 +4183,13 @@
         renderStories();
       };
       document.getElementById('sentHanzi').onclick = function(){ speak(sent.h); };
-      document.getElementById('btnReadSpeak').onclick = function(){ speak(sent.h); };
+      document.getElementById('btnReadSpeak').onclick = function(){ stopTryListening(); speak(sent.h); };
+      var btnTry = document.getElementById('btnTrySpeak');
+      if (btnTry) btnTry.onclick = function(){
+        // Second tap while listening: stop and use what was heard so far.
+        if (tryListening && tryRec) { try { tryRec.stop(); } catch(e) {} return; }
+        startTryListening(story.id, idx, sent);
+      };
       document.getElementById('btnToggleReadPinyin').onclick = function(){
         st.readShowPinyin = !st.readShowPinyin;
         renderStories();
@@ -4174,6 +4200,8 @@
       };
       function goToSentence(newIdx){
         stopNarration();
+        stopTryListening();
+        st.tryResult = null;
         st.readIdx = newIdx;
         st.readShowPinyin = false;
         st.readShowTranslation = false;
@@ -4190,6 +4218,8 @@
         Array.prototype.forEach.call(root.querySelectorAll('.rate-row .rate-btn'), function(btn){
           btn.onclick = function(){
             stopNarration();
+            stopTryListening();
+            st.tryResult = null;
             var val = parseInt(btn.getAttribute('data-val'), 10);
             var matched = matchWordsInSentence(sent.h, WORDS);
             matched.forEach(function(w){
@@ -4803,6 +4833,150 @@
   }
   function narrateStory(story, startIdx, onStep, onDone){
     return narrateSentences(story.sentences, startIdx, onStep, onDone);
+  }
+
+  // ---------- speech recognition ("Selbst versuchen" in story sentences) ----------
+  // Just for fun, no scoring: the user speaks the sentence, the browser's
+  // speech recognition (Chrome/Edge → Google, Safari → Apple; not in Firefox)
+  // transcribes it, and Gemini adds pinyin + translation to whatever was heard.
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  var tryRec = null;
+
+  function normalizeHanzi(text){
+    return String(text || '').replace(/[\s，。！？、,.!?；;：:“”"'‘’（）()…—\-]/g, '');
+  }
+
+  function buildAnnotateTranscriptPrompt(hanzi){
+    return "You are a precise linguistic API for a Mandarin learning app.\n" +
+      "TASK: The following Mandarin text was produced by speech recognition of a learner. Add pinyin (with tone marks) and an English translation.\n" +
+      "TEXT: \"" + hanzi + "\"\n" +
+      "Do NOT correct or change the text, even if it seems wrong or nonsensical — translate literally what is there. You may add Chinese punctuation.\n" +
+      "STRICT OUTPUT RULES:\n" +
+      "1. Output MUST contain exactly 1 line. Nothing else.\n" +
+      "2. Format: HANZI|PINYIN|ENGLISH\n" +
+      "3. No introduction, no markdown fences, no numbering, no explanatory text.";
+  }
+
+  function annotateTranscript(hanzi){
+    var apiKey = loadGeminiKey();
+    if (!apiKey) return Promise.reject(new Error('no-key'));
+    var model = loadGeminiModel();
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    var payload = { contents: [{ parts: [{ text: buildAnnotateTranscriptPrompt(hanzi) }] }] };
+
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(res){
+      if (!res.ok) return res.text().then(function(t){ throw new Error('HTTP ' + res.status + ': ' + t); });
+      return res.json();
+    }).then(function(data){
+      var parsed = parseGeminiResponse(data.candidates[0].content.parts[0].text);
+      if (!parsed.length) throw new Error('Antwort konnte nicht gelesen werden.');
+      return parsed[0];
+    });
+  }
+
+  function stopTryListening(){
+    if (!tryRec) return;
+    var rec = tryRec;
+    tryRec = null;
+    try { rec.abort(); } catch(e) {}
+    var tr = storiesState.tryResult;
+    if (tr && tr.status === 'listening') storiesState.tryResult = null;
+  }
+
+  // result object lives in storiesState.tryResult and is only shown while the
+  // same story sentence is open: {storyId, idx, status, h, p, e, msg}
+  function startTryListening(storyId, idx, target){
+    stopTryListening();
+    stopNarration();
+    var st = storiesState;
+    var tr = { storyId: storyId, idx: idx, status: 'listening', h: '', p: '', e: '', msg: '' };
+    st.tryResult = tr;
+
+    var rec = new SpeechRec();
+    rec.lang = 'zh-CN';
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.maxAlternatives = 1;
+    tryRec = rec;
+    var finalText = '';
+    var failed = false;
+
+    rec.onresult = function(e){
+      var interim = '';
+      finalText = '';
+      for (var i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      tr.h = finalText + interim;
+      var el = document.getElementById('tryHeard');
+      if (el) el.textContent = tr.h;
+    };
+    rec.onerror = function(e){
+      if (tryRec !== rec) return;
+      failed = true;
+      tr.status = 'error';
+      tr.msg = e.error === 'no-speech' ? t('tryNoSpeech')
+        : (e.error === 'not-allowed' || e.error === 'service-not-allowed') ? t('tryMicDenied')
+        : tf('tryError', e.error);
+    };
+    rec.onend = function(){
+      if (tryRec !== rec) return;
+      tryRec = null;
+      if (st.tryResult !== tr) return;
+      var heard = (finalText || tr.h).trim();
+      if (!failed && !heard) { tr.status = 'error'; tr.msg = t('tryNoSpeech'); }
+      if (tr.status === 'error') { renderStories(); return; }
+      tr.h = heard;
+      // Spoken exactly right → reuse the story's own pinyin/translation, no API call.
+      if (normalizeHanzi(heard) === normalizeHanzi(target.h)) {
+        tr.h = target.h; tr.p = target.p; tr.e = target.e;
+        tr.status = 'done';
+        renderStories();
+        return;
+      }
+      tr.status = 'processing';
+      renderStories();
+      annotateTranscript(heard).then(function(r){
+        if (st.tryResult !== tr) return;
+        tr.h = r.h; tr.p = r.p; tr.e = r.e;
+        tr.status = 'done';
+        renderStories();
+      }).catch(function(err){
+        if (st.tryResult !== tr) return;
+        tr.status = 'done';
+        tr.msg = err.message === 'no-key' ? t('tryNoKey') : t('errorPrefix') + err.message;
+        renderStories();
+      });
+    };
+
+    try { rec.start(); } catch(e) {
+      tryRec = null;
+      tr.status = 'error';
+      tr.msg = tf('tryError', e.message);
+    }
+    renderStories();
+  }
+
+  function renderTryBox(tr){
+    if (tr.status === 'listening') {
+      return '<div class="try-box"><div class="try-label">' + esc(t('tryListening')) + '</div>' +
+        '<div class="try-h" id="tryHeard">' + esc(tr.h) + '</div></div>';
+    }
+    if (tr.status === 'error') {
+      return '<div class="try-box"><div class="try-msg">' + esc(tr.msg) + '</div></div>';
+    }
+    return '<div class="try-box"><div class="try-label">' + esc(t('tryHeardLabel')) + '</div>' +
+      '<div class="try-h">' + esc(tr.h) + '</div>' +
+      (tr.status === 'processing' ? '<div class="try-msg">' + esc(t('tryProcessing')) + '</div>' : '') +
+      (tr.p ? '<div class="try-p">' + esc(tr.p) + '</div>' : '') +
+      (tr.e ? '<div class="try-e">' + esc(tr.e) + '</div>' : '') +
+      (tr.msg ? '<div class="try-msg">' + esc(tr.msg) + '</div>' : '') +
+    '</div>';
   }
 
   // ---------- rendering ----------
