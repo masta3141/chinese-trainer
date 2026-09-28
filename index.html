@@ -3285,11 +3285,17 @@
   // `story.id + ':' + idx` in IndexedDB) is found unchanged. The English
   // title clip didn't exist yet under the old scheme, so it's simply missing
   // and gets generated (or backfilled) the next time this recording resumes.
+  // The legacy fields are stripped from the story afterwards so this runs only
+  // once — otherwise deleting the migrated recording would bring it back on
+  // the next load.
   function migrateLegacyStoryAudio(){
-    var changed = false;
+    var changed = false, storiesChanged = false;
     stories.forEach(function(s){
       if (!s.audioVoice) return;
       var alreadyMigrated = recordings.some(function(r){ return r.id === s.id; });
+      var legacy = { voice: s.audioVoice, speed: s.audioSpeed, funStyle: s.audioFunStyle, done: s.audioDone };
+      delete s.audioVoice; delete s.audioSpeed; delete s.audioFunStyle; delete s.audioDone;
+      storiesChanged = true;
       if (alreadyMigrated) return;
       recordings.push({
         id: s.id,
@@ -3298,16 +3304,17 @@
         titleE: s.title.e,
         hsk: s.hsk,
         sentences: s.sentences.map(function(x){ return { h: x.h, e: x.e }; }),
-        voiceId: s.audioVoice,
-        speed: s.audioSpeed,
-        funStyle: s.audioFunStyle || null,
+        voiceId: legacy.voice,
+        speed: legacy.speed,
+        funStyle: legacy.funStyle || null,
         createdAt: Date.now(),
-        done: s.audioDone || 0,
+        done: legacy.done || 0,
         totalSteps: 1 + s.sentences.length
       });
       changed = true;
     });
     if (changed) saveRecordings(recordings);
+    if (storiesChanged) saveStories(stories);
   }
   migrateLegacyStoryAudio();
 
