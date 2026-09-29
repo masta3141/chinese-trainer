@@ -1004,6 +1004,24 @@
   }
   .btn-secondary:hover { border-color: var(--ink-faint); color: var(--ink); }
 
+  /* --- Power-Streak card --- */
+  .streak-card .streak-head { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
+  .streak-card .streak-flame { font-size: 30px; }
+  .streak-card .streak-num { font-size: 40px; font-weight: 700; color: var(--seal); line-height: 1; }
+  .streak-card .streak-unit { font-size: 14px; color: var(--ink-soft); }
+  .streak-card .streak-motto { font-size: 15px; font-weight: 600; margin: 10px 0 6px; }
+  .streak-card .streak-fc { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 0 0 6px; }
+  .streak-card .streak-fc-cell { border: 1px solid var(--hairline); border-radius: 8px; padding: 6px 2px; }
+  .streak-card .streak-fc-cell .n { font-size: 18px; font-weight: 700; }
+  .streak-card .streak-fc-cell .l { font-size: 11px; color: var(--ink-faint); }
+  .streak-card .streak-fc-cell.due .n { color: var(--seal); }
+  .streak-card .streak-fc-total { font-size: 12px; color: var(--ink-faint); margin-bottom: 18px; }
+  .streak-card .streak-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .streak-card .streak-info { margin-top: 16px; font-size: 13px; color: var(--ink-soft); }
+  .streak-card .streak-info summary { cursor: pointer; color: var(--ink-faint); }
+  .streak-card .streak-info p { text-align: left; font-size: 13px; margin: 8px 0 0; }
+  .streak-card .streak-reset { margin: 14px auto 0; }
+
   /* --- Flashcard --- */
   .session-bar {
     display: flex;
@@ -1615,6 +1633,7 @@
       tryBtn: '🎤 Selbst versuchen', tryStopBtn: '⏹ Fertig', tryListening: '🎙 Ich höre zu … sprich den Satz.', tryHeardLabel: 'Verstanden:', tryProcessing: 'Pinyin & Übersetzung werden geholt …', tryNoSpeech: 'Nichts verstanden – versuch es nochmal.', tryMicDenied: 'Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.', tryError: 'Spracherkennung fehlgeschlagen: {0}', tryNoKey: 'Für Pinyin & Übersetzung einen Gemini-API-Key in den Einstellungen eintragen.',
       sentenceSpeak: 'Satz vorlesen', speakTitle: 'Zum Vorlesen antippen',
       sessionBar: '{0} gemeistert · {1} im Fokus · {2} in dieser Runde',
+      streakUnit: 'Power-Streak', streakStartBtn: '🔥 Streak starten', streakContinueBtn: 'Weitermachen', streakNextBtn: '🔥 Nächste Stufe (+1)', streakStatusNew: 'Jede Stufe bringt 5 neue Wörter – und alles, was dein SRS fällig findet.', streakStatusOpen: 'Stufe offen · noch {0} Karten.', streakStatusDone: '✓ Stufe geschafft! Nächste Stufe: {0} neu · {1} Wiederholungen.', streakReviewBtn: '🔁 Nur wiederholen ({0})', streakReviewContinueBtn: '🔁 Wiederholen fortsetzen ({0})', streakReviewBar: '🔁 Nur wiederholen · noch {0} Karten', streakBar: '🔥 Stufe {0} · {1} neu · {2} Wiederholungen', streakFcDue: 'fällig', streakFcTomorrow: 'morgen', streakFcPlus2: 'in 2 T', streakFcPlus35: 'in 3–5 T', streakFcLater: 'später', streakFcTotal: '{0} Wörter im Streak · „Tage“ zählen im SRS pro Stufe', streakNewCard: 'neu', streakDays: '{0} T', streakHowTitle: 'So funktioniert\'s', streakHowText: 'Jeder Druck auf den Button erhöht den Streak um 1 und nimmt 5 neue Wörter aus deinem Pool dazu (die mit dem geringsten Fortschritt, zufällig gewählt). Dazu kommen alle Wörter, die laut Wiederholungsplan (SRS) fällig sind. Die Stufe ist geschafft, wenn alle Karten durch sind – dann kannst du sofort die nächste starten. Jede neue Stufe zählt für das SRS als mindestens ein Tag, Pausen zählen voll: Es wird also immer anspruchsvoller. Der Streak fällt nie zurück, nur wenn du ihn selbst neu startest. Gut und Leicht geben beim ersten Mal pro Stufe +1 Fortschritt, sonst beeinflusst der Streak deine normale Bewertung nicht. Mit „Nur wiederholen“ übst du 10 Streak-Wörter extra (die bald fälligen bevorzugt) – ohne neue Wörter und ohne +1. Das schiebt ihre Fälligkeit nach hinten.', streakResetBtn: 'Streak neu starten', streakResetConfirm: 'Streak wirklich auf 0 setzen? Alle Streak-Wörter und der Wiederholungsplan werden gelöscht. Dein normaler Fortschritt bleibt erhalten.', streakMotto0: 'Bereit für die Challenge?', streakMotto1: 'Der erste Schritt ist gemacht!', streakMotto2: 'Du kommst in Fahrt!', streakMotto3: 'Eine Woche voller Stufen – stark!', streakMotto4: 'Das ist echte Disziplin.', streakMotto5: 'Unaufhaltsam! 🔥', streakMotto6: 'Halbe Hundert – Respekt!', streakMotto7: 'Legende. 加油！',
       rateNochmal: 'Nochmal', rateSchwer: 'Schwer', rateGut: 'Gut', rateLeicht: 'Leicht',
       errorPrefix: 'Fehler: ',
       // settings drawer
@@ -1744,8 +1763,7 @@
       nextWordsDesc: 'Die häufigsten Wörter in deinem aktuellen Deck, die du noch nicht gelernt hast.',
       nextWordsEmpty: 'Alle häufigen Wörter in diesem Deck sind schon gelernt 🎉',
       storiesStatsTitle: 'Geschichten',
-      storiesSavedLabel: 'Geschichten gespeichert',
-      storiesCompletedLabel: 'komplett gelesen',
+      storiesSentencesReadLabel: 'Sätze gelesen',
       statsErrorPrefix: 'Fehler beim Anzeigen der Statistiken:'
     },
     en: {
@@ -1794,6 +1812,7 @@
       tryBtn: '🎤 Try it yourself', tryStopBtn: '⏹ Done', tryListening: '🎙 Listening … say the sentence.', tryHeardLabel: 'Heard:', tryProcessing: 'Fetching pinyin & translation …', tryNoSpeech: 'Didn\'t catch anything – try again.', tryMicDenied: 'No microphone access – please allow it in the browser.', tryError: 'Speech recognition failed: {0}', tryNoKey: 'Add a Gemini API key in the settings for pinyin & translation.',
       sentenceSpeak: 'Read sentence aloud', speakTitle: 'Tap to hear it read aloud',
       sessionBar: '{0} mastered · {1} in focus · {2} in this round',
+      streakUnit: 'Power streak', streakStartBtn: '🔥 Start streak', streakContinueBtn: 'Continue', streakNextBtn: '🔥 Next stage (+1)', streakStatusNew: 'Each stage adds 5 new words – plus everything your SRS finds due.', streakStatusOpen: 'Stage open · {0} cards left.', streakStatusDone: '✓ Stage complete! Next stage: {0} new · {1} reviews.', streakReviewBtn: '🔁 Review only ({0})', streakReviewContinueBtn: '🔁 Continue review ({0})', streakReviewBar: '🔁 Review only · {0} cards left', streakBar: '🔥 Stage {0} · {1} new · {2} reviews', streakFcDue: 'due', streakFcTomorrow: 'tomorrow', streakFcPlus2: 'in 2 d', streakFcPlus35: 'in 3–5 d', streakFcLater: 'later', streakFcTotal: '{0} words in the streak · SRS "days" advance per stage', streakNewCard: 'new', streakDays: '{0} d', streakHowTitle: 'How it works', streakHowText: 'Each press of the button raises the streak by 1 and adds 5 new words from your pool (those with the least progress, chosen at random). On top come all words that are due according to the review schedule (SRS). The stage is complete once all cards are done – then you can start the next one right away. Each new stage counts as at least one day for the SRS, and breaks count in full, so it keeps getting harder. The streak never drops unless you restart it yourself. Good and Easy give +1 progress the first time per stage; otherwise the streak doesn\'t affect your regular ratings. "Review only" practices 10 extra streak words (preferring those due soon) – no new words and no +1. This pushes their due dates back.', streakResetBtn: 'Restart streak', streakResetConfirm: 'Really reset the streak to 0? All streak words and the review schedule will be deleted. Your regular progress is kept.', streakMotto0: 'Ready for the challenge?', streakMotto1: 'The first step is done!', streakMotto2: 'You\'re picking up speed!', streakMotto3: 'A week\'s worth of stages – great!', streakMotto4: 'That\'s real discipline.', streakMotto5: 'Unstoppable! 🔥', streakMotto6: 'Fifty stages – respect!', streakMotto7: 'Legend. 加油！',
       rateNochmal: 'Again', rateSchwer: 'Hard', rateGut: 'Good', rateLeicht: 'Easy',
       errorPrefix: 'Error: ',
       settingsHeading: 'Settings',
@@ -1919,8 +1938,7 @@
       nextWordsDesc: 'The most frequent words in your current deck that you haven\'t learned yet.',
       nextWordsEmpty: 'All frequent words in this deck are already learned 🎉',
       storiesStatsTitle: 'Stories',
-      storiesSavedLabel: 'stories saved',
-      storiesCompletedLabel: 'fully read',
+      storiesSentencesReadLabel: 'sentences read',
       statsErrorPrefix: 'Error displaying statistics:'
     },
     fr: {
@@ -1969,6 +1987,7 @@
       tryBtn: '🎤 Essayer soi-même', tryStopBtn: '⏹ Terminé', tryListening: '🎙 J\'écoute … dis la phrase.', tryHeardLabel: 'Compris :', tryProcessing: 'Récupération du pinyin et de la traduction …', tryNoSpeech: 'Rien compris – réessaie.', tryMicDenied: 'Pas d\'accès au micro – autorise-le dans le navigateur.', tryError: 'Échec de la reconnaissance vocale : {0}', tryNoKey: 'Ajoute une clé API Gemini dans les réglages pour le pinyin et la traduction.',
       sentenceSpeak: 'Lire la phrase', speakTitle: 'Appuyer pour écouter',
       sessionBar: '{0} maîtrisés · {1} en cours · {2} dans cette série',
+      streakUnit: 'Power streak', streakStartBtn: '🔥 Lancer le streak', streakContinueBtn: 'Continuer', streakNextBtn: '🔥 Étape suivante (+1)', streakStatusNew: 'Chaque étape ajoute 5 nouveaux mots – plus tout ce que ton SRS juge à réviser.', streakStatusOpen: 'Étape en cours · encore {0} cartes.', streakStatusDone: '✓ Étape réussie ! Prochaine étape : {0} nouveaux · {1} révisions.', streakReviewBtn: '🔁 Réviser seulement ({0})', streakReviewContinueBtn: '🔁 Continuer la révision ({0})', streakReviewBar: '🔁 Révision seule · encore {0} cartes', streakBar: '🔥 Étape {0} · {1} nouveaux · {2} révisions', streakFcDue: 'à réviser', streakFcTomorrow: 'demain', streakFcPlus2: 'dans 2 j', streakFcPlus35: 'dans 3–5 j', streakFcLater: 'plus tard', streakFcTotal: '{0} mots dans le streak · les « jours » du SRS avancent par étape', streakNewCard: 'nouveau', streakDays: '{0} j', streakHowTitle: 'Comment ça marche', streakHowText: 'Chaque appui sur le bouton augmente le streak de 1 et ajoute 5 nouveaux mots de ton pool (ceux avec le moins de progrès, choisis au hasard). S\'y ajoutent tous les mots à réviser selon le planning de révision (SRS). L\'étape est réussie quand toutes les cartes sont faites – tu peux alors lancer la suivante tout de suite. Chaque nouvelle étape compte pour au moins un jour dans le SRS, et les pauses comptent entièrement : ça devient donc de plus en plus exigeant. Le streak ne recule jamais, sauf si tu le relances toi-même. Bien et Facile donnent +1 de progrès la première fois par étape ; sinon, le streak n\'influence pas ton évaluation normale. « Réviser seulement » te fait pratiquer 10 mots du streak en plus (de préférence ceux bientôt à réviser) – sans nouveaux mots et sans +1. Cela repousse leur échéance.', streakResetBtn: 'Relancer le streak', streakResetConfirm: 'Vraiment remettre le streak à 0 ? Tous les mots du streak et le planning de révision seront supprimés. Ton progrès normal est conservé.', streakMotto0: 'Prêt pour le défi ?', streakMotto1: 'Le premier pas est fait !', streakMotto2: 'Tu prends de l\'élan !', streakMotto3: 'Une semaine d\'étapes – bravo !', streakMotto4: 'Ça, c\'est de la discipline.', streakMotto5: 'Inarrêtable ! 🔥', streakMotto6: 'Cinquante étapes – respect !', streakMotto7: 'Légende. 加油！',
       rateNochmal: 'Encore', rateSchwer: 'Difficile', rateGut: 'Bien', rateLeicht: 'Facile',
       errorPrefix: 'Erreur : ',
       settingsHeading: 'Paramètres',
@@ -2094,8 +2113,7 @@
       nextWordsDesc: 'Les mots les plus fréquents de ton deck actuel que tu n\'as pas encore appris.',
       nextWordsEmpty: 'Tous les mots fréquents de ce deck sont déjà appris 🎉',
       storiesStatsTitle: 'Histoires',
-      storiesSavedLabel: 'histoires enregistrées',
-      storiesCompletedLabel: 'entièrement lues',
+      storiesSentencesReadLabel: 'phrases lues',
       statsErrorPrefix: 'Erreur lors de l\'affichage des statistiques :'
     },
     es: {
@@ -2144,6 +2162,7 @@
       tryBtn: '🎤 Pruébalo tú', tryStopBtn: '⏹ Listo', tryListening: '🎙 Escuchando … di la frase.', tryHeardLabel: 'Entendido:', tryProcessing: 'Obteniendo pinyin y traducción …', tryNoSpeech: 'No se entendió nada – inténtalo de nuevo.', tryMicDenied: 'Sin acceso al micrófono – permítelo en el navegador.', tryError: 'Falló el reconocimiento de voz: {0}', tryNoKey: 'Añade una clave API de Gemini en los ajustes para pinyin y traducción.',
       sentenceSpeak: 'Leer frase en voz alta', speakTitle: 'Toca para escuchar',
       sessionBar: '{0} dominadas · {1} en foco · {2} en esta ronda',
+      streakUnit: 'Power streak', streakStartBtn: '🔥 Empezar racha', streakContinueBtn: 'Continuar', streakNextBtn: '🔥 Siguiente etapa (+1)', streakStatusNew: 'Cada etapa añade 5 palabras nuevas – y todo lo que tu SRS considere pendiente.', streakStatusOpen: 'Etapa abierta · quedan {0} tarjetas.', streakStatusDone: '✓ ¡Etapa completada! Siguiente etapa: {0} nuevas · {1} repasos.', streakReviewBtn: '🔁 Solo repasar ({0})', streakReviewContinueBtn: '🔁 Seguir repasando ({0})', streakReviewBar: '🔁 Solo repasar · quedan {0} tarjetas', streakBar: '🔥 Etapa {0} · {1} nuevas · {2} repasos', streakFcDue: 'pendientes', streakFcTomorrow: 'mañana', streakFcPlus2: 'en 2 d', streakFcPlus35: 'en 3–5 d', streakFcLater: 'después', streakFcTotal: '{0} palabras en la racha · los «días» del SRS avanzan por etapa', streakNewCard: 'nueva', streakDays: '{0} d', streakHowTitle: 'Cómo funciona', streakHowText: 'Cada vez que pulsas el botón, la racha sube 1 y se añaden 5 palabras nuevas de tu pool (las de menor progreso, elegidas al azar). Además entran todas las palabras pendientes según el plan de repaso (SRS). La etapa está completa cuando terminas todas las tarjetas – entonces puedes empezar la siguiente enseguida. Cada nueva etapa cuenta como al menos un día para el SRS, y las pausas cuentan enteras: así se vuelve cada vez más exigente. La racha nunca baja, salvo que la reinicies tú. Bien y Fácil dan +1 de progreso la primera vez por etapa; por lo demás, la racha no afecta a tu valoración normal. «Solo repasar» te hace practicar 10 palabras extra de la racha (preferiblemente las que vencen pronto) – sin palabras nuevas y sin +1. Así se retrasa su vencimiento.', streakResetBtn: 'Reiniciar racha', streakResetConfirm: '¿Seguro que quieres poner la racha a 0? Se borrarán todas las palabras de la racha y el plan de repaso. Tu progreso normal se mantiene.', streakMotto0: '¿Listo para el reto?', streakMotto1: '¡El primer paso está dado!', streakMotto2: '¡Estás cogiendo ritmo!', streakMotto3: 'Una semana de etapas – ¡genial!', streakMotto4: 'Eso es disciplina de verdad.', streakMotto5: '¡Imparable! 🔥', streakMotto6: 'Cincuenta etapas – ¡respeto!', streakMotto7: 'Leyenda. 加油！',
       rateNochmal: 'De nuevo', rateSchwer: 'Difícil', rateGut: 'Bien', rateLeicht: 'Fácil',
       errorPrefix: 'Error: ',
       settingsHeading: 'Ajustes',
@@ -2269,8 +2288,7 @@
       nextWordsDesc: 'Las palabras más frecuentes de tu mazo actual que aún no has aprendido.',
       nextWordsEmpty: 'Ya has aprendido todas las palabras frecuentes de este mazo 🎉',
       storiesStatsTitle: 'Historias',
-      storiesSavedLabel: 'historias guardadas',
-      storiesCompletedLabel: 'leídas por completo',
+      storiesSentencesReadLabel: 'frases leídas',
       statsErrorPrefix: 'Error al mostrar las estadísticas:'
     }
   };
@@ -2575,9 +2593,319 @@
     render(true);
 
     setTimeout(function(){
-      if (!session) return;
+      if (!session || session.streak) return;
       pickNext();
     }, 900);
+  }
+
+  // ---------- Power-Streak (own SRS, separate from the regular session) ----------
+  // Each press of the streak button starts a new "stage": streak +1, 5 new words
+  // from the pool (lowest lvl first, random within a lvl), plus every SRS card
+  // that is due. The stage is done once its queue is empty. The SRS runs on its
+  // own clock (in "days"): each new stage advances it by the real days elapsed
+  // since the previous stage, but at least 1 — so several stages on one day
+  // still bring up reviews. The streak never drops; only an explicit restart
+  // clears it (together with all SRS cards). The only link to regular progress:
+  // the first Gut/Leicht rating of a card per stage gives +1 lvl.
+  var STREAK_KEY = 'hskflash_streak_v1';
+  var STREAK_NEW_PER_STAGE = 5;
+  var STREAK_REQUEUE_GAP = 3;   // a "Nochmal" card comes back after this many other cards
+  var STREAK_MAX_IVL = 365;
+  var STREAK_MIN_EASE = 1.3;
+
+  function emptyStreak(){
+    // cards: wordId -> {ease, ivl, due, last, reps, lapses} (due/last on the SRS clock)
+    // open: current stage — {queue: [ids], rated: {id: true}, newIds: {id: true}, total}
+    return { level: 0, clock: 0, lastRealDay: null, cards: {}, open: null };
+  }
+  function loadStreak(){
+    try {
+      var s = JSON.parse(localStorage.getItem(STREAK_KEY));
+      if (s && typeof s === 'object' && s.cards && typeof s.level === 'number') return s;
+    } catch(e) {}
+    return emptyStreak();
+  }
+  function saveStreak(s){
+    try { localStorage.setItem(STREAK_KEY, JSON.stringify(s)); } catch(e) {}
+  }
+  var powerStreak = loadStreak();
+
+  // Local calendar day as an integer, so "a day has passed" follows the user's midnight.
+  function localDayNumber(){
+    var d = new Date();
+    return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  }
+  function streakStageOpen(){
+    return !!(powerStreak.open && powerStreak.open.queue.length && !powerStreak.open.reviewOnly);
+  }
+  // A review-only round ("Nur wiederholen") that was left unfinished.
+  function streakReviewOpen(){
+    return !!(powerStreak.open && powerStreak.open.queue.length && powerStreak.open.reviewOnly);
+  }
+  function streakReviewable(){
+    return Object.keys(powerStreak.cards).filter(function(id){
+      return WORD_BY_ID[id] && powerStreak.cards[id].last != null;
+    }).map(Number);
+  }
+  // SRS clock value the next stage would run on.
+  function streakNextClock(){
+    if (powerStreak.level === 0 || powerStreak.lastRealDay == null) return powerStreak.clock;
+    return powerStreak.clock + Math.max(1, localDayNumber() - powerStreak.lastRealDay);
+  }
+  function streakDueIds(clock){
+    return Object.keys(powerStreak.cards).filter(function(id){
+      return WORD_BY_ID[id] && powerStreak.cards[id].due <= clock;
+    }).map(Number);
+  }
+  function shuffled(arr){
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = rnd(i + 1);
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+  // Pool words not yet in the streak: take the lowest-lvl group first, random within it.
+  function streakPickNew(n){
+    var byLvl = {};
+    activePool().forEach(function(w){
+      if (powerStreak.cards[w.id]) return;
+      var lvl = (progress[w.id] && progress[w.id].lvl) || 0;
+      (byLvl[lvl] = byLvl[lvl] || []).push(w.id);
+    });
+    var levels = Object.keys(byLvl).map(Number).sort(function(a, b){ return a - b; });
+    var out = [];
+    for (var i = 0; i < levels.length && out.length < n; i++) {
+      out = out.concat(shuffled(byLvl[levels[i]]).slice(0, n - out.length));
+    }
+    return out;
+  }
+  function streakNewCount(){
+    ensurePoolFilled();
+    return Math.min(STREAK_NEW_PER_STAGE, activePool().filter(function(w){ return !powerStreak.cards[w.id]; }).length);
+  }
+
+  function beginStreakStage(){
+    ensurePoolFilled();
+    var clock = streakNextClock();
+    var due = streakDueIds(clock);
+    var fresh = streakPickNew(STREAK_NEW_PER_STAGE);
+    var newIds = {};
+    fresh.forEach(function(id){
+      newIds[id] = true;
+      powerStreak.cards[id] = { ease: 2.5, ivl: 0, due: clock, last: null, reps: 0, lapses: 0 };
+    });
+    powerStreak.clock = clock;
+    powerStreak.lastRealDay = localDayNumber();
+    powerStreak.level++;
+    // New words first, then the reviews.
+    var queue = shuffled(fresh).concat(shuffled(due));
+    powerStreak.open = { queue: queue, rated: {}, newIds: newIds, total: queue.length };
+    saveStreak(powerStreak);
+  }
+
+  // Review-only round: 10 cards from the streak, no new words, streak unchanged.
+  // Runs on the SRS clock plus the real days since the last stage (without the
+  // +1-per-stage rule), and picks cards weighted towards the ones due soonest.
+  var STREAK_REVIEW_SIZE = 10;
+  function beginStreakReview(){
+    var clock = powerStreak.clock + Math.max(0, localDayNumber() - (powerStreak.lastRealDay || localDayNumber()));
+    var cands = streakReviewable().map(function(id){
+      return { id: id, weight: 1 / (1 + Math.max(0, powerStreak.cards[id].due - clock)) };
+    });
+    var picked = [];
+    while (picked.length < STREAK_REVIEW_SIZE && cands.length) {
+      var sum = cands.reduce(function(a, c){ return a + c.weight; }, 0);
+      var r = Math.random() * sum, i = 0;
+      while (i < cands.length - 1 && (r -= cands[i].weight) > 0) i++;
+      picked.push(cands.splice(i, 1)[0].id);
+    }
+    powerStreak.open = { queue: picked, rated: {}, newIds: {}, total: picked.length, reviewOnly: true, clock: clock };
+    saveStreak(powerStreak);
+  }
+
+  // grade: 0 Nochmal, 1 Schwer, 2 Gut, 3 Leicht. Returns the new {ease, ivl}
+  // without touching the card, so the rate buttons can preview the intervals.
+  function streakSchedule(c, grade, clock){
+    var ease = c.ease, ivl;
+    if (c.last == null) {
+      ivl = grade === 3 ? 4 : 1;
+    } else {
+      // Base is the real gap since the last review: overdue cards that are still
+      // known get credit for it, and cards reviewed early (review-only rounds)
+      // grow less — but Schwer/Gut/Leicht always land after the old due date.
+      var base = Math.max(1, clock - c.last);
+      if (grade === 0) { ivl = 1; ease -= 0.2; }
+      else if (grade === 1) { ivl = Math.max(Math.round(c.ivl * 1.2), c.ivl + 1); ease -= 0.15; }
+      else {
+        var good = Math.max(Math.round(base * ease), c.ivl + 1);
+        if (grade === 2) ivl = good;
+        else { ivl = Math.max(Math.round(base * ease * 1.3), good + 1); ease += 0.15; }
+      }
+    }
+    return { ease: Math.max(STREAK_MIN_EASE, ease), ivl: Math.min(STREAK_MAX_IVL, ivl) };
+  }
+
+  function startStreakRound(){
+    if (!streakStageOpen()) beginStreakStage();
+    startStreakSession();
+  }
+  function startStreakReview(){
+    if (!streakReviewOpen()) beginStreakReview();
+    startStreakSession();
+  }
+  function startStreakSession(){
+    session = {
+      streak: true,
+      currentId: null,
+      showPinyin: false,
+      showTranslationInExamples: false,
+      showExamples: false,
+      showSolution: false,
+      finished: false
+    };
+    streakNext();
+  }
+
+  function streakNext(){
+    if (!session || !session.streak) return;
+    // Skip ids whose word no longer exists (e.g. data changed between versions).
+    while (powerStreak.open.queue.length && !WORD_BY_ID[powerStreak.open.queue[0]]) powerStreak.open.queue.shift();
+    session.awaiting = false;
+    if (!powerStreak.open.queue.length) {
+      saveStreak(powerStreak);
+      session = null; // back to the start screen, whose streak card shows "stage done"
+      render();
+      return;
+    }
+    session.currentId = powerStreak.open.queue[0];
+    session.showPinyin = false;
+    session.showTranslationInExamples = false;
+    session.showExamples = false;
+    session.showSolution = false;
+    render();
+  }
+
+  function rateStreak(grade){
+    if (!session || !session.streak || session.awaiting || session.currentId == null) return;
+    session.awaiting = true;
+    var id = session.currentId;
+    var open = powerStreak.open;
+    var clock = open.reviewOnly ? open.clock : powerStreak.clock;
+    var c = powerStreak.cards[id];
+    if (!open.rated[id]) {
+      // Only the first rating of a card per stage schedules it and earns progress.
+      open.rated[id] = true;
+      var r = streakSchedule(c, grade, clock);
+      if (grade === 0 && c.last != null) c.lapses++;
+      c.ease = r.ease;
+      c.ivl = r.ivl;
+      c.due = clock + r.ivl;
+      c.last = clock;
+      c.reps++;
+      if (grade >= 2) {
+        var p = progress[id] || { lvl: 0, lr: null, seen: false };
+        p.lvl = Math.min((p.lvl || 0) + 1, 100);
+        p.seen = true;
+        progress[id] = p;
+        saveProgress(progress);
+        updatePoolCell(id);
+      }
+    }
+    open.queue.shift();
+    if (grade === 0) open.queue.splice(Math.min(STREAK_REQUEUE_GAP, open.queue.length), 0, id);
+    saveStreak(powerStreak);
+
+    if (settings.autoSpeak) {
+      var w = WORD_BY_ID[id];
+      if (w) speak(w.h);
+    }
+    session.showPinyin = true;
+    session.showSolution = true;
+    render(true);
+    setTimeout(streakNext, 900);
+  }
+
+  function resetStreak(){
+    if (!confirm(t('streakResetConfirm'))) return;
+    powerStreak = emptyStreak();
+    saveStreak(powerStreak);
+    if (session && session.streak) session = null;
+    render();
+  }
+
+  function streakMotto(level){
+    var tiers = [[100, 7], [50, 6], [30, 5], [14, 4], [7, 3], [3, 2], [1, 1], [0, 0]];
+    for (var i = 0; i < tiers.length; i++) {
+      if (level >= tiers[i][0]) return t('streakMotto' + tiers[i][1]);
+    }
+    return '';
+  }
+
+  // Review forecast relative to the next stage's SRS clock:
+  // [due, +1, +2, +3..5, >5, total cards in the streak]
+  function streakForecast(){
+    var nc = streakNextClock();
+    var b = [0, 0, 0, 0, 0];
+    var ids = Object.keys(powerStreak.cards).filter(function(id){ return WORD_BY_ID[id]; });
+    ids.forEach(function(id){
+      var d = powerStreak.cards[id].due - nc;
+      b[d <= 0 ? 0 : d === 1 ? 1 : d === 2 ? 2 : d <= 5 ? 3 : 4]++;
+    });
+    return b.concat(ids.length);
+  }
+
+  function renderStreakCard(){
+    var open = streakStageOpen();
+    var status, btnLabel;
+    if (powerStreak.level === 0) {
+      status = t('streakStatusNew');
+      btnLabel = t('streakStartBtn');
+    } else if (open) {
+      status = tf('streakStatusOpen', powerStreak.open.queue.length);
+      btnLabel = t('streakContinueBtn');
+    } else {
+      status = tf('streakStatusDone', streakNewCount(), streakDueIds(streakNextClock()).length);
+      btnLabel = t('streakNextBtn');
+    }
+    return '<div class="panel streak-card">' +
+        '<div class="streak-head"><span class="streak-flame">🔥</span>' +
+          '<span class="streak-num">' + powerStreak.level + '</span>' +
+          '<span class="streak-unit">' + esc(t('streakUnit')) + '</span></div>' +
+        '<div class="streak-motto">' + esc(streakMotto(powerStreak.level)) + '</div>' +
+        '<p>' + esc(status) + '</p>' +
+        (powerStreak.level > 0 ? renderStreakForecast() : '') +
+        '<div class="streak-btns"><button class="btn-primary" id="btnStreak">' + esc(btnLabel) + '</button>' +
+          (!open && streakReviewable().length
+            ? '<button class="btn-secondary" id="btnStreakReview">' + esc(streakReviewOpen() ? tf('streakReviewContinueBtn', powerStreak.open.queue.length) : tf('streakReviewBtn', STREAK_REVIEW_SIZE)) + '</button>'
+            : '') +
+        '</div>' +
+        '<details class="streak-info"><summary>' + esc(t('streakHowTitle')) + '</summary>' +
+          '<p>' + esc(t('streakHowText')) + '</p></details>' +
+        (powerStreak.level > 0 ? '<button class="hint-btn streak-reset" id="btnStreakReset">' + esc(t('streakResetBtn')) + '</button>' : '') +
+      '</div>';
+  }
+  function renderStreakForecast(){
+    var f = streakForecast();
+    var keys = ['streakFcDue', 'streakFcTomorrow', 'streakFcPlus2', 'streakFcPlus35', 'streakFcLater'];
+    return '<div class="streak-fc">' +
+        keys.map(function(k, i){
+          return '<div class="streak-fc-cell' + (i === 0 ? ' due' : '') + '"><div class="n">' + f[i] + '</div><div class="l">' + esc(t(k)) + '</div></div>';
+        }).join('') +
+      '</div>' +
+      '<div class="streak-fc-total">' + esc(tf('streakFcTotal', f[5])) + '</div>';
+  }
+  function wireStreakCard(){
+    document.getElementById('btnStreak').onclick = startStreakRound;
+    var review = document.getElementById('btnStreakReview');
+    if (review) review.onclick = startStreakReview;
+    var reset = document.getElementById('btnStreakReset');
+    if (reset) reset.onclick = resetStreak;
+  }
+
+  // Interval shown under each rate button, e.g. "↻", "1 T", "3 T".
+  function streakIvlLabel(days){
+    return days > 0 ? tf('streakDays', days) : '↻';
   }
 
   // ---------- Gemini example generation ----------
@@ -2676,6 +3004,24 @@
     try { localStorage.setItem(STORIES_KEY, JSON.stringify(list)); } catch(e) {}
   }
   var stories = loadStories();
+
+  // All-time count of story sentences read (rated). Kept separately from the
+  // stories themselves so restarting or deleting a story never lowers it.
+  // First run: seed it from the reading positions of the existing stories.
+  var SENTENCES_READ_KEY = 'hskflash_sentences_read_v1';
+  function loadSentencesRead(){
+    try {
+      var raw = localStorage.getItem(SENTENCES_READ_KEY);
+      if (raw != null) return parseInt(raw, 10) || 0;
+    } catch(e) {}
+    var seeded = stories.reduce(function(sum, s){ return sum + Math.min(s.currentIdx || 0, s.sentences.length); }, 0);
+    saveSentencesRead(seeded);
+    return seeded;
+  }
+  function saveSentencesRead(n){
+    try { localStorage.setItem(SENTENCES_READ_KEY, String(n)); } catch(e) {}
+  }
+  var sentencesRead = loadSentencesRead();
 
   var storiesState = {
     view: 'library',       // 'library' | 'generate' | 'preview' | 'detail'
@@ -4232,6 +4578,8 @@
             });
             saveProgress(progress);
             recordActivity();
+            sentencesRead++;
+            saveSentencesRead(sentencesRead);
             renderStats();
             // Reveal pinyin and translation together right away, rather than
             // requiring a separate toggle tap, so there's something to read
@@ -5700,12 +6048,10 @@
       '<p style="font-size:12px;color:var(--ink-faint);margin:0 0 10px;">' + esc(t('nextWordsDesc')) + '</p>' +
       nextWordsHtml;
 
-    var storiesCompleted = stories.filter(function(s){ return (s.currentIdx || 0) >= s.sentences.length; }).length;
     var storiesHtml =
       '<div class="stats-section-title">' + esc(t('storiesStatsTitle')) + '</div>' +
       '<div class="stat-cards">' +
-        '<div class="stat-card"><div class="stat-value">' + stories.length + '</div><div class="stat-label">' + esc(t('storiesSavedLabel')) + '</div></div>' +
-        '<div class="stat-card"><div class="stat-value">' + storiesCompleted + '</div><div class="stat-label">' + esc(t('storiesCompletedLabel')) + '</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + sentencesRead + '</div><div class="stat-label">' + esc(t('storiesSentencesReadLabel')) + '</div></div>' +
       '</div>';
 
     var motivation = pickMotivationMessage(streak, learnedPct, learned);
@@ -5748,8 +6094,10 @@
           '<h2>' + esc(t('readyTitle')) + '</h2>' +
           '<p>' + esc(t('readyDesc')) + '</p>' +
           '<button class="btn-primary" id="btnStart">' + esc(t('startBtn')) + '</button>' +
-        '</div>';
+        '</div>' +
+        renderStreakCard();
       document.getElementById('btnStart').onclick = startSession;
+      wireStreakCard();
       return;
     }
 
@@ -5759,21 +6107,51 @@
           '<h2>' + esc(t('finishedTitle')) + '</h2>' +
           '<p>' + esc(t('finishedDesc')) + '</p>' +
           '<button class="btn-primary" id="btnAgain">' + esc(t('newRoundBtn')) + '</button>' +
-        '</div>';
+        '</div>' +
+        renderStreakCard();
       document.getElementById('btnAgain').onclick = startSession;
+      wireStreakCard();
       return;
     }
 
     var w = WORD_BY_ID[session.currentId];
-    var win = session.lastWindow || activeWindow();
     var examples = examplesFor(w.id);
+    var barText, dotsHtml = '', rateHtml;
 
-    var dotsHtml = session.ids.slice(0, Math.min(session.ids.length, 20)).map(function(id){
-      var cls = 'dot';
-      if (session.sessionPts[id] >= 5) cls += ' done';
-      else if (id === session.currentId) cls += ' active';
-      return '<span class="' + cls + '"></span>';
-    }).join('');
+    if (session.streak) {
+      var sOpen = powerStreak.open;
+      var sCard = powerStreak.cards[w.id];
+      var isNewCard = sOpen.newIds[w.id] && !sOpen.rated[w.id];
+      var newLeft = sOpen.queue.filter(function(id){ return sOpen.newIds[id] && !sOpen.rated[id]; }).length;
+      barText = sOpen.reviewOnly
+        ? tf('streakReviewBar', sOpen.queue.length)
+        : tf('streakBar', powerStreak.level, newLeft, sOpen.queue.length - newLeft) + (isNewCard ? ' · ' + t('streakNewCard') : '');
+      var sClock = sOpen.reviewOnly ? sOpen.clock : powerStreak.clock;
+      // Intervals are previewed only for the first rating; repeats in the same stage don't reschedule.
+      var ivls = [0, 1, 2, 3].map(function(g){
+        if (sOpen.rated[w.id]) return '';
+        return g === 0 ? streakIvlLabel(0) : streakIvlLabel(streakSchedule(sCard, g, sClock).ivl);
+      });
+      rateHtml =
+        '<button class="rate-btn" style="background:' + levelToColor(4) + '" data-grade="0">' + esc(t('rateNochmal')) + '<span class="val">' + esc(ivls[0]) + '</span></button>' +
+        '<button class="rate-btn" style="background:' + levelToColor(28) + '" data-grade="1">' + esc(t('rateSchwer')) + '<span class="val">' + esc(ivls[1]) + '</span></button>' +
+        '<button class="rate-btn" style="background:' + levelToColor(58) + '" data-grade="2">' + esc(t('rateGut')) + '<span class="val">' + esc(ivls[2]) + '</span></button>' +
+        '<button class="rate-btn" style="background:' + levelToColor(92) + '" data-grade="3">' + esc(t('rateLeicht')) + '<span class="val">' + esc(ivls[3]) + '</span></button>';
+    } else {
+      var win = session.lastWindow || activeWindow();
+      barText = tf('sessionBar', win.prog, win.dictPart.length, session.ids.length);
+      dotsHtml = session.ids.slice(0, Math.min(session.ids.length, 20)).map(function(id){
+        var cls = 'dot';
+        if (session.sessionPts[id] >= 5) cls += ' done';
+        else if (id === session.currentId) cls += ' active';
+        return '<span class="' + cls + '"></span>';
+      }).join('');
+      rateHtml =
+        '<button class="rate-btn" style="background:' + levelToColor(4) + '" data-val="0">' + esc(t('rateNochmal')) + '<span class="val">+0</span></button>' +
+        '<button class="rate-btn" style="background:' + levelToColor(28) + '" data-val="1">' + esc(t('rateSchwer')) + '<span class="val">+1</span></button>' +
+        '<button class="rate-btn" style="background:' + levelToColor(58) + '" data-val="2">' + esc(t('rateGut')) + '<span class="val">+2</span></button>' +
+        '<button class="rate-btn" style="background:' + levelToColor(92) + '" data-val="5">' + esc(t('rateLeicht')) + '<span class="val">+5</span></button>';
+    }
 
     var exHtml = '';
     if (examples.length) {
@@ -5800,7 +6178,7 @@
 
     main.innerHTML =
       '<div class="session-bar">' +
-        '<span>' + esc(tf('sessionBar', win.prog, win.dictPart.length, session.ids.length)) + '</span>' +
+        '<span>' + esc(barText) + '</span>' +
         '<span class="dots">' + dotsHtml + '</span>' +
       '</div>' +
       '<div class="card">' +
@@ -5820,12 +6198,7 @@
           exHtml +
         '</div>' +
         '<div class="feedback-toast">' + (justAnswered ? esc(t('savedToast')) : '') + '</div>' +
-        '<div class="rate-row">' +
-          '<button class="rate-btn" style="background:' + levelToColor(4) + '" data-val="0">' + esc(t('rateNochmal')) + '<span class="val">+0</span></button>' +
-          '<button class="rate-btn" style="background:' + levelToColor(28) + '" data-val="1">' + esc(t('rateSchwer')) + '<span class="val">+1</span></button>' +
-          '<button class="rate-btn" style="background:' + levelToColor(58) + '" data-val="2">' + esc(t('rateGut')) + '<span class="val">+2</span></button>' +
-          '<button class="rate-btn" style="background:' + levelToColor(92) + '" data-val="5">' + esc(t('rateLeicht')) + '<span class="val">+5</span></button>' +
-        '</div>' +
+        '<div class="rate-row">' + rateHtml + '</div>' +
       '</div>';
 
     document.getElementById('hanziText').onclick = function(){ speak(w.h); };
@@ -5875,7 +6248,9 @@
     };
 
     Array.prototype.forEach.call(document.querySelectorAll('.rate-btn'), function(btn){
-      btn.onclick = function(){ rate(parseInt(btn.getAttribute('data-val'), 10)); };
+      btn.onclick = session.streak
+        ? function(){ rateStreak(parseInt(btn.getAttribute('data-grade'), 10)); }
+        : function(){ rate(parseInt(btn.getAttribute('data-val'), 10)); };
     });
   }
 
@@ -5975,7 +6350,7 @@
   }
 
   document.getElementById('btnExportProgress').onclick = function(){
-    downloadJson({ format: 'hskflash-progress-v1', exportedAt: new Date().toISOString(), progress: progress }, 'hskflash-progress');
+    downloadJson({ format: 'hskflash-progress-v1', exportedAt: new Date().toISOString(), progress: progress, streak: powerStreak }, 'hskflash-progress');
   };
   document.getElementById('btnExportExamples').onclick = function(){
     downloadJson({ format: 'hskflash-examples-v1', exportedAt: new Date().toISOString(), generatedExamples: generatedExamples }, 'hskflash-examples');
@@ -6011,6 +6386,11 @@
         if (!confirm(t('importConfirmProgress'))) { e.target.value = ''; return; }
         progress = data.progress;
         saveProgress(progress);
+        // Older exports have no streak data — keep the current streak then.
+        if (data.streak && typeof data.streak === 'object' && data.streak.cards) {
+          powerStreak = data.streak;
+          saveStreak(powerStreak);
+        }
         session = null;
         buildPoolPanel();
       } else if (importTarget === 'examples') {
