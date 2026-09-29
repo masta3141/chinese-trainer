@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "HSK Vokabeltrainer" — an installable, offline-capable PWA for learning Chinese HSK vocabulary (flashcards, Gemini-generated stories and example sentences, "Satzinseln" topic sentence sets, stats, TTS audio recordings). Deployed as static files on GitHub Pages. UI default language is German; comments and code are in English.
 
-There is **no build system, package manager, linter, or test suite**. The whole app is plain ES5-style JavaScript (`var`, `function`, no modules) inside one IIFE in `index.html`. To run locally, serve the directory over HTTP (the service worker won't register from `file://`):
+There is **no build system, package manager, linter, or test suite**. The app is plain ES5-style JavaScript (`var`, `function`, no modules) in classic `<script>` files that share the global scope. To run locally, serve the directory over HTTP (the service worker won't register from `file://`):
 
 ```
 python3 -m http.server 8000
@@ -14,22 +14,24 @@ python3 -m http.server 8000
 
 ## Files
 
-- `index.html` (~1.9 MB, ~6000 lines) — the entire app: CSS (`<style>`), markup, four embedded JSON data blocks, and all JS.
-- `sw.js` — service worker: stale-while-revalidate cache for same-origin GETs only; cross-origin requests (Gemini API, Google Fonts, CDN) pass through. **Bump `CACHE_NAME`** when shell files change, and keep `APP_SHELL` in sync with deployed files.
+- `index.html` — markup only, plus the `<link>`/`<script>` tags.
+- `css/app.css` — all styles.
+- `data/*.js` — the big data sets as plain globals (single huge lines, 15 KB–1 MB):
+  - `words-hsk2.js` → `WORDS_HSK2`: 5000 HSK 2.0 words, ids 1–5000
+  - `words-hsk3.js` → `WORDS_HSK3`: 9226 HSK 3.0 words, ids 100001+ (level keys include `hsk79`)
+  - Word shape: `{id, hsk: 'hsk1'..., h: hanzi, p: pinyin, e: English}`
+  - `examples.js` → `EXAMPLES`: built-in example sentences keyed by word id string
+  - `freq.js` → `FREQ_DATA`: SUBTLEX-CH word/char frequencies used for coverage stats
+- `js/*.js` — the app, one file per area, loaded in this order (see `index.html`):
+  `core` (constants, storage keys, activity, `esc`) → `i18n` → `state` (load/save progress, settings, fonts; global state) → `session` (flashcard session) → `streak` (Power-Streak + own SRS) → `gemini` (example sentences) → `stories` → `tts` (Gemini TTS, WAV, IndexedDB) → `audio` (recordings, export, Audio tab) → `islands` → `navigation` (carousel, tabs) → `pool` (left pool panel) → `speech` (browser TTS, narration, speech recognition) → `cards` (`render()` of the cards view) → `stats` → `settings` (drawer, import/export, language switcher) → `init` (SW registration, first render; must stay last).
+- `sw.js` — service worker: stale-while-revalidate cache for same-origin GETs only; cross-origin requests (Gemini API, Google Fonts, CDN) pass through. **Bump `CACHE_NAME`** when any shell file changes, and keep `APP_SHELL` in sync with the `<link>`/`<script>` tags in `index.html`.
 - `manifest.json`, icons, screenshots — PWA metadata.
 
-## Working with index.html
+## Working with the code
 
-Lines ~1464–1467 are single JSON lines of 100 KB–1 MB each. **Never Read the whole file or grep without limiting output** — use `grep -n ... | cut -c1-200`, and `Read` with `offset`/`limit` on the relevant range. Sections in the JS are marked with `// ---------- <name> ----------` comments; grep for those to navigate.
-
-Embedded data (`<script type="application/json">`, parsed at startup):
-- `words-data` → `WORDS_HSK2`: 5000 HSK 2.0 words, ids 1–5000
-- `words-hsk3-data` → `WORDS_HSK3`: 9226 HSK 3.0 words, ids 100001+ (level keys include `hsk79`)
-- Word shape: `{id, hsk: 'hsk1'..., h: hanzi, p: pinyin, e: English}`
-- `examples-data` → `EXAMPLES`: built-in example sentences keyed by word id string
-- `freq-data` → `FREQ_DATA`: SUBTLEX-CH word/char frequencies used for coverage stats
-
-Editing these data blocks means rewriting a single huge line — do it with a script (e.g. Python regex on the `<script id="...">` block), not with Edit.
+- All `js/*.js` files start with `"use strict";` and declare globals. **Load order matters for code that runs at load time**: top-level statements (e.g. `var powerStreak = loadStreak();`) may only use functions/vars from the same or an earlier file. Function bodies can reference anything, since they run after all files are loaded. New top-level names must not collide with other files or with browser globals (`name`, `status`, `open`, `close`, …).
+- **Never Read or grep the `data/*.js` files without limiting output** (`grep ... | cut -c1-200`). Editing them means rewriting a single huge line — do it with a script, not with Edit.
+- Sections inside the JS files are marked with `// ---------- <name> ----------` comments.
 
 ## Architecture
 

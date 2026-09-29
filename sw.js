@@ -10,9 +10,32 @@
 //
 // Deploy this file in the SAME folder as your index.html on GitHub Pages.
 
-var CACHE_NAME = 'hskflash-shell-v5';
+var CACHE_NAME = 'hskflash-shell-v6';
+// Keep in sync with the <link>/<script> tags in index.html.
 var APP_SHELL = [
   'index.html',
+  'css/app.css',
+  'data/words-hsk2.js',
+  'data/words-hsk3.js',
+  'data/examples.js',
+  'data/freq.js',
+  'js/core.js',
+  'js/i18n.js',
+  'js/state.js',
+  'js/session.js',
+  'js/streak.js',
+  'js/gemini.js',
+  'js/stories.js',
+  'js/tts.js',
+  'js/audio.js',
+  'js/islands.js',
+  'js/navigation.js',
+  'js/pool.js',
+  'js/speech.js',
+  'js/cards.js',
+  'js/stats.js',
+  'js/settings.js',
+  'js/init.js',
   'manifest.json',
   'icon-192.png',
   'icon-512.png',
