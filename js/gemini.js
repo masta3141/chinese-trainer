@@ -3,12 +3,18 @@
 
 // ---------- Gemini example generation ----------
 // Faithful port of modGemini.bas: FetchMandarinExamples / CallGeminiAPI / ParseApiResponse
-function buildGeminiPrompt(targetWord, hskLevel){
+// existing: sentences (hanzi) the word already has — Gemini is asked for new
+// ones that differ from them ("Weitere Beispiele" on the card).
+function buildGeminiPrompt(targetWord, hskLevel, existing){
   return "You are a precise linguistic API for a Mandarin learning app.\n" +
     "TASK: Generate exactly 3 distinct example sentences for the provided Mandarin word.\n" +
     "INPUT PARAMETERS:\n" +
     "- Target Word: " + targetWord + "\n" +
     "- Target Level: " + hskLevel + "\n" +
+    (existing && existing.length
+      ? "These example sentences already exist:\n" + existing.map(function(h){ return "- " + h; }).join("\n") + "\n" +
+        "Create 3 NEW sentences that differ from them in content and structure (other situations, other sentence patterns). Do not repeat or paraphrase them.\n"
+      : "") +
     "STRICT OUTPUT RULES:\n" +
     "1. Output MUST contain exactly 3 lines. Nothing else.\n" +
     "2. No introduction, no markdown fences (do NOT use ```), no explanatory text.\n" +
@@ -41,7 +47,8 @@ function generateExamplesFor(word){
   }
   var model = loadGeminiModel();
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
-  var prompt = buildGeminiPrompt(word.h, word.hsk.toUpperCase());
+  var existing = examplesFor(word.id).map(function(ex){ return ex.h; });
+  var prompt = buildGeminiPrompt(word.h, word.hsk.toUpperCase(), existing);
   var payload = { contents: [{ parts: [{ text: prompt }] }] };
 
   return fetch(url, {
@@ -57,11 +64,23 @@ function generateExamplesFor(word){
     return res.json();
   }).then(function(data){
     var text = data.candidates[0].content.parts[0].text;
-    var parsed = parseGeminiResponse(text);
-    if (parsed.length === 0) throw new Error('Antwort konnte nicht gelesen werden.');
-    var key = String(word.id);
-    generatedExamples[key] = (generatedExamples[key] || []).concat(parsed);
-    saveGeneratedExamples(generatedExamples);
-    return parsed;
+    // Drop sentences the word already has (ignoring punctuation/spaces).
+    var norm = function(h){ return h.replace(/[\s，。！？、,.!?；;：:“”"']/g, ''); };
+    var known = {};
+    existing.forEach(function(h){ known[norm(h)] = true; });
+    var parsed = parseGeminiResponse(text).filter(function(ex){
+      var k = norm(ex.h);
+      if (known[k]) return false;
+      known[k] = true;
+      return true;
+    });
+    if (parsed.length === 0) throw new Error(existing.length ? 'Keine neuen Sätze erhalten.' : 'Antwort konnte nicht gelesen werden.');
+    // Wait until the stored examples are loaded, so they aren't overwritten.
+    return (examplesReady || Promise.resolve()).then(function(){
+      var key = String(word.id);
+      generatedExamples[key] = (generatedExamples[key] || []).concat(parsed);
+      saveGeneratedExamplesFor(key);
+      return parsed;
+    });
   });
 }

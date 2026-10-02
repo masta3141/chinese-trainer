@@ -64,15 +64,14 @@ function normalizeSpeedKey(sp){
   return 'slow'; // '0.5', '0.75', or unset
 }
 // Quota pacing: exactly one TTS generation (title or sentence) is allowed at
-// a time, then a mandatory TTS_BATCH_PAUSE_MS pause before the next one —
-// comfortably under Gemini's real per-minute quota (no more back-to-back
-// bursts). This pause is UNCONDITIONAL — it applies no matter what the
-// "quota enabled" setting says, because Gemini enforces its own per-minute
-// limit regardless of any setting in this app. TTS_MAX_PER_DAY is a
-// separate, optional rolling-24h cap that the "quota enabled" setting does
-// control (see checkTtsRateLimit / loadTtsQuotaEnabled).
+// a time, then a mandatory pause before the next one. Without the "quota
+// enabled" setting the pause is TTS_BATCH_PAUSE_MS, which fits the free
+// quota of up to 10 generations per minute. With the setting it is
+// TTS_LIMITED_PAUSE_MS (max. 2 per minute), plus the rolling-24h cap
+// TTS_MAX_PER_DAY (see checkTtsRateLimit / loadTtsQuotaEnabled).
 var TTS_BATCH_SIZE = 1;
-var TTS_BATCH_PAUSE_MS = 7 * 1000; // 7 seconds between every single generation call, always enforced
+var TTS_BATCH_PAUSE_MS = 7 * 1000; // free quota: 7 seconds between calls (≤ 10 per minute)
+var TTS_LIMITED_PAUSE_MS = 30 * 1000; // quota setting on: 30 seconds between calls (2 per minute)
 var TTS_MAX_PER_DAY = 8; // rolling 24h window, not a midnight reset — optional, tied to the setting
 var TTS_LOG_KEY = 'hskflash_tts_call_log_v1';
 var TTS_BATCH_KEY = 'hskflash_tts_batch_v1';
@@ -216,8 +215,9 @@ function idbDeletePrefix(prefix){
   });
 }
 
-// ---- Rate limiter: a mandatory TTS_BATCH_PAUSE_MS pause after every single
-// call, plus a max of TTS_MAX_PER_DAY calls per rolling 24h window — shared
+// ---- Rate limiter: a mandatory pause after every single call (7 s, or 30 s
+// with the quota setting), plus — with the quota setting — a max of
+// TTS_MAX_PER_DAY calls per rolling 24h window — shared
 // globally across all stories/recordings since it tracks the same API key. ----
 function loadTtsLog(){
   try { return JSON.parse(localStorage.getItem(TTS_LOG_KEY)) || []; } catch(e) { return []; }
@@ -233,16 +233,16 @@ function recordTtsCall(){
   var log = pruneTtsLog(loadTtsLog());
   log.push(Date.now());
   saveTtsLog(log);
-  // The pacing window is tracked unconditionally — it always starts a
-  // fresh TTS_BATCH_PAUSE_MS window after every single call, regardless of
-  // the optional "quota enabled" setting (that setting only affects the
-  // TTS_MAX_PER_DAY check below in checkTtsRateLimit).
+  // The pacing window is tracked unconditionally — it always starts a fresh
+  // pause window after every single call; its length is decided in
+  // checkTtsRateLimit depending on the "quota enabled" setting.
   saveTtsBatchState({ count: 1, windowStart: Date.now() });
 }
 // Returns { canProceed:true } | { canProceed:false, dailyLimitReached:true, nextSlotAt } | { canProceed:false, waitMs }
 function checkTtsRateLimit(){
+  var limited = loadTtsQuotaEnabled();
   // Optional daily cap — only enforced when the user has turned it on.
-  if (loadTtsQuotaEnabled()) {
+  if (limited) {
     var log = pruneTtsLog(loadTtsLog());
     saveTtsLog(log);
     if (log.length >= TTS_MAX_PER_DAY) {
@@ -250,12 +250,13 @@ function checkTtsRateLimit(){
       return { canProceed: false, dailyLimitReached: true, nextSlotAt: oldest + 24 * 60 * 60 * 1000 };
     }
   }
-  // Mandatory per-call pacing — always enforced, independent of the setting
-  // above, because Gemini's own per-minute limit applies either way.
+  // Mandatory per-call pacing — always enforced, because Gemini's own
+  // per-minute limit applies either way; longer with the quota setting.
+  var pause = limited ? TTS_LIMITED_PAUSE_MS : TTS_BATCH_PAUSE_MS;
   var batch = loadTtsBatchState();
   var now = Date.now();
-  if (now - batch.windowStart >= TTS_BATCH_PAUSE_MS) return { canProceed: true }; // pause window elapsed (or no call yet)
-  return { canProceed: false, dailyLimitReached: false, waitMs: Math.max(500, (batch.windowStart + TTS_BATCH_PAUSE_MS) - now) };
+  if (now - batch.windowStart >= pause) return { canProceed: true }; // pause window elapsed (or no call yet)
+  return { canProceed: false, dailyLimitReached: false, waitMs: Math.max(500, (batch.windowStart + pause) - now) };
 }
 
 // Shared low-level Gemini TTS call: sends an arbitrary list of

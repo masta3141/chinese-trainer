@@ -36,3 +36,7 @@ applyStaticTranslations();
 buildPoolLegend();
 buildPoolPanel();
 render();
+// Generated examples load asynchronously from IndexedDB; refresh what shows them.
+initExamplesStore().then(function(){
+  if (session && !session.finished) render();
+});

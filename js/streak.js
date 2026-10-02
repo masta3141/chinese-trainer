@@ -127,12 +127,31 @@ function beginStreakReview(){
   saveStreak(powerStreak);
 }
 
+// Review-only rounds push cards only gently: Schwer leaves the card exactly as
+// it is (a due card stays due), and a card that isn't due yet moves back by
+// just a fraction of its interval on Gut/Leicht (ease unchanged).
+var STREAK_EARLY_GOOD = 0.2;
+// Damping for regular reviews: intervals grow by ease × this on Gut (with the
+// start ease 2.5 that's ×2: 1, 2, 4, 8, 16 … days) and additionally × the
+// Leicht bonus on Leicht.
+var STREAK_IVL_FACTOR = 0.8;
+var STREAK_EASY_BONUS = 1.2;
+var STREAK_EARLY_EASY = 0.4;
+
 // grade: 0 Nochmal, 1 Schwer, 2 Gut, 3 Leicht. Returns the new {ease, ivl}
-// without touching the card, so the rate buttons can preview the intervals.
-function streakSchedule(c, grade, clock){
+// without touching the card, so the rate buttons can preview the intervals —
+// or null when the card is to be left unchanged.
+function streakSchedule(c, grade, clock, reviewOnly){
   var ease = c.ease, ivl;
+  if (reviewOnly && grade === 1) return null;
+  if (reviewOnly && c.last != null && clock < c.due && grade >= 2) {
+    var push = grade === 2
+      ? Math.max(1, Math.round(c.ivl * STREAK_EARLY_GOOD))
+      : Math.max(2, Math.round(c.ivl * STREAK_EARLY_EASY));
+    return { ease: ease, ivl: Math.min(STREAK_MAX_IVL, c.due + push - clock) };
+  }
   if (c.last == null) {
-    ivl = grade === 3 ? 4 : 1;
+    ivl = grade === 3 ? 3 : 1;
   } else {
     // Base is the real gap since the last review: overdue cards that are still
     // known get credit for it, and cards reviewed early (review-only rounds)
@@ -141,9 +160,9 @@ function streakSchedule(c, grade, clock){
     if (grade === 0) { ivl = 1; ease -= 0.2; }
     else if (grade === 1) { ivl = Math.max(Math.round(c.ivl * 1.2), c.ivl + 1); ease -= 0.15; }
     else {
-      var good = Math.max(Math.round(base * ease), c.ivl + 1);
+      var good = Math.max(Math.round(base * ease * STREAK_IVL_FACTOR), c.ivl + 1);
       if (grade === 2) ivl = good;
-      else { ivl = Math.max(Math.round(base * ease * 1.3), good + 1); ease += 0.15; }
+      else { ivl = Math.max(Math.round(base * ease * STREAK_IVL_FACTOR * STREAK_EASY_BONUS), good + 1); ease += 0.1; }
     }
   }
   return { ease: Math.max(STREAK_MIN_EASE, ease), ivl: Math.min(STREAK_MAX_IVL, ivl) };
@@ -182,6 +201,7 @@ function streakNext(){
     return;
   }
   session.currentId = powerStreak.open.queue[0];
+  session.generateError = null;
   session.showPinyin = false;
   session.showTranslationInExamples = false;
   session.showExamples = false;
@@ -199,13 +219,15 @@ function rateStreak(grade){
   if (!open.rated[id]) {
     // Only the first rating of a card per stage schedules it and earns progress.
     open.rated[id] = true;
-    var r = streakSchedule(c, grade, clock);
-    if (grade === 0 && c.last != null) c.lapses++;
-    c.ease = r.ease;
-    c.ivl = r.ivl;
-    c.due = clock + r.ivl;
-    c.last = clock;
-    c.reps++;
+    var r = streakSchedule(c, grade, clock, open.reviewOnly);
+    if (r) {
+      if (grade === 0 && c.last != null) c.lapses++;
+      c.ease = r.ease;
+      c.ivl = r.ivl;
+      c.due = clock + r.ivl;
+      c.last = clock;
+      c.reps++;
+    }
     if (grade >= 2) {
       var p = progress[id] || { lvl: 0, lr: null, seen: false };
       p.lvl = Math.min((p.lvl || 0) + 1, 100);
@@ -271,32 +293,32 @@ function renderStreakCard(){
     status = tf('streakStatusDone', streakNewCount(), streakDueIds(streakNextClock()).length);
     btnLabel = t('streakNextBtn');
   }
-  return '<div class="panel streak-card">' +
-      '<div class="streak-head"><span class="streak-flame">🔥</span>' +
-        '<span class="streak-num">' + powerStreak.level + '</span>' +
-        '<span class="streak-unit">' + esc(t('streakUnit')) + '</span></div>' +
-      '<div class="streak-motto">' + esc(streakMotto(powerStreak.level)) + '</div>' +
+  return '<div class="panel mode-card">' +
+      '<div class="mode-head"><span class="mode-icon">🔥</span>' +
+        '<span class="mode-num">' + powerStreak.level + '</span>' +
+        '<span class="mode-unit">' + esc(t('streakUnit')) + '</span></div>' +
+      '<div class="mode-motto">' + esc(streakMotto(powerStreak.level)) + '</div>' +
       '<p>' + esc(status) + '</p>' +
-      (powerStreak.level > 0 ? renderStreakForecast() : '') +
-      '<div class="streak-btns"><button class="btn-primary" id="btnStreak">' + esc(btnLabel) + '</button>' +
+      renderStreakForecast() +
+      '<div class="mode-btns"><button class="btn-primary" id="btnStreak">' + esc(btnLabel) + '</button>' +
         (!open && streakReviewable().length
           ? '<button class="btn-secondary" id="btnStreakReview">' + esc(streakReviewOpen() ? tf('streakReviewContinueBtn', powerStreak.open.queue.length) : tf('streakReviewBtn', STREAK_REVIEW_SIZE)) + '</button>'
           : '') +
       '</div>' +
-      '<details class="streak-info"><summary>' + esc(t('streakHowTitle')) + '</summary>' +
+      '<details class="mode-info"><summary>' + esc(t('streakHowTitle')) + '</summary>' +
         '<p>' + esc(t('streakHowText')) + '</p></details>' +
-      (powerStreak.level > 0 ? '<button class="hint-btn streak-reset" id="btnStreakReset">' + esc(t('streakResetBtn')) + '</button>' : '') +
+      (powerStreak.level > 0 ? '<button class="hint-btn mode-reset" id="btnStreakReset">' + esc(t('streakResetBtn')) + '</button>' : '') +
     '</div>';
 }
 function renderStreakForecast(){
   var f = streakForecast();
   var keys = ['streakFcDue', 'streakFcTomorrow', 'streakFcPlus2', 'streakFcPlus35', 'streakFcLater'];
-  return '<div class="streak-fc">' +
+  return '<div class="mode-grid">' +
       keys.map(function(k, i){
-        return '<div class="streak-fc-cell' + (i === 0 ? ' due' : '') + '"><div class="n">' + f[i] + '</div><div class="l">' + esc(t(k)) + '</div></div>';
+        return '<div class="mode-cell' + (i === 0 ? ' due' : '') + '"><div class="n">' + f[i] + '</div><div class="l">' + esc(t(k)) + '</div></div>';
       }).join('') +
     '</div>' +
-    '<div class="streak-fc-total">' + esc(tf('streakFcTotal', f[5])) + '</div>';
+    '<div class="mode-note">' + esc(tf('streakFcTotal', f[5])) + '</div>';
 }
 function wireStreakCard(){
   document.getElementById('btnStreak').onclick = startStreakRound;

@@ -1,15 +1,122 @@
 // State: loading/saving progress, settings, fonts, Gemini key; global app state.
 "use strict";
 
-function loadGeneratedExamples(){
+// Example sentences live in their own IndexedDB (one record per word id:
+// [{h,p,e}, ...]) and are mirrored in memory in `generatedExamples`, so
+// examplesFor() stays synchronous. On the first start in a browser the store
+// is filled once from data/examples-seed.json (only words without examples
+// yet); after that the user extends them with "Weitere Beispiele". Older
+// versions kept generated examples as one JSON blob in localStorage
+// (GENERATED_EX_KEY); that is moved over on the first start and then removed.
+// Without IndexedDB, localStorage stays in use.
+var EXAMPLES_SEED_URL = 'data/examples-seed.json';
+var EXAMPLES_SEEDED_KEY = 'hskflash_examples_seeded_v1';
+var EXAMPLES_DB_NAME = 'hskflash_examples_db';
+var EXAMPLES_STORE = 'examples';
+var examplesDbPromise = null;
+var examplesUseIdb = 'indexedDB' in window;
+var examplesReady = null; // set by initExamplesStore(); generation waits for it before merging
+
+function openExamplesDB(){
+  if (examplesDbPromise) return examplesDbPromise;
+  examplesDbPromise = new Promise(function(resolve, reject){
+    var req = indexedDB.open(EXAMPLES_DB_NAME, 1);
+    req.onupgradeneeded = function(e){
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains(EXAMPLES_STORE)) db.createObjectStore(EXAMPLES_STORE);
+    };
+    req.onsuccess = function(e){ resolve(e.target.result); };
+    req.onerror = function(){ reject(req.error); };
+  });
+  return examplesDbPromise;
+}
+// Runs fn(store) in one readwrite transaction; resolves when it is committed.
+function examplesTx(fn){
+  return openExamplesDB().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(EXAMPLES_STORE, 'readwrite');
+      fn(tx.objectStore(EXAMPLES_STORE));
+      tx.oncomplete = function(){ resolve(); };
+      tx.onerror = function(){ reject(tx.error); };
+    });
+  });
+}
+function loadLegacyGeneratedExamples(){
   try {
     var raw = localStorage.getItem(GENERATED_EX_KEY);
     if (raw) return JSON.parse(raw);
   } catch(e) {}
-  return {};
+  return null;
 }
+function loadGeneratedExamples(){
+  // Synchronous part only: without IndexedDB the localStorage blob is the store.
+  return examplesUseIdb ? {} : (loadLegacyGeneratedExamples() || {});
+}
+// Loads all records into generatedExamples (and migrates the old localStorage blob).
+function initExamplesStore(){
+  if (!examplesUseIdb) { examplesReady = Promise.resolve(); return examplesReady; }
+  examplesReady = openExamplesDB().then(function(db){
+    return new Promise(function(resolve, reject){
+      var loaded = {};
+      var req = db.transaction(EXAMPLES_STORE, 'readonly').objectStore(EXAMPLES_STORE).openCursor();
+      req.onsuccess = function(){
+        var cur = req.result;
+        if (cur) { loaded[cur.key] = cur.value; cur.continue(); } else resolve(loaded);
+      };
+      req.onerror = function(){ reject(req.error); };
+    });
+  }).then(function(loaded){
+    var legacy = loadLegacyGeneratedExamples();
+    var migrate = legacy ? Object.keys(legacy).filter(function(k){ return !loaded[k]; }) : [];
+    migrate.forEach(function(k){ loaded[k] = legacy[k]; });
+    Object.keys(loaded).forEach(function(k){ generatedExamples[k] = loaded[k]; });
+    if (!legacy) return;
+    return examplesTx(function(store){
+      migrate.forEach(function(k){ store.put(legacy[k], k); });
+    }).then(function(){
+      try { localStorage.removeItem(GENERATED_EX_KEY); } catch(e) {}
+    });
+  }).catch(function(){
+    // IndexedDB unusable (e.g. blocked in private mode): fall back to localStorage.
+    examplesUseIdb = false;
+    var legacy = loadLegacyGeneratedExamples() || {};
+    Object.keys(legacy).forEach(function(k){ generatedExamples[k] = legacy[k]; });
+  }).then(seedExamples);
+  return examplesReady;
+}
+// One-time fill from the shipped seed file. If it can't be fetched (offline on
+// the very first start) it is simply tried again on the next start.
+function seedExamples(){
+  try { if (localStorage.getItem(EXAMPLES_SEEDED_KEY)) return; } catch(e) { return; }
+  return fetch(EXAMPLES_SEED_URL).then(function(res){
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }).then(function(seed){
+    var add = Object.keys(seed).filter(function(k){ return !(generatedExamples[k] && generatedExamples[k].length); });
+    add.forEach(function(k){ generatedExamples[k] = seed[k]; });
+    var saved = !examplesUseIdb
+      ? Promise.resolve(saveGeneratedExamples(generatedExamples))
+      : examplesTx(function(store){ add.forEach(function(k){ store.put(seed[k], k); }); });
+    return saved.then(function(){
+      try { localStorage.setItem(EXAMPLES_SEEDED_KEY, '1'); } catch(e) {}
+    });
+  }).catch(function(){});
+}
+// Saves the sentences of one word (after generating examples for it).
+function saveGeneratedExamplesFor(key){
+  if (!examplesUseIdb) { saveGeneratedExamples(generatedExamples); return; }
+  examplesTx(function(store){ store.put(generatedExamples[key], key); }).catch(function(){});
+}
+// Replaces the whole store with g (import).
 function saveGeneratedExamples(g){
-  try { localStorage.setItem(GENERATED_EX_KEY, JSON.stringify(g)); } catch(e) {}
+  if (!examplesUseIdb) {
+    try { localStorage.setItem(GENERATED_EX_KEY, JSON.stringify(g)); } catch(e) {}
+    return;
+  }
+  examplesTx(function(store){
+    store.clear();
+    Object.keys(g).forEach(function(k){ store.put(g[k], k); });
+  }).catch(function(){});
 }
 function loadGeminiKey(){
   try { return localStorage.getItem(GEMINI_KEY_STORE) || ''; } catch(e) { return ''; }
@@ -118,10 +225,7 @@ var HSK_ORDER = STANDARD_LEVELS[settings.standard];
 var generatedExamples = loadGeneratedExamples();
 
 function examplesFor(wordId){
-  var key = String(wordId);
-  var base = EXAMPLES[key] || [];
-  var gen = generatedExamples[key] || [];
-  return base.concat(gen);
+  return generatedExamples[String(wordId)] || [];
 }
 
 var session = null; // { ids: [...], sessionPts: {id:0}, currentId, awaitingNext, mastered: [] }

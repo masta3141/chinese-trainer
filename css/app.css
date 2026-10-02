@@ -983,23 +983,24 @@
   }
   .btn-secondary:hover { border-color: var(--ink-faint); color: var(--ink); }
 
-  /* --- Power-Streak card --- */
-  .streak-card .streak-head { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
-  .streak-card .streak-flame { font-size: 30px; }
-  .streak-card .streak-num { font-size: 40px; font-weight: 700; color: var(--seal); line-height: 1; }
-  .streak-card .streak-unit { font-size: 14px; color: var(--ink-soft); }
-  .streak-card .streak-motto { font-size: 15px; font-weight: 600; margin: 10px 0 6px; }
-  .streak-card .streak-fc { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 0 0 6px; }
-  .streak-card .streak-fc-cell { border: 1px solid var(--hairline); border-radius: 8px; padding: 6px 2px; }
-  .streak-card .streak-fc-cell .n { font-size: 18px; font-weight: 700; }
-  .streak-card .streak-fc-cell .l { font-size: 11px; color: var(--ink-faint); }
-  .streak-card .streak-fc-cell.due .n { color: var(--seal); }
-  .streak-card .streak-fc-total { font-size: 12px; color: var(--ink-faint); margin-bottom: 18px; }
-  .streak-card .streak-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  .streak-card .streak-info { margin-top: 16px; font-size: 13px; color: var(--ink-soft); }
-  .streak-card .streak-info summary { cursor: pointer; color: var(--ink-faint); }
-  .streak-card .streak-info p { text-align: left; font-size: 13px; margin: 8px 0 0; }
-  .streak-card .streak-reset { margin: 14px auto 0; }
+  /* --- Mode cards on the cards start screen (free practice + Power-Streak) --- */
+  .mode-card .mode-head { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
+  .mode-card .mode-icon { font-size: 30px; }
+  .mode-card .mode-title { font-size: 26px; font-weight: 700; color: var(--seal); line-height: 1; }
+  .mode-card .mode-num { font-size: 40px; font-weight: 700; color: var(--seal); line-height: 1; }
+  .mode-card .mode-unit { font-size: 14px; color: var(--ink-soft); }
+  .mode-card .mode-motto { font-size: 15px; font-weight: 600; margin: 10px 0 6px; }
+  .mode-card .mode-grid { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin: 0 0 6px; }
+  .mode-card .mode-cell { border: 1px solid var(--hairline); border-radius: 8px; padding: 6px 2px; }
+  .mode-card .mode-cell .n { font-size: 18px; font-weight: 700; }
+  .mode-card .mode-cell .l { font-size: 11px; color: var(--ink-faint); }
+  .mode-card .mode-cell.due .n { color: var(--seal); }
+  .mode-card .mode-note { font-size: 12px; color: var(--ink-faint); margin-bottom: 18px; }
+  .mode-card .mode-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .mode-card .mode-info { margin-top: 16px; font-size: 13px; color: var(--ink-soft); }
+  .mode-card .mode-info summary { cursor: pointer; color: var(--ink-faint); }
+  .mode-card .mode-info p { text-align: left; font-size: 13px; margin: 8px 0 0; }
+  .mode-card .mode-reset { margin: 14px auto 0; }
 
   /* --- Flashcard --- */
   .session-bar {

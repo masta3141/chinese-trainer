@@ -100,6 +100,7 @@ function pickNext(){
   }
   var candidate = choices[rnd(choices.length)];
   session.currentId = candidate;
+  session.generateError = null;
   session.showPinyin = false;
   session.showTranslationInExamples = false;
   session.showExamples = false;

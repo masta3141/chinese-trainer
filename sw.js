@@ -10,14 +10,14 @@
 //
 // Deploy this file in the SAME folder as your index.html on GitHub Pages.
 
-var CACHE_NAME = 'hskflash-shell-v6';
+var CACHE_NAME = 'hskflash-shell-v9';
 // Keep in sync with the <link>/<script> tags in index.html.
 var APP_SHELL = [
   'index.html',
   'css/app.css',
   'data/words-hsk2.js',
   'data/words-hsk3.js',
-  'data/examples.js',
+  'data/examples-seed.json',
   'data/freq.js',
   'js/core.js',
   'js/i18n.js',
@@ -74,26 +74,26 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
+  // Network first: always serve the current version of every file when online
+  // (cache: 'no-cache' revalidates with the server, so the HTTP cache can't
+  // hand out stale files either). This keeps index.html, css/, data/ and js/
+  // from the same deploy together — serving cached files first could mix an
+  // old js/state.js with a new js/init.js after an update. The cache is only
+  // the offline fallback, refreshed on every successful fetch.
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      var networkFetch = fetch(event.request)
-        .then(function (response) {
-          if (response && response.status === 200) {
-            var copy = response.clone();
-            caches.open(CACHE_NAME).then(function (cache) {
-              cache.put(event.request, copy);
-            });
-          }
-          return response;
-        })
-        .catch(function () {
-          // Offline and nothing cached for this request — nothing more we can do.
-          return cached;
-        });
-
-      // Cached version first for instant load / offline support; the network
-      // request still runs in the background and refreshes the cache.
-      return cached || networkFetch;
-    })
+    fetch(event.request, { cache: 'no-cache' })
+      .then(function (response) {
+        if (response && response.status === 200) {
+          var copy = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) {
+            cache.put(event.request, copy);
+          });
+        }
+        return response;
+      })
+      .catch(function () {
+        // Offline: fall back to the cached copy (precached on install).
+        return caches.match(event.request);
+      })
   );
 });

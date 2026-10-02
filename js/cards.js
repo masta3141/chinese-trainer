@@ -5,30 +5,45 @@
 var main = document.getElementById('main');
 var statsStrip = document.getElementById('statsStrip');
 
+// Start/finished screen card for the regular, free-form session — same layout
+// as the Power-Streak card below it. The grid shows the funnel:
+// all words of the standard → pool → words per round → words in focus.
+function renderFreeCard(finished){
+  var total = WORDS.length;
+  var pool = Math.min(settings.pool, total);
+  var round = Math.min(settings.sessionSize, pool);
+  var focus = Math.min(7, round); // window size of activeWindow()
+  var cells = [[total, 'freeFcTotal'], [pool, 'freeFcPool'], [round, 'freeFcRound'], [focus, 'freeFcFocus']];
+  return '<div class="panel mode-card">' +
+      '<div class="mode-head"><span class="mode-icon">🎴</span>' +
+        '<span class="mode-title">' + esc(t('freeTitle')) + '</span></div>' +
+      '<div class="mode-motto">' + esc(finished ? t('finishedTitle') : t('freeMotto')) + '</div>' +
+      '<p>' + esc(finished ? t('finishedDesc') : t('freeStatus')) + '</p>' +
+      '<div class="mode-grid">' +
+        cells.map(function(c){
+          return '<div class="mode-cell"><div class="n">' + c[0] + '</div><div class="l">' + esc(t(c[1])) + '</div></div>';
+        }).join('') +
+      '</div>' +
+      '<div class="mode-note">' + esc(t('freeNote')) + '</div>' +
+      '<div class="mode-btns"><button class="btn-primary" id="' + (finished ? 'btnAgain' : 'btnStart') + '">' +
+        esc(finished ? t('newRoundBtn') : t('startBtn')) + '</button></div>' +
+      '<details class="mode-info"><summary>' + esc(t('streakHowTitle')) + '</summary>' +
+        '<p>' + esc(tf('freeHowText', total, pool, round)) + '</p></details>' +
+    '</div>';
+}
+
 function render(justAnswered){
   renderStats();
 
   if (!session) {
-    main.innerHTML =
-      '<div class="panel">' +
-        '<h2>' + esc(t('readyTitle')) + '</h2>' +
-        '<p>' + esc(t('readyDesc')) + '</p>' +
-        '<button class="btn-primary" id="btnStart">' + esc(t('startBtn')) + '</button>' +
-      '</div>' +
-      renderStreakCard();
+    main.innerHTML = renderFreeCard(false) + renderStreakCard();
     document.getElementById('btnStart').onclick = startSession;
     wireStreakCard();
     return;
   }
 
   if (session.finished) {
-    main.innerHTML =
-      '<div class="panel">' +
-        '<h2>' + esc(t('finishedTitle')) + '</h2>' +
-        '<p>' + esc(t('finishedDesc')) + '</p>' +
-        '<button class="btn-primary" id="btnAgain">' + esc(t('newRoundBtn')) + '</button>' +
-      '</div>' +
-      renderStreakCard();
+    main.innerHTML = renderFreeCard(true) + renderStreakCard();
     document.getElementById('btnAgain').onclick = startSession;
     wireStreakCard();
     return;
@@ -50,7 +65,9 @@ function render(justAnswered){
     // Intervals are previewed only for the first rating; repeats in the same stage don't reschedule.
     var ivls = [0, 1, 2, 3].map(function(g){
       if (sOpen.rated[w.id]) return '';
-      return g === 0 ? streakIvlLabel(0) : streakIvlLabel(streakSchedule(sCard, g, sClock).ivl);
+      if (g === 0) return streakIvlLabel(0);
+      var r = streakSchedule(sCard, g, sClock, sOpen.reviewOnly);
+      return r ? streakIvlLabel(r.ivl) : '=';
     });
     rateHtml =
       '<button class="rate-btn" style="background:' + levelToColor(4) + '" data-grade="0">' + esc(t('rateNochmal')) + '<span class="val">' + esc(ivls[0]) + '</span></button>' +
@@ -75,7 +92,7 @@ function render(justAnswered){
 
   var exHtml = '';
   if (examples.length) {
-    exHtml = examples.slice(0,6).map(function(ex, i){
+    exHtml = examples.map(function(ex, i){
       var row = '<div class="ex-row"><div class="ex-h">' +
         '<button class="ex-speak-btn" data-ex-idx="' + i + '" title="' + esc(t('sentenceSpeak')) + '">🔊</button> ' +
         esc(ex.h) + '</div>';
@@ -87,7 +104,11 @@ function render(justAnswered){
       }
       row += '</div>';
       return row;
-    }).join('');
+    }).join('') +
+      (session.generating
+        ? '<div class="ex-e">' + esc(t('generatingExamples')) + '</div>'
+        : '<button class="hint-btn" id="btnGenExamples">' + esc(t('moreExamplesBtn')) + '</button>') +
+      (session.generateError ? '<div class="ex-e" style="margin-top:8px;color:var(--seal);">' + esc(session.generateError) + '</div>' : '');
   } else if (session.generating) {
     exHtml = '<div class="ex-e">' + esc(t('generatingExamples')) + '</div>';
   } else {
