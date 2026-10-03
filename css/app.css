@@ -1093,6 +1093,11 @@
     align-items: center;
     gap: 6px;
   }
+  a.hint-btn { text-decoration: none; }
+  .imprint-link { margin-top: 28px; text-align: center; }
+  .imprint-link a { color: var(--ink-faint); }
+  .get-key-btn { display: inline-flex; margin-top: 8px; }
+  .key-free-check { width: 100%; justify-content: flex-start; margin-top: 8px; }
   .hint-btn:hover { border-color: var(--ink-faint); color: var(--ink); }
   .hint-btn.on {
     border-color: var(--jade);

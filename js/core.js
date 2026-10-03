@@ -78,7 +78,8 @@ function computeStreak(){
   }
   return streak;
 }
-var DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
+var DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite'; // fallback until detectGeminiModels() has run
+var DEFAULT_GEMINI_TTS_MODEL = 'gemini-3.8-flash-lite-tts';
 
 var DEFAULT_SETTINGS = { standard: 'hsk2', pool: 300, sessionSize: 20, speak: true, autoSpeak: true, voiceName: '', lang: 'de' };
 

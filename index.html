@@ -26,7 +26,7 @@
   <header class="top">
     <div class="brand">
       <span class="mark">汉字</span>
-      <h1>HSK Vokabeltrainer</h1>
+      <h1 data-i18n="appTitle">HSK Vokabeltrainer</h1>
     </div>
     <div class="top-actions">
       <button class="icon-btn" id="btnLang" title="Language / Sprache" style="font-size:16px;">🇩🇪</button>
@@ -167,21 +167,20 @@
     <div class="field" style="margin-bottom:14px;">
       <label for="inpGeminiKey" data-i18n="geminiKeyLabel">Gemini API-Key</label>
       <input type="password" id="inpGeminiKey" placeholder="AIza…" autocomplete="off">
-    </div>
-    <div class="field" style="margin-bottom:0;">
-      <label for="inpGeminiModel" data-i18n="geminiModelLabel">Modell</label>
-      <input type="text" id="inpGeminiModel" placeholder="gemini-3.5-flash-lite">
+      <label class="hsk-check key-free-check">
+        <input type="checkbox" id="inpTtsQuotaEnabled">
+        <span data-i18n="audioQuotaEnabledLabel">Kostenloser Key (ohne Zahlungsdaten erstellt)</span>
+      </label>
+      <p class="drawer-note" data-i18n="audioQuotaHint">Warum diese Frage? Kostenlose Keys erlauben nur wenige Audio-Aufnahmen pro Minute und Tag. Mit Häkchen erzeugt die App deshalb höchstens 2 Sätze pro Minute und 8 pro Tag – so kommen keine Fehlermeldungen von Google. Bei einem kostenpflichtigen Key ohne Häkchen geht es schneller.</p>
+      <a class="hint-btn get-key-btn" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" data-i18n="geminiGetKeyBtn">🔑 Kostenlosen API-Key holen (30 Sek.)</a>
+      <p class="drawer-note" data-i18n="geminiGetKeyHow">1. Mit deinem Google-Konto anmelden · 2. „API-Schlüssel erstellen“ tippen · 3. Key kopieren, hier einfügen und „Key speichern“. Kostenlos, keine Zahlungsdaten nötig.</p>
     </div>
     <button class="btn-secondary" id="btnSaveGeminiKey" style="margin-top:14px;" data-i18n="geminiSaveBtn">Key speichern</button>
+    <p class="drawer-note" id="geminiModelInfo"></p>
     <p class="drawer-note" data-i18n="geminiKeyNote">Der Key verlässt diesen Browser nie außer in direkten Anfragen an Google — er wird nur lokal gespeichert, nicht in dieser Datei oder irgendwo sonst.</p>
 
-    <div class="field" style="margin-top:18px;">
-      <label class="hsk-check" style="width:100%;justify-content:flex-start;">
-        <input type="checkbox" id="inpTtsQuotaEnabled">
-        <span data-i18n="audioQuotaEnabledLabel">Tageslimit aktiv (max. 2 Sätze / Minute, 8 / 24 Std.)</span>
-      </label>
-      <p class="drawer-note" data-i18n="audioQuotaHint">Ohne Häkchen wird zwischen zwei Sätzen 7 Sekunden gewartet – passend zum freien Kontingent mit bis zu 10 Sätzen pro Minute. Mit Häkchen sind es 30 Sekunden (max. 2 Sätze pro Minute) und höchstens 8 Sätze in 24 Stunden.</p>
-    </div>
+    <p class="drawer-note imprint-link"><a href="impressum.html" data-i18n="imprintLink">Impressum &amp; Datenschutz</a></p>
+
   </div>
 </div>
 

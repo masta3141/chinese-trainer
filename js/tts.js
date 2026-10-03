@@ -2,7 +2,6 @@
 "use strict";
 
 // ---------- story audio export (Gemini TTS + Google Cloud TTS) ----------
-var GEMINI_TTS_MODEL = 'gemini-3.8-flash-lite-tts';
 var TTS_VOICES = [
   { id: 'Puck', gender: 'm' },
   { id: 'Charon', gender: 'm' },
@@ -266,7 +265,7 @@ function checkTtsRateLimit(){
 function callGeminiTTSParts(parts, voiceId){
   var apiKey = loadGeminiKey();
   if (!apiKey) return Promise.reject(new Error('no-key'));
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(GEMINI_TTS_MODEL) + ':generateContent?key=' + encodeURIComponent(apiKey);
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(loadGeminiTtsModel()) + ':generateContent?key=' + encodeURIComponent(apiKey);
   var payload = {
     contents: [{ role: 'user', parts: parts }],
     generationConfig: {

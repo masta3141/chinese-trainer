@@ -40,3 +40,4 @@ render();
 initExamplesStore().then(function(){
   if (session && !session.finished) render();
 });
+detectGeminiModels(false); // background, at most weekly

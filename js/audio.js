@@ -358,10 +358,10 @@ function recordingMeta(rec){
 
 // Which completed recordings are checked for the "play checked entries
 // back to back" playlist, keyed by recording id. Not persisted — a fresh
-// session simply starts with everything checked (the common case: play
-// everything). Session-only, like the other transient UI state above.
+// session starts with nothing checked. Session-only, like the other
+// transient UI state above.
 var audioTabChecked = {};
-function isRecChecked(id){ return audioTabChecked[id] !== false; }
+function isRecChecked(id){ return audioTabChecked[id] === true; }
 
 function playCheckedRecordings(orderedIds, list){
   var checkedIds = orderedIds.filter(function(id){
@@ -444,7 +444,8 @@ function renderAudioTab(){
       }).join('')
     : '<div class="empty-note">' + esc(t('audioTabEmpty')) + '</div>';
 
-  var anyPlayable = list.some(function(r){ return r.done >= r.totalSteps; });
+  // Play is only possible once at least one finished recording is checked.
+  var anyPlayable = list.some(function(r){ return r.done >= r.totalSteps && isRecChecked(r.id); });
   var playAllIcon = isPlaybackActive ? (isPaused ? '▶' : '⏸') : '▶';
   var playAllTitle = isPlaybackActive ? (isPaused ? t('audioPlayTitle') : t('audioPauseTitle')) : t('audioPlayTitle');
 
@@ -475,6 +476,9 @@ function renderAudioTab(){
   Array.prototype.forEach.call(root.querySelectorAll('[data-rec-check]'), function(box){
     box.onchange = function(){
       audioTabChecked[box.getAttribute('data-rec-check')] = box.checked;
+      if (playAllBtn && !isPlaybackActive) {
+        playAllBtn.disabled = !list.some(function(r){ return r.done >= r.totalSteps && isRecChecked(r.id); });
+      }
     };
   });
   Array.prototype.forEach.call(root.querySelectorAll('[data-rec-download]'), function(btn){

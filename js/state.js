@@ -130,6 +130,53 @@ function loadGeminiModel(){
 function saveGeminiModel(m){
   try { localStorage.setItem(GEMINI_MODEL_STORE, m || DEFAULT_GEMINI_MODEL); } catch(e) {}
 }
+var GEMINI_TTS_MODEL_STORE = 'hskflash_gemini_tts_model_v1';
+var GEMINI_MODELS_CHECKED_KEY = 'hskflash_gemini_models_checked_v1';
+var GEMINI_MODELS_RECHECK_MS = 7 * 24 * 60 * 60 * 1000;
+function loadGeminiTtsModel(){
+  try { return localStorage.getItem(GEMINI_TTS_MODEL_STORE) || DEFAULT_GEMINI_TTS_MODEL; } catch(e) { return DEFAULT_GEMINI_TTS_MODEL; }
+}
+
+// Picks the newest stable model whose id matches one of the patterns, in
+// order of preference (e.g. "gemini-3.5-flash-lite"; preview/exp/dated
+// variants don't match). ids: model ids without the "models/" prefix.
+function pickNewestModel(ids, patterns){
+  for (var i = 0; i < patterns.length; i++) {
+    var best = null, bestVer = null;
+    ids.forEach(function(id){
+      var m = patterns[i].exec(id);
+      if (!m) return;
+      var ver = m[1].split('.').map(Number);
+      if (!bestVer || ver[0] > bestVer[0] || (ver[0] === bestVer[0] && (ver[1] || 0) > (bestVer[1] || 0))) { best = id; bestVer = ver; }
+    });
+    if (best) return best;
+  }
+  return null;
+}
+// Asks the Gemini API which models this key can use and stores the newest
+// fitting text and TTS model. Runs at most once a week unless forced (new
+// key); on any failure the previously stored or default models stay.
+function detectGeminiModels(force){
+  var key = loadGeminiKey();
+  if (!key) return Promise.resolve();
+  try {
+    var last = parseInt(localStorage.getItem(GEMINI_MODELS_CHECKED_KEY), 10) || 0;
+    if (!force && Date.now() - last < GEMINI_MODELS_RECHECK_MS) return Promise.resolve();
+  } catch(e) {}
+  return fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=' + encodeURIComponent(key))
+    .then(function(res){ if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+    .then(function(data){
+      var ids = (data.models || []).filter(function(m){
+        return (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0;
+      }).map(function(m){ return String(m.name).replace(/^models\//, ''); });
+      var text = pickNewestModel(ids, [/^gemini-(\d+(?:\.\d+)?)-flash-lite$/, /^gemini-(\d+(?:\.\d+)?)-flash$/]);
+      var tts = pickNewestModel(ids, [/^gemini-(\d+(?:\.\d+)?)-flash-lite-tts$/, /^gemini-(\d+(?:\.\d+)?)-flash-tts$/]);
+      if (text) saveGeminiModel(text);
+      if (tts) { try { localStorage.setItem(GEMINI_TTS_MODEL_STORE, tts); } catch(e) {} }
+      try { localStorage.setItem(GEMINI_MODELS_CHECKED_KEY, String(Date.now())); } catch(e) {}
+    })
+    .catch(function(){});
+}
 
 function loadProgress(){
   try {

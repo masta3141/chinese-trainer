@@ -36,7 +36,7 @@ function openDrawer(){
   document.getElementById('hanziSizeVal').textContent = fonts.hanziSize + 'px';
   document.getElementById('exampleSizeVal').textContent = fonts.exampleSize + 'px';
   document.getElementById('inpGeminiKey').value = loadGeminiKey();
-  document.getElementById('inpGeminiModel').value = loadGeminiModel();
+  showGeminiModelInfo();
   document.getElementById('inpTtsQuotaEnabled').checked = loadTtsQuotaEnabled();
   buildVoiceSelect();
   overlay.classList.add('show');
@@ -60,9 +60,14 @@ document.getElementById('btnApplySettings').onclick = function(){
   startSession();
 };
 
+function showGeminiModelInfo(){
+  var el = document.getElementById('geminiModelInfo');
+  if (el) el.textContent = tf('geminiModelAuto', loadGeminiModel(), loadGeminiTtsModel());
+}
+
 document.getElementById('btnSaveGeminiKey').onclick = function(){
   saveGeminiKey(document.getElementById('inpGeminiKey').value.trim());
-  saveGeminiModel(document.getElementById('inpGeminiModel').value.trim());
+  detectGeminiModels(true).then(showGeminiModelInfo);
   var btn = document.getElementById('btnSaveGeminiKey');
   btn.textContent = t('geminiSavedToast');
   setTimeout(function(){ btn.textContent = t('geminiSaveBtn'); }, 1500);
