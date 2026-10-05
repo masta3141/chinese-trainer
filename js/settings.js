@@ -37,6 +37,7 @@ function openDrawer(){
   document.getElementById('exampleSizeVal').textContent = fonts.exampleSize + 'px';
   document.getElementById('inpGeminiKey').value = loadGeminiKey();
   showGeminiModelInfo();
+  showBackupInfo();
   document.getElementById('inpTtsQuotaEnabled').checked = loadTtsQuotaEnabled();
   buildVoiceSelect();
   overlay.classList.add('show');

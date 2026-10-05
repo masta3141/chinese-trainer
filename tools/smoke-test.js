@@ -295,7 +295,7 @@ async function main(){
         { base: await ev('basePool().length'), shown: strip, pool: await ev('activePool().length') });
       await ev('var p = document.getElementById("inpPool"); p.value = 300; p.dispatchEvent(new Event("change")); closeDrawer(); true');
       await click('.lang-option[data-lang="en"]');
-      check('language switch translates the title', (await ev('document.querySelector("h1").textContent')) === 'HSK Flashcards');
+      check('language switch translates the UI', (await ev('document.getElementById("tabCards").textContent')) === 'Cards');
       await click('.lang-option[data-lang="de"]');
     });
     await section('Mobile layout', async () => {
@@ -304,6 +304,36 @@ async function main(){
       check('mobile carousel is active', await ev('document.getElementById("learnArea").classList.contains("carousel")'));
       await send('Emulation.clearDeviceMetricsOverride');
     });
+    await section('Full backup and restore', async () => {
+      // Audio is stored as {fmt, pcm: Uint8Array view}; use a sub-view like the app does.
+      await ev('idbSet("smoke:0", { fmt: { sampleRate: 24000 }, pcm: new Uint8Array([1, 2, 3, 250]).subarray(1) }).then(function(){ return true; })');
+      const before = { examples: await ev('Object.keys(generatedExamples).length'), level: await ev('powerStreak.level') };
+      const raw = await ev('buildFullBackup().then(function(d){ window.__bk = JSON.stringify(d); return window.__bk; })');
+      const bk = JSON.parse(raw);
+      check('backup contains progress, streak, stories and islands', ['hskflash_progress_v1', 'hskflash_streak_v1', 'hskflash_stories_v1', 'hskflash_islands_v1'].every(k => k in bk.localStorage));
+      check('backup contains example sentences and audio', Object.keys(bk.examples).length === before.examples && !!bk.audio['smoke:0'],
+        { examples: Object.keys(bk.examples).length, expected: before.examples, audio: Object.keys(bk.audio) });
+      check('backup leaves out the API key', !('hskflash_gemini_key_v1' in bk.localStorage));
+      await send('Browser.setDownloadBehavior', { behavior: 'deny' }).catch(() => {});
+      await click('#btnSettings');
+      await click('#btnBackupAll');
+      await waitFor('!!localStorage.getItem("hskflash_last_backup_v1")', 8000);
+      check('"Alles sichern" button creates a backup and notes the date', /heute/.test(await ev('document.getElementById("backupInfo").textContent')),
+        await ev('document.getElementById("backupInfo").textContent'));
+      await ev('closeDrawer(); true');
+      // wipe everything, then restore (the app reloads itself)
+      await ev('Object.keys(localStorage).filter(function(k){ return k.indexOf("hskflash_") === 0 && k !== "hskflash_gemini_key_v1"; }).forEach(function(k){ localStorage.removeItem(k); }); ' +
+        'Promise.all([replaceWholeStore(openExamplesDB, EXAMPLES_STORE, {}), replaceWholeStore(openAudioDB, AUDIO_STORE, {})]).then(function(){ return true; })');
+      await ev('restoreFullBackup(JSON.parse(window.__bk)).then(function(){ return true; })');
+      await sleep(800);
+      await waitFor('typeof render === "function" && document.readyState === "complete"', 10000);
+      await sleep(600);
+      check('restore brings back streak, story and island', (await ev('powerStreak.level')) === before.level && (await ev('stories.length')) === 1 && (await ev('islands.length')) === 1);
+      check('restore brings back the example sentences', (await ev('Object.keys(generatedExamples).length')) === before.examples);
+      check('restore brings back the audio bytes exactly', JSON.stringify(await ev('idbGet("smoke:0").then(function(v){ return Array.from(v.pcm); })')) === '[2,3,250]');
+      check('API key survives a restore', (await ev('localStorage.getItem("hskflash_gemini_key_v1")')) === 'FAKE');
+    });
+
     await section('Persistence and offline cache', async () => {
       await reload();
       check('streak, story and island survive a reload',

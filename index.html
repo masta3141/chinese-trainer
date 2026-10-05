@@ -6,11 +6,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="HSK Vokabeltrainer">
+<meta name="apple-mobile-web-app-title" content="HSK Trainer">
 <meta name="theme-color" content="#a33b2c">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<title>汉字 Karten — HSK Vokabeltrainer</title>
+<title>汉字 HSK Trainer</title>
 <!-- Pure-JS MP3 encoder, used only when downloading a narrated recording (see
      buildRecordingMp3Blob below) — playback itself never needs this. If it
      fails to load (offline, blocked), downloads fall back to WAV. -->
@@ -23,7 +23,7 @@
   <header class="top">
     <div class="brand">
       <span class="mark">汉字</span>
-      <h1 data-i18n="appTitle">HSK Vokabeltrainer</h1>
+      <h1 data-i18n="appTitle">HSK Trainer</h1>
     </div>
     <div class="top-actions">
       <button class="icon-btn" id="btnLang" title="Language / Sprache" style="font-size:16px;">🇩🇪</button>
@@ -137,6 +137,13 @@
 
   <div class="drawer-actions">
     <h2 style="margin-top:0;" data-i18n="exportHeading">Daten sichern</h2>
+    <div class="export-row backup-all-row">
+      <span class="export-row-label" data-i18n="backupAllLabel">Alles (inkl. Audio)</span>
+      <button class="btn-secondary" id="btnBackupAll" data-i18n="exportBtn">⬇</button>
+      <button class="btn-secondary" id="btnRestoreAll" data-i18n="importBtn">⬆</button>
+    </div>
+    <input type="file" id="inpRestoreFile" accept="application/json,.json" style="display:none;">
+    <p class="drawer-note" id="backupInfo"></p>
     <div class="export-row">
       <span class="export-row-label" data-i18n="exportProgressLabel">Fortschritt</span>
       <button class="btn-secondary" id="btnExportProgress" data-i18n="exportBtn">⬇</button>
@@ -203,6 +210,7 @@
 <script src="js/cards.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/backup.js"></script>
 <script src="js/welcome.js"></script>
 <script src="js/init.js"></script>
 </body>

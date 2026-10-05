@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "HSK Vokabeltrainer",
-  "short_name": "HSK",
+  "name": "HSK Trainer",
+  "short_name": "HSK Trainer",
   "description": "Karteikarten, Geschichten und Statistiken zum Lernen der HSK-Vokabeln (2.0 und 3.0), mit Fortschritts-Übersicht und Gemini-gestützter Beispielsatz- und Story-Generierung.",
   "start_url": ".",
   "scope": ".",
