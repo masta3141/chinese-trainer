@@ -90,11 +90,10 @@
     bei Safari durch Apple). Die App selbst speichert die Aufnahme nicht.
   </p>
 
-  <h3>Schriftarten und Bibliotheken von Drittanbietern</h3>
+  <h3>Keine Inhalte von Drittanbietern</h3>
   <p>
-    Die App lädt Schriftarten von Google Fonts (Google Ireland Limited) und die Bibliothek „lamejs“ für den MP3-Export
-    vom Content-Delivery-Netzwerk jsDelivr. Dabei wird technisch bedingt deine IP-Adresse an diese Anbieter übermittelt
-    (Art. 6 Abs. 1 lit. f DSGVO, Interesse an einer einheitlichen Darstellung und Funktion).
+    Abgesehen von den oben genannten Google-Diensten lädt die App nichts von fremden Servern: Alle Dateien kommen von
+    GitHub Pages, Schriftarten werden nicht nachgeladen (die App nutzt die Schriften deines Geräts).
   </p>
 
   <h3>Offline-Speicher</h3>
@@ -109,6 +108,14 @@
     Widerspruch (Art. 15–21 DSGVO). Da ich selbst keine Daten von dir speichere, wende dich für Daten bei GitHub oder
     Google bitte direkt an diese Anbieter; bei Fragen helfe ich gern per E-Mail. Du hast außerdem das Recht, dich bei einer
     Datenschutz-Aufsichtsbehörde zu beschweren, z. B. beim Hessischen Beauftragten für Datenschutz und Informationsfreiheit.
+  </p>
+
+  <h2>Verwendete Open-Source-Software</h2>
+  <p>
+    Der MP3-Export nutzt <a href="https://github.com/zhuker/lamejs" target="_blank" rel="noopener">lamejs</a>, eine
+    JavaScript-Version von <a href="https://lame.sourceforge.net" target="_blank" rel="noopener">LAME</a>, unverändert
+    unter der <a href="https://www.gnu.org/licenses/lgpl-3.0.html" target="_blank" rel="noopener">GNU LGPL 3.0</a>.
+    <span lang="en">(The MP3 export uses lamejs, a JavaScript port of LAME, unmodified, under the GNU LGPL 3.0.)</span>
   </p>
 
   <h2 lang="en">About this app</h2>
@@ -139,7 +146,7 @@
         services, so please don't enter personal data. These features are only used if you enter a key.</li>
       <li>“Try it yourself” uses your browser's speech recognition (Google for Chrome/Edge, Apple for Safari) after you allow
         microphone access. The app does not store the audio.</li>
-      <li>Fonts are loaded from Google Fonts and the MP3 library “lamejs” from jsDelivr, which transmits your IP address to these providers.</li>
+      <li>Apart from the Google services above, the app loads nothing from third-party servers: all files come from GitHub Pages and no web fonts are loaded (the app uses your device's fonts).</li>
       <li>A service worker caches the app's files on your device for offline use.</li>
       <li>You have the rights under Art. 15–21 GDPR and may lodge a complaint with a data protection authority.</li>
     </ul>

@@ -11,13 +11,10 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <title>汉字 Karten — HSK Vokabeltrainer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Ma+Shan+Zheng&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Pure-JS MP3 encoder, used only when downloading a narrated recording (see
      buildRecordingMp3Blob below) — playback itself never needs this. If it
      fails to load (offline, blocked), downloads fall back to WAV. -->
-<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js" defer></script>
+<script src="vendor/lamejs/lame.min.js" defer></script>
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -118,9 +115,9 @@
   <div class="field">
     <label for="inpFontFamily" data-i18n="fontFamilyLabel">Schriftart (Hanzi)</label>
     <select id="inpFontFamily">
-      <option value="serif" data-i18n="fontSerif">Noto Serif SC (Standard)</option>
-      <option value="sans" data-i18n="fontSans">Noto Sans SC</option>
-      <option value="brush" data-i18n="fontBrush">Ma Shan Zheng (Pinsel-Stil)</option>
+      <option value="sans" data-i18n="fontSans">Noto Sans CJK (Standard)</option>
+      <option value="serif" data-i18n="fontSerif">Serif (falls auf dem Gerät vorhanden)</option>
+      <option value="brush" data-i18n="fontBrush">Kai / Pinsel (falls vorhanden)</option>
       <option value="system" data-i18n="fontSystem">Systemschrift</option>
     </select>
   </div>

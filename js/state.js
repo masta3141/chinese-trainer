@@ -237,11 +237,15 @@ function saveSettings(s){
 }
 
 var FONT_KEY = 'hskflash_fonts_v1';
-var DEFAULT_FONTS = { family: 'serif', hanziSize: 72, exampleSize: 16 };
+// Only fonts installed on the device (no web fonts, nothing loaded from
+// Google): Android ships Noto Sans CJK, Apple PingFang, Windows Microsoft
+// YaHei. Serif and Kai only exist on some devices and fall back to sans.
+var CJK_SANS = "'Noto Sans CJK SC', 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif";
+var DEFAULT_FONTS = { family: 'sans', hanziSize: 72, exampleSize: 16 };
 var FONT_STACKS = {
-  serif: "'Noto Serif SC', serif",
-  sans: "'Noto Sans SC', sans-serif",
-  brush: "'Ma Shan Zheng', cursive",
+  serif: "'Noto Serif CJK SC', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'SimSun', " + CJK_SANS,
+  sans: CJK_SANS,
+  brush: "'KaiTi', 'STKaiti', 'Kaiti SC', " + CJK_SANS,
   system: "-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
 };
 function loadFonts(){

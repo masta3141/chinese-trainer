@@ -18,7 +18,7 @@
     --green-fill: #5b9574;
     --hairline: rgba(36,31,25,0.14);
     --shadow: rgba(36,31,25,0.18);
-    --hanzi-font: 'Noto Serif SC', serif;
+    --hanzi-font: 'Noto Sans CJK SC', 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     --hanzi-size: clamp(56px, 16vw, 84px);
     --example-size: 16px;
     padding-top: env(safe-area-inset-top, 0px);
@@ -67,7 +67,7 @@
     margin: 0;
     background: var(--paper);
     color: var(--ink);
-    font-family: 'Work Sans', system-ui, sans-serif;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     min-height: 100%;
     display: flex;
     flex-direction: column;
@@ -182,7 +182,7 @@
     right: 3px;
     font-size: 8.5px;
     line-height: 1;
-    font-family: 'Work Sans', sans-serif;
+    font-family: system-ui, sans-serif;
     font-weight: 700;
     color: #000;
   }
@@ -194,7 +194,7 @@
     left: 4px;
     font-size: 9px;
     line-height: 1;
-    font-family: 'Work Sans', sans-serif;
+    font-family: system-ui, sans-serif;
     font-weight: 700;
     color: var(--jade);
     opacity: .75;
@@ -232,7 +232,7 @@
     padding: 10px 16px;
     border-radius: 10px;
     font-size: 13px;
-    font-family: var(--hanzi-font), 'Work Sans', sans-serif;
+    font-family: var(--hanzi-font), system-ui, sans-serif;
     max-width: min(90vw, 380px);
     text-align: center;
     z-index: 40;
@@ -898,7 +898,7 @@
     white-space: nowrap;
   }
   .brand .mark {
-    font-family: 'Noto Serif SC', serif;
+    font-family: var(--hanzi-font);
     font-size: 26px;
     color: var(--seal);
     line-height: 1;
