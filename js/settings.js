@@ -50,15 +50,21 @@ function closeDrawer(){
 document.getElementById('btnSettings').onclick = openDrawer;
 overlay.onclick = closeDrawer;
 
-document.getElementById('btnApplySettings').onclick = function(){
+// Pool size and words per round are saved right away; a running round just
+// continues, the new values apply from the next round on.
+function applyRoundSettings(){
   var pool = parseInt(document.getElementById('inpPool').value, 10);
   var sess = parseInt(document.getElementById('inpSession').value, 10);
   settings.pool = isNaN(pool) || pool < 1 ? DEFAULT_SETTINGS.pool : pool;
   settings.sessionSize = isNaN(sess) || sess < 1 ? DEFAULT_SETTINGS.sessionSize : sess;
   saveSettings(settings);
-  closeDrawer();
-  startSession();
-};
+  ensurePoolFilled();
+  buildPoolPanel();
+  renderStats();
+  if (!session || session.finished) render();
+}
+document.getElementById('inpPool').onchange = applyRoundSettings;
+document.getElementById('inpSession').onchange = applyRoundSettings;
 
 function showGeminiModelInfo(){
   var el = document.getElementById('geminiModelInfo');
@@ -102,7 +108,7 @@ function downloadJson(payload, filenamePrefix){
 }
 
 document.getElementById('btnExportProgress').onclick = function(){
-  downloadJson({ format: 'hskflash-progress-v1', exportedAt: new Date().toISOString(), progress: progress, streak: powerStreak }, 'hskflash-progress');
+  downloadJson({ format: 'hskflash-progress-v1', exportedAt: new Date().toISOString(), progress: progress, streak: powerStreak, poolOverrides: poolOverrides }, 'hskflash-progress');
 };
 document.getElementById('btnExportExamples').onclick = function(){
   downloadJson({ format: 'hskflash-examples-v1', exportedAt: new Date().toISOString(), generatedExamples: generatedExamples }, 'hskflash-examples');
@@ -142,6 +148,10 @@ document.getElementById('inpImportFile').onchange = function(e){
       if (data.streak && typeof data.streak === 'object' && data.streak.cards) {
         powerStreak = data.streak;
         saveStreak(powerStreak);
+      }
+      if (data.poolOverrides && typeof data.poolOverrides === 'object') {
+        poolOverrides = data.poolOverrides;
+        savePoolOverrides(poolOverrides);
       }
       session = null;
       buildPoolPanel();

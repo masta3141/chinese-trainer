@@ -91,18 +91,24 @@ function streakNewCount(){
 function beginStreakStage(){
   ensurePoolFilled();
   var clock = streakNextClock();
-  var due = streakDueIds(clock);
+  // Cards added by hand in the grid (never shown yet) count as new words.
+  var manual = [];
+  var due = streakDueIds(clock).filter(function(id){
+    if (powerStreak.cards[id].last == null) { manual.push(id); return false; }
+    return true;
+  });
   var fresh = streakPickNew(STREAK_NEW_PER_STAGE);
   var newIds = {};
   fresh.forEach(function(id){
     newIds[id] = true;
     powerStreak.cards[id] = { ease: 2.5, ivl: 0, due: clock, last: null, reps: 0, lapses: 0 };
   });
+  manual.forEach(function(id){ newIds[id] = true; });
   powerStreak.clock = clock;
   powerStreak.lastRealDay = localDayNumber();
   powerStreak.level++;
   // New words first, then the reviews.
-  var queue = shuffled(fresh).concat(shuffled(due));
+  var queue = shuffled(fresh.concat(manual)).concat(shuffled(due));
   powerStreak.open = { queue: queue, rated: {}, newIds: newIds, total: queue.length };
   saveStreak(powerStreak);
 }
@@ -251,6 +257,27 @@ function rateStreak(grade){
   setTimeout(streakNext, 900);
 }
 
+// "✎ Streak anpassen" in the grid: add a word as a new card (introduced in the
+// next stage together with the new words) or remove it from the streak,
+// including from a stage that is currently open.
+function setWordInStreak(w, on){
+  var id = w.id;
+  if (on) {
+    if (!powerStreak.cards[id]) powerStreak.cards[id] = { ease: 2.5, ivl: 0, due: powerStreak.clock, last: null, reps: 0, lapses: 0 };
+  } else {
+    delete powerStreak.cards[id];
+    var open = powerStreak.open;
+    if (open) {
+      open.queue = open.queue.filter(function(q){ return q !== id; });
+      delete open.rated[id];
+      delete open.newIds[id];
+    }
+    // The card on screen in a running streak round is gone: move on.
+    if (session && session.streak && session.currentId === id) { saveStreak(powerStreak); streakNext(); return; }
+  }
+  saveStreak(powerStreak);
+}
+
 function resetStreak(){
   if (!confirm(t('streakResetConfirm'))) return;
   powerStreak = emptyStreak();
@@ -290,7 +317,9 @@ function renderStreakCard(){
     status = tf('streakStatusOpen', powerStreak.open.queue.length);
     btnLabel = t('streakContinueBtn');
   } else {
-    status = tf('streakStatusDone', streakNewCount(), streakDueIds(streakNextClock()).length);
+    var dueNext = streakDueIds(streakNextClock());
+    var manualNew = dueNext.filter(function(id){ return powerStreak.cards[id].last == null; }).length;
+    status = tf('streakStatusDone', streakNewCount() + manualNew, dueNext.length - manualNew);
     btnLabel = t('streakNextBtn');
   }
   return '<div class="panel mode-card">' +

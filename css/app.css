@@ -187,6 +187,38 @@
     color: #000;
   }
   .pool-cell { cursor: pointer; }
+  .pool-cell.in-pool::before {
+    content: '✓';
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 9px;
+    line-height: 1;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 700;
+    color: var(--jade);
+    opacity: .75;
+  }
+  .pool-cell.learned.in-pool::before { color: #1f5a3c; opacity: .8; }
+  .legend-break { flex-basis: 100%; height: 0; }
+  .grid-search { flex: 0 0 auto; }
+  .pool-cell .peek { color: var(--ink-soft); opacity: .75; }
+  .grid-search input { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 20px; border: 1px solid var(--hairline); background: var(--paper); color: var(--ink); font: inherit; font-size: 13px; }
+  .grid-search input:focus { outline: none; border-color: var(--ink-faint); }
+  .pool-cell.in-streak::after {
+    content: '🔥';
+    position: absolute;
+    left: 3px;
+    bottom: 2px;
+    font-size: 8px;
+    line-height: 1;
+    opacity: .8;
+  }
+  .legend-chip.pool-edit-chip { margin-left: 0; }
+  .legend-chip.pool-edit-chip.active { border-color: var(--jade); color: var(--jade-deep); }
+  .pool-edit-hint { flex-basis: 100%; font-size: 11.5px; color: var(--jade-deep); margin-top: 2px; }
+  .sent-word { border-radius: 4px; transition: background .12s; }
+  .sent-word:hover { background: var(--hairline); }
   .grid-info-toast {
     position: fixed;
     left: 50%;
@@ -859,6 +891,8 @@
     display: flex;
     align-items: baseline;
     gap: 10px;
+    min-width: 0;
+    white-space: nowrap;
   }
   .brand .mark {
     font-family: 'Noto Serif SC', serif;
@@ -871,10 +905,13 @@
     font-weight: 600;
     margin: 0;
     letter-spacing: 0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .top-actions {
     display: flex;
     gap: 8px;
+    flex-shrink: 0;
   }
   .icon-btn {
     background: none;
@@ -982,6 +1019,19 @@
     font-weight: 500;
   }
   .btn-secondary:hover { border-color: var(--ink-faint); color: var(--ink); }
+
+  /* --- Welcome dialog (js/welcome.js) --- */
+  .info-btn { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 700; font-size: 17px; }
+  .welcome-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .welcome-box { background: var(--paper-raised); color: var(--ink); border: 1px solid var(--hairline); border-radius: 14px; max-width: 480px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 22px 20px; box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+  .welcome-box h2 { margin: 0 0 8px; font-size: 20px; }
+  .welcome-box h3 { margin: 16px 0 4px; font-size: 14.5px; color: var(--seal); }
+  .welcome-box p, .welcome-box li { font-size: 14px; line-height: 1.5; color: var(--ink-soft); margin: 0 0 6px; }
+  .welcome-tabs { margin: 0; padding-left: 18px; }
+  .welcome-tabs strong { color: var(--ink); }
+  .welcome-key { margin-top: 14px !important; padding: 10px 12px; border: 1px dashed var(--hairline); border-radius: 10px; }
+  .welcome-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+  .welcome-check { font-size: 13.5px; color: var(--ink-soft); display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
   /* --- Mode cards on the cards start screen (free practice + Power-Streak) --- */
   .mode-card .mode-head { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
@@ -1305,6 +1355,10 @@
   }
 
   @media (max-width: 420px) {
+    .brand { gap: 7px; }
+    .brand .mark { font-size: 22px; }
+    .brand h1 { font-size: 15px; }
+    .top-actions { gap: 6px; }
     .card { padding: 32px 18px 22px; }
     .rate-btn { font-size: 11.5px; padding: 12px 2px; }
   }

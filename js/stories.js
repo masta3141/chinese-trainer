@@ -68,6 +68,60 @@ function hskPromptLabel(key){
 
 // Greedy longest-match-first: finds which known vocabulary words occur in a sentence,
 // so rating a sentence can award progress to the actual words it contains.
+// Splits a sentence into known words for display (forward longest match,
+// words are at most 4 characters). Words of the current standard win over
+// the other standard. Returns [{s: text, w: word | null}, ...].
+var STORY_MAX_WORD_LEN = 4;
+var wordByHanzi = null, wordByHanziStd = null;
+function segmentSentence(text){
+  if (wordByHanziStd !== settings.standard) {
+    wordByHanzi = {};
+    WORDS.concat(ALL_WORDS).forEach(function(w){ if (!wordByHanzi[w.h]) wordByHanzi[w.h] = w; });
+    wordByHanziStd = settings.standard;
+  }
+  var out = [], i = 0;
+  while (i < text.length) {
+    var w = null, len;
+    for (len = Math.min(STORY_MAX_WORD_LEN, text.length - i); len >= 1; len--) {
+      w = wordByHanzi[text.substr(i, len)];
+      if (w) break;
+    }
+    if (w) { out.push({ s: text.substr(i, len), w: w }); i += len; continue; }
+    var last = out[out.length - 1];
+    if (last && !last.w) last.s += text[i]; else out.push({ s: text[i], w: null });
+    i++;
+  }
+  return out;
+}
+// Sentence markup with every known word as a hoverable/tappable span, softly
+// tinted with the word's progress colour once it has been learned a bit.
+function sentenceWordsHtml(text){
+  return segmentSentence(text).map(function(tok){
+    if (!tok.w) return esc(tok.s);
+    var p = progress[tok.w.id];
+    var tint = (p && p.seen && p.lvl > 0)
+      ? ' style="background:' + levelToColor(p.lvl).replace('rgb(', 'rgba(').replace(')', ',.22)') + '"' : '';
+    return '<span class="sent-word" data-wid="' + tok.w.id + '"' + tint + ' title="' + esc(wordInfoText(tok.w)) + '">' + esc(tok.s) + '</span>';
+  }).join('');
+}
+// "Satz in den Pool": adds every known word of the sentence (current standard) to the pool.
+function addSentenceToPool(text){
+  var inStd = {};
+  WORDS.forEach(function(w){ inStd[w.id] = true; });
+  var inPool = {};
+  activePool().forEach(function(w){ inPool[w.id] = true; });
+  var added = 0;
+  segmentSentence(text).forEach(function(tok){
+    if (tok.w && inStd[tok.w.id] && !inPool[tok.w.id]) {
+      setWordInPool(tok.w, true);
+      inPool[tok.w.id] = true;
+      added++;
+    }
+  });
+  if (added) poolPoolChanged();
+  showToast(added ? tf('sentPoolAdded', added) : t('sentPoolAllIn'));
+}
+
 function matchWordsInSentence(text, wordList){
   var candidates = wordList.filter(function(w){ return w.h && text.indexOf(w.h) !== -1; });
   candidates.sort(function(a, b){ return b.h.length - a.h.length; });
@@ -429,12 +483,13 @@ function renderStories(){
             '<button class="hint-btn" id="btnPrevSent"' + (idx === 0 ? ' disabled' : '') + '>' + esc(t('storiesPrev')) + '</button>' +
             '<button class="hint-btn" id="btnNextSent"' + (idx === story.sentences.length - 1 ? ' disabled' : '') + '>' + esc(t('storiesNext')) + '</button>' +
           '</div>' +
-          '<div class="hanzi" id="sentHanzi" style="font-size:clamp(28px,7vw,38px);line-height:1.5;cursor:pointer;margin-top:8px;" title="' + esc(t('speakTitle')) + '">' + esc(sent.h) + '</div>' +
+          '<div class="hanzi" id="sentHanzi" style="font-size:clamp(28px,7vw,38px);line-height:1.5;cursor:pointer;margin-top:8px;">' + sentenceWordsHtml(sent.h) + '</div>' +
           '<div class="pinyin-line">' + (st.readShowPinyin ? esc(sent.p) : '') + '</div>' +
           '<div class="hint-row">' +
             '<button class="hint-btn' + (st.readShowPinyin ? ' on' : '') + '" id="btnToggleReadPinyin">' + esc(st.readShowPinyin ? t('storiesPinyinHide') : t('storiesPinyinShow')) + '</button>' +
             '<button class="hint-btn' + (st.readShowTranslation ? ' on' : '') + '" id="btnToggleReadTranslation">' + esc(st.readShowTranslation ? t('storiesTranslationHide') : t('storiesTranslationShow')) + '</button>' +
             '<button class="hint-btn" id="btnReadSpeak">' + esc(t('readBtn')) + '</button>' +
+            '<button class="hint-btn" id="btnSentToPool">' + esc(t('sentToPoolBtn')) + '</button>' +
             (SpeechRec ? '<button class="hint-btn' + (tryListening ? ' on' : '') + '" id="btnTrySpeak">' + esc(tryListening ? t('tryStopBtn') : t('tryBtn')) + '</button>' : '') +
           '</div>' +
           '<div class="solution-line">' + (st.readShowTranslation ? esc(sent.e) : '') + '</div>' +
@@ -474,8 +529,14 @@ function renderStories(){
       });
       renderStories();
     };
-    document.getElementById('sentHanzi').onclick = function(){ speak(sent.h); };
+    // Tap a word: its info + pronunciation; tap elsewhere: read the whole sentence.
+    document.getElementById('sentHanzi').onclick = function(e){
+      var span = e.target.closest ? e.target.closest('[data-wid]') : null;
+      var w = span && WORD_BY_ID[span.getAttribute('data-wid')];
+      if (w) { showWordToast(w); speak(w.h); } else speak(sent.h);
+    };
     document.getElementById('btnReadSpeak').onclick = function(){ stopTryListening(); speak(sent.h); };
+    document.getElementById('btnSentToPool').onclick = function(){ addSentenceToPool(sent.h); };
     var btnTry = document.getElementById('btnTrySpeak');
     if (btnTry) btnTry.onclick = function(){
       // Second tap while listening: stop and use what was heard so far.

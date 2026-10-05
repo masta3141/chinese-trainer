@@ -13,26 +13,20 @@ if ('serviceWorker' in navigator) {
 // ---------- grid tap-to-info (mobile has no hover tooltips) ----------
 (function initGridTapInfo(){
   var panel = document.getElementById('poolPanel');
-  var toast = document.getElementById('gridInfoToast');
-  if (!panel || !toast) return;
-  var hideTimer = null;
+  if (!panel) return;
   panel.addEventListener('click', function(e){
     var cell = e.target.closest ? e.target.closest('.pool-cell') : null;
     if (!cell) return;
-    var id = parseInt(cell.getAttribute('data-id'), 10);
-    var w = WORD_BY_ID[id];
-    if (!w) return;
-    var p = progress[id];
-    var lvlPart = (p && p.seen && p.lvl > 0) ? (' · ' + t('cellLevelLabel') + ' ' + p.lvl) : '';
-    toast.textContent = w.h + ' · ' + w.p + ' · ' + w.e + lvlPart;
-    toast.classList.add('show');
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(function(){ toast.classList.remove('show'); }, 2600);
+    var w = WORD_BY_ID[parseInt(cell.getAttribute('data-id'), 10)];
+    if (streakEditMode) toggleStreakWord(w);
+    else if (poolEditMode) togglePoolWord(w);
+    else showWordToast(w);
   });
 })();
 
 // ---------- init ----------
 applyStaticTranslations();
+ensurePoolFilled(); // so the pool size shown before the first round is right
 buildPoolLegend();
 buildPoolPanel();
 render();
@@ -41,3 +35,4 @@ initExamplesStore().then(function(){
   if (session && !session.finished) render();
 });
 detectGeminiModels(false); // background, at most weekly
+maybeShowWelcome();

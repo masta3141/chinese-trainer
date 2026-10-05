@@ -5,7 +5,7 @@ function renderStats(){
   var fw = filteredWords();
   var mastered = fw.filter(function(w){ return progress[w.id] && progress[w.id].lvl >= 40; }).length;
   statsStrip.innerHTML =
-    '<span><b>' + settings.pool + '</b> / ' + WORDS.length + ' ' + esc(t('statsInPool')) + '</span>' +
+    '<span><b>' + activePool().length + '</b> / ' + WORDS.length + ' ' + esc(t('statsInPool')) + '</span>' +
     '<span><b>' + mastered + '</b> ' + esc(t('statsMastered')) + '</span>' +
     '<span><b>' + settings.sessionSize + '</b> ' + esc(t('statsPerRound')) + '</span>';
 }

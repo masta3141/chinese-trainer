@@ -19,14 +19,42 @@ function ensurePoolFilled(){
       progress[fresh[i].id] = { lvl: 0, lr: EPOCH_LONG_AGO, seen: false };
     }
     saveProgress(progress);
+    if (typeof buildPoolPanel === 'function') buildPoolPanel(); // refresh pool check marks
   }
 }
 
-function activePool(){
+// Base pool: the first settings.pool reviewed words in id order.
+function basePool(){
   var fw = filteredWords();
   var reviewed = fw.filter(function(w){ return progress[w.id] && progress[w.id].lr; })
                     .sort(function(a,b){ return a.id - b.id; });
   return reviewed.slice(0, settings.pool);
+}
+
+// Manual pool selection ("✓ Pool anpassen", "Satz in den Pool"), kept apart
+// from the settings: wordId -> true (added) | false (removed from the base).
+var POOL_OVERRIDES_KEY = 'hskflash_pool_overrides_v1';
+function loadPoolOverrides(){
+  try { return JSON.parse(localStorage.getItem(POOL_OVERRIDES_KEY)) || {}; } catch(e) { return {}; }
+}
+function savePoolOverrides(o){
+  try { localStorage.setItem(POOL_OVERRIDES_KEY, JSON.stringify(o)); } catch(e) {}
+}
+var poolOverrides = loadPoolOverrides();
+
+// Effective pool used everywhere: base pool plus added minus removed words
+// (only words of the current standard), in id order.
+function activePool(){
+  var inBase = {};
+  var out = basePool().filter(function(w){ inBase[w.id] = true; return poolOverrides[w.id] !== false; });
+  WORDS.forEach(function(w){ if (poolOverrides[w.id] === true && !inBase[w.id]) out.push(w); });
+  return out.sort(function(a, b){ return a.id - b.id; });
+}
+function setWordInPool(w, on){
+  var inBase = basePool().some(function(x){ return x.id === w.id; });
+  if (on === inBase) delete poolOverrides[w.id];
+  else poolOverrides[w.id] = on;
+  savePoolOverrides(poolOverrides);
 }
 
 function startSession(){

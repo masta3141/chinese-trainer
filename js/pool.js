@@ -37,6 +37,66 @@ function savePoolMaxHsk(n){
 }
 var poolMaxHsk = loadPoolMaxHsk();
 
+// Extra grid filters next to the HSK chips: only pool words, and progress
+// buckets (0–24, 25–49, 50–74, 75–100; several can be on, none = no filter).
+var GRID_FILTER_KEY = 'hskflash_grid_filter_v1';
+var LVL_BUCKETS = [[0, 24], [25, 49], [50, 74], [75, 100]];
+function loadGridFilter(){
+  try {
+    var f = JSON.parse(localStorage.getItem(GRID_FILTER_KEY));
+    if (f && typeof f === 'object') return { pool: !!f.pool, streak: !!f.streak, lvl: Array.isArray(f.lvl) ? f.lvl : [] };
+  } catch(e) {}
+  return { pool: false, streak: false, lvl: [] };
+}
+function saveGridFilter(f){
+  try { localStorage.setItem(GRID_FILTER_KEY, JSON.stringify(f)); } catch(e) {}
+}
+var gridFilter = loadGridFilter();
+// Text search in the grid: hanzi (substring), pinyin without tones (spaces,
+// tone numbers and apostrophes ignored, v/u also match ü; "nihao", "ni3hao",
+// "niha" all find "nǐ hǎo") and the English meaning (substring).
+var gridSearch = '';
+var gridSearchTimer = null;
+(function(){
+  var input = document.getElementById('gridSearch');
+  if (!input) return;
+  input.addEventListener('input', function(){
+    clearTimeout(gridSearchTimer);
+    gridSearchTimer = setTimeout(function(){
+      gridSearch = input.value.trim();
+      buildPoolPanel();
+    }, 150);
+  });
+})();
+var searchKeys = {}; // wordId -> {p, e}, built lazily
+function plainPinyin(s){
+  return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/v/g, 'u').replace(/[^a-z]/g, '');
+}
+function wordMatchesSearch(w, q){
+  if (/[\u3400-\u9fff]/.test(q)) return w.h.indexOf(q.replace(/[^\u3400-\u9fff]/g, '')) >= 0;
+  var k = searchKeys[w.id];
+  if (!k) k = searchKeys[w.id] = { p: plainPinyin(w.p), e: w.e.toLowerCase() };
+  var qp = plainPinyin(q);
+  if (qp && k.p.indexOf(qp) >= 0) return true;
+  var qe = q.toLowerCase().trim();
+  return !!qe && k.e.indexOf(qe) >= 0;
+}
+
+// Relevance while searching: 0 exact (hanzi, toneless pinyin or meaning),
+// 1 pinyin/meaning starts with the query, 2 any other substring match.
+function searchRank(w, q){
+  var k = searchKeys[w.id], qp = plainPinyin(q), qe = q.toLowerCase().trim();
+  if (w.h === q || (qp && k.p === qp) || k.e === qe) return 0;
+  if ((qp && k.p.indexOf(qp) === 0) || k.e.indexOf(qe) === 0) return 1;
+  return 2;
+}
+
+function lvlBucket(lvl){
+  for (var i = LVL_BUCKETS.length - 1; i >= 0; i--) if (lvl >= LVL_BUCKETS[i][0]) return i;
+  return 0;
+}
+
 function switchStandard(newStd){
   settings.standard = newStd;
   WORDS = wordsForStandard(newStd);
@@ -60,8 +120,53 @@ function buildPoolLegend(){
     return '<button class="legend-chip' + (on ? '' : ' off') + '" data-max="' + n + '">' +
       '<span class="dot" style="background:' + HSK_COLORS[h] + '"></span>' + label +
       '</button>';
-  }).join('');
-  Array.prototype.forEach.call(legend.querySelectorAll('.legend-chip'), function(btn){
+  }).join('') +
+    '<div class="legend-break"></div>' +
+    '<button class="legend-chip' + (gridFilter.pool ? '' : ' off') + '" id="btnFilterPool">' + esc(t('gridFilterPool')) + '</button>' +
+    '<button class="legend-chip' + (gridFilter.streak ? '' : ' off') + '" id="btnFilterStreak">' + esc(t('gridFilterStreak')) + '</button>' +
+    LVL_BUCKETS.map(function(b, i){
+      var on = gridFilter.lvl.indexOf(i) >= 0;
+      return '<button class="legend-chip' + (on ? '' : ' off') + '" data-lvl-bucket="' + i + '" title="' + esc(tf('gridFilterLvlTitle', b[0], b[1])) + '">' +
+        '<span class="dot" style="background:' + levelToColor((b[0] + b[1]) / 2) + '"></span>' + b[0] + '–' + b[1] + '</button>';
+    }).join('') +
+    '<div class="legend-break"></div>' +
+    '<button class="legend-chip pool-edit-chip' + (poolEditMode ? ' active' : '') + '" id="btnPoolEdit">' + esc(t('poolEditBtn')) + '</button>' +
+    '<button class="legend-chip pool-edit-chip' + (streakEditMode ? ' active' : '') + '" id="btnStreakEdit">' + esc(t('streakEditBtn')) + '</button>' +
+    (poolEditMode ? '<div class="pool-edit-hint">' + esc(t('poolEditHint')) + '</div>' : '') +
+    (streakEditMode ? '<div class="pool-edit-hint">' + esc(t('streakEditHint')) + '</div>' : '');
+  document.getElementById('btnStreakEdit').onclick = function(){
+    streakEditMode = !streakEditMode;
+    if (streakEditMode) poolEditMode = false;
+    buildPoolLegend();
+  };
+  document.getElementById('btnFilterStreak').onclick = function(){
+    gridFilter.streak = !gridFilter.streak;
+    saveGridFilter(gridFilter);
+    buildPoolLegend();
+    buildPoolPanel();
+  };
+  document.getElementById('btnFilterPool').onclick = function(){
+    gridFilter.pool = !gridFilter.pool;
+    saveGridFilter(gridFilter);
+    buildPoolLegend();
+    buildPoolPanel();
+  };
+  Array.prototype.forEach.call(legend.querySelectorAll('[data-lvl-bucket]'), function(btn){
+    btn.onclick = function(){
+      var i = parseInt(btn.getAttribute('data-lvl-bucket'), 10);
+      var at = gridFilter.lvl.indexOf(i);
+      if (at >= 0) gridFilter.lvl.splice(at, 1); else gridFilter.lvl.push(i);
+      saveGridFilter(gridFilter);
+      buildPoolLegend();
+      buildPoolPanel();
+    };
+  });
+  document.getElementById('btnPoolEdit').onclick = function(){
+    poolEditMode = !poolEditMode;
+    if (poolEditMode) streakEditMode = false;
+    buildPoolLegend();
+  };
+  Array.prototype.forEach.call(legend.querySelectorAll('.legend-chip[data-max]'), function(btn){
     btn.onclick = function(){
       poolMaxHsk = parseInt(btn.getAttribute('data-max'), 10);
       savePoolMaxHsk(poolMaxHsk);
@@ -98,26 +203,93 @@ function hanziFontSizeFor(len){
   return 11; // 4+ characters
 }
 
+// Info text for a word (hanzi · pinyin · meaning · level), shown as a toast
+// when a word is tapped — in the vocabulary grid and in story sentences.
+function wordInfoText(w){
+  var p = progress[w.id];
+  var lvlPart = (p && p.seen && p.lvl > 0) ? (' · ' + t('cellLevelLabel') + ' ' + p.lvl) : '';
+  return w.h + ' · ' + w.p + ' · ' + w.e + lvlPart;
+}
+var wordToastTimer = null;
+function showToast(text){
+  var toast = document.getElementById('gridInfoToast');
+  if (!toast) return;
+  toast.textContent = text;
+  toast.classList.add('show');
+  clearTimeout(wordToastTimer);
+  wordToastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 2600);
+}
+function showWordToast(w){
+  if (w) showToast(wordInfoText(w));
+}
+
+// Ids of the current active pool, for the check mark on grid cells; refreshed
+// by buildPoolPanel().
+var poolIdSet = {};
+// "✎ Pool anpassen" / "✎ Streak anpassen": while on, tapping a grid cell
+// adds/removes that word (only one of the two modes at a time).
+var poolEditMode = false;
+var streakEditMode = false;
+
 function poolCellMarkup(w){
   var p = progress[w.id];
+  var inPool = (poolIdSet[w.id] ? ' in-pool' : '') + (powerStreak.cards[w.id] ? ' in-streak' : '');
   var title = w.h + ' · ' + w.p + ' · ' + w.e;
   var ring = 'box-shadow:0 0 0 2px ' + (HSK_COLORS[w.hsk] || 'transparent') + ';';
   var fsize = 'font-size:' + hanziFontSizeFor(w.h.length) + 'px;';
   var lvl = (p && p.lvl) || 0;
   if (p && p.seen && lvl > 0) {
-    return '<div class="pool-cell learned" data-id="' + w.id + '" style="background:' + levelToColor(lvl) + ';' + ring + fsize + '" title="' + esc(title) + '">' +
+    return '<div class="pool-cell learned' + inPool + '" data-id="' + w.id + '" style="background:' + levelToColor(lvl) + ';' + ring + fsize + '" title="' + esc(title) + '">' +
       esc(w.h) + '<span class="lvl-badge">' + lvl + '</span></div>';
   }
-  return '<div class="pool-cell" data-id="' + w.id + '" style="' + ring + '" title="' + esc(title) + '"></div>';
+  // Not learned yet: an empty tile — except while searching, so you can see what was found.
+  var peek = gridSearch ? '<span class="peek" style="' + fsize + '">' + esc(w.h) + '</span>' : '';
+  return '<div class="pool-cell' + inPool + '" data-id="' + w.id + '" style="' + ring + '" title="' + esc(title) + '">' + peek + '</div>';
 }
 
 function buildPoolPanel(){
   var panel = document.getElementById('poolPanel');
   if (!panel) return;
+  poolIdSet = {};
+  activePool().forEach(function(w){ poolIdSet[w.id] = true; });
   var visible = WORDS.filter(function(w){
-    return HSK_ORDER.indexOf(w.hsk) < poolMaxHsk;
+    if (HSK_ORDER.indexOf(w.hsk) >= poolMaxHsk) return false;
+    if (gridSearch && !wordMatchesSearch(w, gridSearch)) return false;
+    if (gridFilter.pool && !poolIdSet[w.id]) return false;
+    if (gridFilter.streak && !powerStreak.cards[w.id]) return false;
+    if (gridFilter.lvl.length) {
+      var lvl = (progress[w.id] && progress[w.id].lvl) || 0;
+      if (gridFilter.lvl.indexOf(lvlBucket(lvl)) < 0) return false;
+    }
+    return true;
   });
+  if (gridSearch) {
+    var rank = {};
+    visible.forEach(function(w){ rank[w.id] = searchRank(w, gridSearch); });
+    visible.sort(function(a, b){ return (rank[a.id] - rank[b.id]) || (a.id - b.id); });
+  }
   panel.innerHTML = visible.map(poolCellMarkup).join('');
+}
+
+// Pool edit mode: tapping a word adds it to the pool or removes it.
+function toggleStreakWord(w){
+  var on = !powerStreak.cards[w.id];
+  setWordInStreak(w, on);
+  updatePoolCell(w.id);
+  if (!session) render();
+  showToast(tf(on ? 'streakAddedToast' : 'streakRemovedToast', w.h));
+}
+function togglePoolWord(w){
+  var on = !poolIdSet[w.id];
+  setWordInPool(w, on);
+  poolPoolChanged();
+  showToast(tf(on ? 'poolAddedToast' : 'poolRemovedToast', w.h));
+}
+// After a manual pool change: refresh check marks and the numbers shown.
+function poolPoolChanged(){
+  buildPoolPanel();
+  renderStats();
+  if (!session) render();
 }
 
 function updatePoolCell(id){

@@ -10,7 +10,7 @@ var statsStrip = document.getElementById('statsStrip');
 // all words of the standard → pool → words per round → words in focus.
 function renderFreeCard(finished){
   var total = WORDS.length;
-  var pool = Math.min(settings.pool, total);
+  var pool = activePool().length;
   var round = Math.min(settings.sessionSize, pool);
   var focus = Math.min(7, round); // window size of activeWindow()
   var cells = [[total, 'freeFcTotal'], [pool, 'freeFcPool'], [round, 'freeFcRound'], [focus, 'freeFcFocus']];

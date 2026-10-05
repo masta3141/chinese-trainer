@@ -31,6 +31,7 @@
     <div class="top-actions">
       <button class="icon-btn" id="btnLang" title="Language / Sprache" style="font-size:16px;">🇩🇪</button>
       <button class="icon-btn" id="btnSettings" title="Einstellungen">⚙</button>
+      <button class="icon-btn info-btn" id="btnShowWelcome" title="Einführung anzeigen" data-i18n-title="welcomeReopen">i</button>
     </div>
   </header>
 
@@ -60,6 +61,7 @@
 
   <div class="learn-area" id="learnArea">
     <aside class="pool-panel" aria-label="Fortschritt aller Wörter">
+      <div class="grid-search"><input type="search" id="gridSearch" autocomplete="off" data-i18n-placeholder="gridSearchPlaceholder" placeholder="Suche: Hanzi, Pinyin oder Bedeutung"></div>
       <div class="pool-legend" id="poolLegend"></div>
       <div class="pool-grid" id="poolPanel"></div>
     </aside>
@@ -98,6 +100,7 @@
   <div class="field">
     <label for="inpSession" data-i18n="sessionLabel">Wörter pro Runde</label>
     <input type="number" id="inpSession" min="4" max="200" step="1">
+    <p class="drawer-note" data-i18n="settingsNextRound">Änderungen gelten ab der nächsten Runde.</p>
   </div>
   <div class="field">
     <label class="hsk-check" style="width:100%;justify-content:flex-start;">
@@ -131,7 +134,6 @@
   </div>
 
   <div class="drawer-actions">
-    <button class="btn-secondary" id="btnApplySettings" data-i18n="applyBtn">Übernehmen &amp; Runde neu starten</button>
     <button class="danger-btn" id="btnReset" data-i18n="resetBtn">Fortschritt zurücksetzen</button>
     <p class="drawer-note" data-i18n="resetNote">Dein Fortschritt wird nur lokal in diesem Browser gespeichert (localStorage). "Fortschritt zurücksetzen" löscht ihn vollständig.</p>
   </div>
@@ -169,15 +171,15 @@
       <input type="password" id="inpGeminiKey" placeholder="AIza…" autocomplete="off">
       <label class="hsk-check key-free-check">
         <input type="checkbox" id="inpTtsQuotaEnabled">
-        <span data-i18n="audioQuotaEnabledLabel">Kostenloser Key (ohne Zahlungsdaten erstellt)</span>
+        <span data-i18n="audioQuotaEnabledLabel">Kostenloser Key? (ohne Zahlungsdaten erstellt)</span>
       </label>
       <p class="drawer-note" data-i18n="audioQuotaHint">Warum diese Frage? Kostenlose Keys erlauben nur wenige Audio-Aufnahmen pro Minute und Tag. Mit Häkchen erzeugt die App deshalb höchstens 2 Sätze pro Minute und 8 pro Tag – so kommen keine Fehlermeldungen von Google. Bei einem kostenpflichtigen Key ohne Häkchen geht es schneller.</p>
       <a class="hint-btn get-key-btn" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" data-i18n="geminiGetKeyBtn">🔑 Kostenlosen API-Key holen (30 Sek.)</a>
-      <p class="drawer-note" data-i18n="geminiGetKeyHow">1. Mit deinem Google-Konto anmelden · 2. „API-Schlüssel erstellen“ tippen · 3. Key kopieren, hier einfügen und „Key speichern“. Kostenlos, keine Zahlungsdaten nötig.</p>
+      <p class="drawer-note" data-i18n="geminiGetKeyHow">1. Button oben antippen · 2. Mit deinem Google-Konto anmelden · 3. „API-Schlüssel erstellen“ tippen · 4. Key kopieren, hier einfügen und „Key speichern“. Kostenlos, keine Zahlungsdaten nötig.</p>
     </div>
     <button class="btn-secondary" id="btnSaveGeminiKey" style="margin-top:14px;" data-i18n="geminiSaveBtn">Key speichern</button>
     <p class="drawer-note" id="geminiModelInfo"></p>
-    <p class="drawer-note" data-i18n="geminiKeyNote">Der Key verlässt diesen Browser nie außer in direkten Anfragen an Google — er wird nur lokal gespeichert, nicht in dieser Datei oder irgendwo sonst.</p>
+    <p class="drawer-note" data-i18n="geminiKeyNote">Dein Key bleibt auf deinem Gerät und wird ausschließlich für die Kommunikation mit Google verwendet.</p>
 
     <p class="drawer-note imprint-link"><a href="impressum.html" data-i18n="imprintLink">Impressum &amp; Datenschutz</a></p>
 
@@ -204,6 +206,7 @@
 <script src="js/cards.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/welcome.js"></script>
 <script src="js/init.js"></script>
 </body>
 </html>
