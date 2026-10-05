@@ -88,6 +88,8 @@ const PAGE_STUBS = `
 (function(){
   var seed = 12345;
   Math.random = function(){ seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  // pretend to be a German phone, so the first start picks German
+  Object.defineProperty(navigator, 'languages', { get: function(){ return ['de-DE', 'en-US']; } });
   window.confirm = function(){ return true; };
   window.alert = function(){};
   window.__spoken = [];
@@ -192,6 +194,9 @@ async function main(){
     await section('First start', async () => {
       await load();
       check('welcome dialog on first start', await exists('#welcomeBackdrop'));
+    check('first start follows the device language', (await ev('settings.lang')) === 'de');
+    check('device language detection with fallback to English',
+      (await ev('detectDeviceLang(["fr-CA"])')) === 'fr' && (await ev('detectDeviceLang(["ja-JP", "es-MX"])')) === 'es' && (await ev('detectDeviceLang(["ja-JP"])')) === 'en');
       await ev('document.getElementById("welcomeDontShow").checked = true; document.getElementById("welcomeGo").click(); true');
       await reload();
       check('welcome dialog stays hidden after "Nicht mehr anzeigen"', !(await exists('#welcomeBackdrop')));

@@ -216,6 +216,17 @@ function loadProgress(){
 function saveProgress(p){
   try { localStorage.setItem(PROG_KEY, JSON.stringify(p)); } catch(e) {}
 }
+// UI language for a first start: the first of the device's preferred
+// languages the app knows (de/en/fr/es), otherwise English.
+function detectDeviceLang(list){
+  list = list || navigator.languages || [navigator.language || ''];
+  for (var i = 0; i < list.length; i++) {
+    var code = String(list[i] || '').slice(0, 2).toLowerCase();
+    if (I18N[code]) return code;
+  }
+  return 'en';
+}
+
 function loadSettings(){
   try {
     var raw = localStorage.getItem(SET_KEY);
@@ -227,10 +238,11 @@ function loadSettings(){
         delete s.srsNewPerDay;
         try { localStorage.setItem(SET_KEY, JSON.stringify(s)); } catch(e2) {}
       }
+      if (!s.lang) s.lang = detectDeviceLang();
       return Object.assign({}, DEFAULT_SETTINGS, s);
     }
   } catch(e) {}
-  return Object.assign({}, DEFAULT_SETTINGS);
+  return Object.assign({}, DEFAULT_SETTINGS, { lang: detectDeviceLang() });
 }
 function saveSettings(s){
   try { localStorage.setItem(SET_KEY, JSON.stringify(s)); } catch(e) {}

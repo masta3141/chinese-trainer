@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-"HSK Trainer" (formerly "HSK Vokabeltrainer") — an installable, offline-capable PWA for learning Chinese HSK vocabulary (flashcards, Gemini-generated stories and example sentences, "Satzinseln" topic sentence sets, stats, TTS audio recordings). Deployed as static files on GitHub Pages. UI default language is German; comments and code are in English.
+"HSK Trainer" (formerly "HSK Vokabeltrainer") — an installable, offline-capable PWA for learning Chinese HSK vocabulary (flashcards, Gemini-generated stories and example sentences, "Satzinseln" topic sentence sets, stats, TTS audio recordings). Deployed as static files on GitHub Pages. On the first start the UI language follows the device (`detectDeviceLang`: de/en/fr/es, else English); German is the reference translation (`t()` falls back to it). Comments and code are in English.
 
 There is **no build system, package manager, linter, or unit tests**. The app is plain ES5-style JavaScript (`var`, `function`, no modules) in classic `<script>` files that share the global scope. To run locally, serve the directory over HTTP (the service worker won't register from `file://`):
 
