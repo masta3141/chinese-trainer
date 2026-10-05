@@ -26,14 +26,31 @@ var islandsState = {
   ownSentenceError: null
 };
 
-function buildIslandPrompt(topicName, description, existingSentences, count){
+// HSK level of an island (older islands have none: they were generated for
+// "roughly HSK 3-4", so HSK 3 is the closest default).
+function islandHsk(island){
+  return (island && island.hsk) || (HSK_ORDER.indexOf('hsk3') >= 0 ? 'hsk3' : HSK_ORDER[0]);
+}
+function islandHskSelect(id, selected){
+  return '<select id="' + id + '" class="island-hsk-select">' +
+    HSK_ORDER.map(function(h){ return '<option value="' + h + '"' + (h === selected ? ' selected' : '') + '>' + esc(hskLabel(h)) + '</option>'; }).join('') +
+  '</select>';
+}
+// Vocabulary instruction for Gemini, e.g. "HSK 3 (HSK 2.0 standard)".
+function islandHskInstruction(hskKey){
+  var std = settings.standard === 'hsk3' ? 'HSK 3.0' : 'HSK 2.0';
+  return "Use only vocabulary and grammar of " + hskLabel(hskKey) + " or below (" + std + " standard). " +
+    "If the topic needs a word above that level, rephrase it with simpler words.\n";
+}
+
+function buildIslandPrompt(topicName, description, existingSentences, count, hskKey){
   var existingList = existingSentences.map(function(s){ return s.h; }).join('; ');
   return "You are a precise linguistic API for a Mandarin learning app.\n" +
     "TASK: Suggest natural, everyday Mandarin Chinese sentences a learner could actually use or hear in real life.\n" +
     "TOPIC: \"" + topicName + "\"\n" +
     (description ? "SITUATION / CONTEXT DETAILS (follow this closely — it describes exactly what the learner expects): " + description + "\n" : "") +
     "Number of sentences: " + count + "\n" +
-    "Keep vocabulary and grammar accessible for an intermediate learner (roughly HSK 3-4 level).\n" +
+    islandHskInstruction(hskKey) +
     (existingList ? "Do not repeat or closely duplicate any of these already-collected sentences: " + existingList + "\n" : "") +
     "STRICT OUTPUT RULES:\n" +
     "1. Output MUST contain exactly " + count + " lines. Nothing else.\n" +
@@ -51,7 +68,7 @@ function generateIslandSentences(island, count){
   }
   var model = loadGeminiModel();
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
-  var prompt = buildIslandPrompt(island.name, island.description, island.sentences, count);
+  var prompt = buildIslandPrompt(island.name, island.description, island.sentences, count, islandHsk(island));
   var payload = { contents: [{ parts: [{ text: prompt }] }] };
 
   return fetch(url, {
@@ -73,18 +90,19 @@ function generateIslandSentences(island, count){
 // Lets the user type their own sentence in English and have Gemini translate
 // it into natural Mandarin — added directly to the island (no accept/reject
 // review step, since it's the user's own content, not a Gemini suggestion).
-function buildTranslateSentencePrompt(englishText){
+function buildTranslateSentencePrompt(englishText, hskKey){
   return "You are a precise linguistic API for a Mandarin learning app.\n" +
     "TASK: Translate the following English sentence into natural, everyday Mandarin Chinese that a learner could actually use or hear in real life.\n" +
     "ENGLISH SENTENCE: \"" + englishText + "\"\n" +
-    "Keep vocabulary and grammar accessible for an intermediate learner (roughly HSK 3-4 level) while staying faithful to the original meaning.\n" +
+    islandHskInstruction(hskKey) +
+    "Stay faithful to the original meaning.\n" +
     "STRICT OUTPUT RULES:\n" +
     "1. Output MUST contain exactly 1 line. Nothing else.\n" +
     "2. Format: HANZI|PINYIN|ENGLISH (use the original English sentence, lightly cleaned up if needed, as the ENGLISH field)\n" +
     "3. No introduction, no markdown fences, no numbering, no explanatory text.";
 }
 
-function translateOwnSentence(englishText){
+function translateOwnSentence(englishText, hskKey){
   var apiKey = loadGeminiKey();
   if (!apiKey) {
     openDrawer();
@@ -94,7 +112,7 @@ function translateOwnSentence(englishText){
   }
   var model = loadGeminiModel();
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
-  var prompt = buildTranslateSentencePrompt(englishText);
+  var prompt = buildTranslateSentencePrompt(englishText, hskKey);
   var payload = { contents: [{ parts: [{ text: prompt }] }] };
 
   return fetch(url, {
@@ -125,7 +143,7 @@ function renderIslands(){
           return '<div class="story-card" data-id="' + isl.id + '">' +
             '<div class="story-card-toprow">' +
               '<span class="story-title" style="font-family:inherit;font-size:14.5px;font-weight:600;">' + esc(isl.name) + '</span>' +
-              '<span class="story-meta" style="white-space:nowrap;">' + esc(tf('islandsSentenceCount', isl.sentences.length)) + '</span>' +
+              '<span class="story-meta" style="white-space:nowrap;">' + esc(hskLabel(islandHsk(isl)) + ' · ' + tf('islandsSentenceCount', isl.sentences.length)) + '</span>' +
             '</div>' +
           '</div>';
         }).join('')
@@ -137,6 +155,8 @@ function renderIslands(){
           '<input type="text" id="inpNewIslandName" placeholder="' + esc(t('islandsNewNamePlaceholder')) + '" value="' + esc(ist.newIslandName) + '" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--hairline);border-radius:7px;font-family:inherit;font-size:13.5px;background:var(--paper-raised);color:var(--ink);">' +
           '<div class="audio-picker-label" style="margin-top:9px;">' + esc(t('islandsNewDescPrompt')) + '</div>' +
           '<textarea id="inpNewIslandDesc" placeholder="' + esc(t('islandsNewDescPlaceholder')) + '" rows="2" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--hairline);border-radius:7px;font-family:inherit;font-size:13px;background:var(--paper-raised);color:var(--ink);resize:vertical;">' + esc(ist.newIslandDesc) + '</textarea>' +
+          '<div class="audio-picker-label" style="margin-top:9px;">' + esc(t('storiesHskLabel')) + '</div>' +
+          islandHskSelect('inpNewIslandHsk', ist.newIslandHsk || islandHsk(null)) +
           '<div class="audio-picker-actions">' +
             '<button class="btn-primary" id="btnCreateIsland" style="flex:1;padding:9px;font-size:13px;">' + esc(t('islandsCreateBtn')) + '</button>' +
             '<button class="hint-btn" id="btnCancelNewIsland">' + esc(t('islandsCancelBtn')) + '</button>' +
@@ -168,8 +188,11 @@ function renderIslands(){
       var descInput = document.getElementById('inpNewIslandDesc');
       var name = nameInput ? nameInput.value.trim() : '';
       var description = descInput ? descInput.value.trim() : '';
+      var hskSel = document.getElementById('inpNewIslandHsk');
+      var hsk = hskSel ? hskSel.value : islandHsk(null);
       if (!name) return;
-      var newIsland = { id: 'island_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), name: name, description: description, sentences: [], createdAt: new Date().toISOString() };
+      ist.newIslandHsk = hsk;
+      var newIsland = { id: 'island_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), name: name, description: description, hsk: hsk, sentences: [], createdAt: new Date().toISOString() };
       islands.push(newIsland);
       saveIslands(islands);
       ist.showNewForm = false;
@@ -219,6 +242,7 @@ function renderIslands(){
         '<div class="story-title-block" style="margin-bottom:14px;padding-bottom:12px;">' +
           '<div class="t-h" style="font-size:17px;font-family:inherit;">' + esc(isl.name) + '</div>' +
           '<div class="t-e" style="margin-top:2px;">' + esc(tf('islandsSentenceCount', isl.sentences.length)) + '</div>' +
+          '<div class="island-hsk-row"><span>' + esc(t('storiesHskLabel')) + '</span>' + islandHskSelect('selIslandHsk', islandHsk(isl)) + '</div>' +
           (ist.editingDescId === isl.id
             ? '<div style="margin-top:9px;">' +
                 '<textarea id="inpEditIslandDesc" rows="2" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--hairline);border-radius:7px;font-family:inherit;font-size:13px;background:var(--paper-raised);color:var(--ink);resize:vertical;">' + esc(isl.description || '') + '</textarea>' +
@@ -247,6 +271,10 @@ function renderIslands(){
       '</div>';
 
     document.getElementById('btnBackToIslandsList').onclick = function(){ stopNarration(); ist.view = 'list'; renderIslands(); };
+    document.getElementById('selIslandHsk').onchange = function(e){
+      isl.hsk = e.target.value;
+      saveIslands(islands);
+    };
     document.getElementById('btnDeleteIsland').onclick = function(){
       stopNarration();
       if (!confirm(t('islandsDeleteConfirm'))) return;
@@ -296,7 +324,7 @@ function renderIslands(){
       ist.ownSentenceBusy = true;
       ist.ownSentenceError = null;
       renderIslands();
-      translateOwnSentence(text).then(function(s){
+      translateOwnSentence(text, islandHsk(isl)).then(function(s){
         isl.sentences.push(s);
         saveIslands(islands);
         ist.ownSentenceBusy = false;

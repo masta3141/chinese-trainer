@@ -10,7 +10,7 @@
 //
 // Deploy this file in the SAME folder as your index.html on GitHub Pages.
 
-var CACHE_NAME = 'hskflash-shell-v20';
+var CACHE_NAME = 'hskflash-shell-v22';
 // Keep in sync with the <link>/<script> tags in index.html.
 var APP_SHELL = [
   'index.html',

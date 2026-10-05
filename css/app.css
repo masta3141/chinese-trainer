@@ -201,6 +201,9 @@
   }
   .pool-cell.learned.in-pool::before { color: #1f5a3c; opacity: .8; }
   .legend-break { flex-basis: 100%; height: 0; }
+  .island-hsk-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; font-size: 12.5px; color: var(--ink-soft); }
+  .island-hsk-select { padding: 5px 8px; border: 1px solid var(--hairline); border-radius: 7px; background: var(--paper-raised); color: var(--ink); font: inherit; font-size: 12.5px; }
+  #inpNewIslandHsk { width: 100%; }
   .grid-search { flex: 0 0 auto; }
   .pool-cell .peek { color: var(--ink-soft); opacity: .75; }
   .grid-search input { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 20px; border: 1px solid var(--hairline); background: var(--paper); color: var(--ink); font: inherit; font-size: 13px; }
