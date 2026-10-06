@@ -91,6 +91,14 @@ const PAGE_STUBS = `
   // pretend to be a German phone, so the first start picks German
   Object.defineProperty(navigator, 'languages', { get: function(){ return ['de-DE', 'en-US']; } });
   window.confirm = function(){ return true; };
+  // Don't let downloads (e.g. "Alles sichern") really start: Chrome would show a
+  // desktop notification. Record the file name instead.
+  window.__downloads = [];
+  var realClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function(){
+    if (this.hasAttribute('download')) { window.__downloads.push(this.download); return; }
+    return realClick.apply(this, arguments);
+  };
   window.alert = function(){};
   window.__spoken = [];
   if (window.speechSynthesis) window.speechSynthesis.speak = function(u){ window.__spoken.push(u.text); };
@@ -217,6 +225,16 @@ async function main(){
         await sleep(1000);
       }
       check('ratings are saved to progress', (await ev('Object.keys(progress).filter(function(k){ return progress[k].lvl > 0; }).length')) > 0);
+      // pause, reload, resume the free round
+      const roundIds = JSON.stringify(await ev('session.ids'));
+      const roundPts = JSON.stringify(await ev('session.sessionPts'));
+      await click('#btnPause');
+      check('"Pause" goes back to the start screen with "Fortsetzen"', !(await ev('!!session')) && await exists('#btnResume'));
+      await reload();
+      check('paused free round survives a reload', await exists('#btnResume'));
+      await click('#btnResume');
+      check('"Fortsetzen" continues the same round with its points',
+        JSON.stringify(await ev('session.ids')) === roundIds && JSON.stringify(await ev('session.sessionPts')) === roundPts);
       await click('#btnExamples');
       const exBefore = await ev('examplesFor(session.currentId).length');
       await click('#btnGenExamples');
@@ -226,6 +244,14 @@ async function main(){
     await section('Power-Streak', async () => {
       await reload();
       await click('#btnStreak');
+      // pause in the middle of the stage and continue
+      await click('.rate-btn[data-grade="2"]'); await sleep(1000);
+      const left = await ev('powerStreak.open.queue.length');
+      await click('#btnPause');
+      await reload();
+      check('paused streak stage keeps its remaining cards', !(await ev('!!session')) && (await ev('powerStreak.open.queue.length')) === left && (await ev('powerStreak.level')) === 1);
+      await click('#btnStreak');
+      check('"Weitermachen" continues the same stage', (await ev('powerStreak.level')) === 1 && (await ev('!!(session && session.streak)')));
       for (let i = 0; i < 30 && await exists('.rate-btn[data-grade]'); i++) { await click('.rate-btn[data-grade="2"]'); await sleep(1000); }
       check('stage 1 done: streak 1 with 5 cards', (await ev('powerStreak.level')) === 1 && (await ev('Object.keys(powerStreak.cards).length')) === 5,
         { level: await ev('powerStreak.level'), cards: await ev('Object.keys(powerStreak.cards).length') });
@@ -233,6 +259,13 @@ async function main(){
       await click('#btnStreakReview');
       for (let i = 0; i < 30 && await exists('.rate-btn[data-grade]'); i++) { await click('.rate-btn[data-grade="1"]'); await sleep(1000); }
       check('review-only round keeps the streak level', (await ev('powerStreak.level')) === 1);
+    // SRS rules on a reviewed card with an 8-day interval
+    const card = '({ ease: 2.5, ivl: 8, due: 10, last: 2, reps: 3, lapses: 0 })';
+    check('Nochmal makes a card due right away', (await ev('streakSchedule(' + card + ', 0, 10, false).ivl')) === 0 &&
+      (await ev('streakSchedule(' + card + ', 0, 13, true).ivl')) === 0);
+    check('Schwer halves the interval and never grows it', (await ev('streakSchedule(' + card + ', 1, 10, false).ivl')) === 4 &&
+      (await ev('streakSchedule({ ease: 2.5, ivl: 1, due: 10, last: 9, reps: 1, lapses: 0 }, 1, 10, false).ivl')) === 1);
+    check('Gut grows the interval', (await ev('streakSchedule(' + card + ', 2, 10, false).ivl')) > 8);
     });
     await section('Vocabulary grid', async () => {
       await ev('switchView("grid"); true');
@@ -319,12 +352,12 @@ async function main(){
       check('backup contains example sentences and audio', Object.keys(bk.examples).length === before.examples && !!bk.audio['smoke:0'],
         { examples: Object.keys(bk.examples).length, expected: before.examples, audio: Object.keys(bk.audio) });
       check('backup leaves out the API key', !('hskflash_gemini_key_v1' in bk.localStorage));
-      await send('Browser.setDownloadBehavior', { behavior: 'deny' }).catch(() => {});
       await click('#btnSettings');
       await click('#btnBackupAll');
       await waitFor('!!localStorage.getItem("hskflash_last_backup_v1")', 8000);
-      check('"Alles sichern" button creates a backup and notes the date', /heute/.test(await ev('document.getElementById("backupInfo").textContent')),
-        await ev('document.getElementById("backupInfo").textContent'));
+      check('"Alles sichern" button offers the backup file and notes the date',
+        /^hskflash-backup-.*\.json$/.test((await ev('window.__downloads.join(",")'))) && /heute/.test(await ev('document.getElementById("backupInfo").textContent')),
+        { downloads: await ev('window.__downloads'), info: await ev('document.getElementById("backupInfo").textContent') });
       await ev('closeDrawer(); true');
       // wipe everything, then restore (the app reloads itself)
       await ev('Object.keys(localStorage).filter(function(k){ return k.indexOf("hskflash_") === 0 && k !== "hskflash_gemini_key_v1"; }).forEach(function(k){ localStorage.removeItem(k); }); ' +

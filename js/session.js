@@ -94,6 +94,57 @@ function startSession(){
     finished: false
   };
   pickNext();
+  saveFreeSession();
+}
+
+// ---------- pause / resume of the free-practice round ----------
+// The running round is kept in localStorage (ids + round points), so it can be
+// paused with "⏸ Pause" and resumed later — even after the app was closed.
+var FREE_SESSION_KEY = 'hskflash_free_session_v1';
+function saveFreeSession(){
+  try {
+    if (session && !session.streak && !session.finished) {
+      localStorage.setItem(FREE_SESSION_KEY, JSON.stringify({ standard: settings.standard, ids: session.ids, sessionPts: session.sessionPts }));
+    } else if (!session || !session.streak) {
+      localStorage.removeItem(FREE_SESSION_KEY);
+    }
+  } catch(e) {}
+}
+// The paused round of the current standard, or null.
+function loadFreeSession(){
+  try {
+    var s = JSON.parse(localStorage.getItem(FREE_SESSION_KEY));
+    if (!s || s.standard !== settings.standard || !Array.isArray(s.ids)) return null;
+    var ids = s.ids.filter(function(id){ return WORD_BY_ID[id]; });
+    if (!ids.length) return null;
+    var pts = {};
+    ids.forEach(function(id){ pts[id] = (s.sessionPts && s.sessionPts[id]) || 0; });
+    if (ids.every(function(id){ return pts[id] >= 5; })) return null;
+    return { ids: ids, sessionPts: pts };
+  } catch(e) { return null; }
+}
+function resumeFreeSession(){
+  var s = loadFreeSession();
+  if (!s) { startSession(); return; }
+  session = {
+    ids: s.ids,
+    sessionPts: s.sessionPts,
+    currentId: null,
+    showPinyin: false,
+    showTranslationInExamples: false,
+    showExamples: false,
+    showSolution: false,
+    finished: false
+  };
+  pickNext();
+}
+// "⏸ Pause" in a running round (free practice or Power-Streak): back to the
+// start screen; the free round is saved, an open streak stage is saved anyway.
+function pauseSession(){
+  if (!session) return;
+  if (!session.streak) saveFreeSession();
+  session = null;
+  render();
 }
 
 function activeWindow(){
@@ -117,6 +168,7 @@ function pickNext(){
   session.lastWindow = win;
   if (win.dictPart.length === 0) {
     session.finished = true;
+    saveFreeSession(); // round done: nothing left to resume
     render();
     return;
   }
@@ -154,6 +206,7 @@ function rate(val){
   }
 
   session.sessionPts[id] = (session.sessionPts[id] || 0) + val;
+  saveFreeSession();
   session.showPinyin = true;
   session.showSolution = true;
   render(true);

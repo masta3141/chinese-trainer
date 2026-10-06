@@ -13,20 +13,25 @@ function renderFreeCard(finished){
   var pool = activePool().length;
   var round = Math.min(settings.sessionSize, pool);
   var focus = Math.min(7, round); // window size of activeWindow()
+  var paused = finished ? null : loadFreeSession();
+  var pausedDone = paused ? paused.ids.filter(function(id){ return paused.sessionPts[id] >= 5; }).length : 0;
   var cells = [[total, 'freeFcTotal'], [pool, 'freeFcPool'], [round, 'freeFcRound'], [focus, 'freeFcFocus']];
   return '<div class="panel mode-card">' +
       '<div class="mode-head"><span class="mode-icon">🎴</span>' +
         '<span class="mode-title">' + esc(t('freeTitle')) + '</span></div>' +
       '<div class="mode-motto">' + esc(finished ? t('finishedTitle') : t('freeMotto')) + '</div>' +
-      '<p>' + esc(finished ? t('finishedDesc') : t('freeStatus')) + '</p>' +
+      '<p>' + esc(finished ? t('finishedDesc') : paused ? tf('freePausedStatus', pausedDone, paused.ids.length) : t('freeStatus')) + '</p>' +
       '<div class="mode-grid">' +
         cells.map(function(c){
           return '<div class="mode-cell"><div class="n">' + c[0] + '</div><div class="l">' + esc(t(c[1])) + '</div></div>';
         }).join('') +
       '</div>' +
       '<div class="mode-note">' + esc(t('freeNote')) + '</div>' +
-      '<div class="mode-btns"><button class="btn-primary" id="' + (finished ? 'btnAgain' : 'btnStart') + '">' +
-        esc(finished ? t('newRoundBtn') : t('startBtn')) + '</button></div>' +
+      (paused && !finished
+        ? '<div class="mode-btns"><button class="btn-primary" id="btnResume">' + esc(t('freeResumeBtn')) + '</button>' +
+            '<button class="btn-secondary" id="btnStart">' + esc(t('freeRestartBtn')) + '</button></div>'
+        : '<div class="mode-btns"><button class="btn-primary" id="' + (finished ? 'btnAgain' : 'btnStart') + '">' +
+            esc(finished ? t('newRoundBtn') : t('startBtn')) + '</button></div>') +
       '<details class="mode-info"><summary>' + esc(t('streakHowTitle')) + '</summary>' +
         '<p>' + esc(tf('freeHowText', total, pool, round)) + '</p></details>' +
     '</div>';
@@ -38,6 +43,8 @@ function render(justAnswered){
   if (!session) {
     main.innerHTML = renderFreeCard(false) + renderStreakCard();
     document.getElementById('btnStart').onclick = startSession;
+    var resume = document.getElementById('btnResume');
+    if (resume) resume.onclick = resumeFreeSession;
     wireStreakCard();
     return;
   }
@@ -120,6 +127,7 @@ function render(justAnswered){
   main.innerHTML =
     '<div class="session-bar">' +
       '<span>' + esc(barText) + '</span>' +
+      '<button class="hint-btn session-pause" id="btnPause">' + esc(t('pauseBtn')) + '</button>' +
       '<span class="dots">' + dotsHtml + '</span>' +
     '</div>' +
     '<div class="card">' +
@@ -142,6 +150,7 @@ function render(justAnswered){
       '<div class="rate-row">' + rateHtml + '</div>' +
     '</div>';
 
+  document.getElementById('btnPause').onclick = pauseSession;
   document.getElementById('hanziText').onclick = function(){ speak(w.h); };
   document.getElementById('btnRead').onclick = function(){ speak(w.h); };
   document.getElementById('btnTogglePinyin').onclick = function(){

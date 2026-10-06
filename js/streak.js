@@ -156,15 +156,19 @@ function streakSchedule(c, grade, clock, reviewOnly){
       : Math.max(2, Math.round(c.ivl * STREAK_EARLY_EASY));
     return { ease: ease, ivl: Math.min(STREAK_MAX_IVL, c.due + push - clock) };
   }
+  // Nochmal: due again right away, i.e. always among the due cards of the
+  // next stage (also after a review-only round on a later day).
+  if (grade === 0) {
+    return { ease: Math.max(STREAK_MIN_EASE, c.last == null ? ease : ease - 0.2), ivl: 0 };
+  }
   if (c.last == null) {
     ivl = grade === 3 ? 3 : 1;
   } else {
     // Base is the real gap since the last review: overdue cards that are still
-    // known get credit for it, and cards reviewed early (review-only rounds)
-    // grow less — but Schwer/Gut/Leicht always land after the old due date.
+    // known get credit for it, and cards reviewed early (review-only rounds) grow less.
     var base = Math.max(1, clock - c.last);
-    if (grade === 0) { ivl = 1; ease -= 0.2; }
-    else if (grade === 1) { ivl = Math.max(Math.round(c.ivl * 1.2), c.ivl + 1); ease -= 0.15; }
+    // Schwer never improves a card: the interval is halved (at least 1 day).
+    if (grade === 1) { ivl = Math.max(1, Math.floor(c.ivl / 2)); ease -= 0.15; }
     else {
       var good = Math.max(Math.round(base * ease * STREAK_IVL_FACTOR), c.ivl + 1);
       if (grade === 2) ivl = good;

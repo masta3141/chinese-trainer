@@ -58,6 +58,8 @@ var gridFilter = loadGridFilter();
 var gridSearch = '';
 var gridSearchTimer = null;
 (function(){
+  var filterBtn = document.getElementById('btnGridFilter');
+  if (filterBtn) filterBtn.onclick = function(){ gridFilterOpen = !gridFilterOpen; buildPoolLegend(); };
   var input = document.getElementById('gridSearch');
   if (!input) return;
   input.addEventListener('input', function(){
@@ -110,70 +112,75 @@ function switchStandard(newStd){
   render();
 }
 
+// Filter area above the grid: the search field and a "Filter" button are
+// always visible; HSK levels, pool/streak, progress buckets and the tap mode
+// sit in a panel that opens from that button. An active tap mode keeps its
+// hint visible even when the panel is closed.
+var gridFilterOpen = false;
+function activeGridFilterCount(){
+  return (poolMaxHsk < HSK_ORDER.length ? 1 : 0) + (gridFilter.pool ? 1 : 0) + (gridFilter.streak ? 1 : 0) + (gridFilter.lvl.length ? 1 : 0);
+}
 function buildPoolLegend(){
   var legend = document.getElementById('poolLegend');
   if (!legend) return;
-  legend.innerHTML = HSK_ORDER.map(function(h, i){
+  var count = activeGridFilterCount();
+  var btn = document.getElementById('btnGridFilter');
+  if (btn) {
+    btn.textContent = t('gridFilterBtn') + (count ? ' · ' + count : '') + (gridFilterOpen ? ' ▴' : ' ▾');
+    btn.classList.toggle('active', gridFilterOpen || count > 0);
+  }
+  var hskChips = HSK_ORDER.map(function(h, i){
     var n = i + 1;
-    var on = n === poolMaxHsk;
     var label = h === 'hsk79' ? 'HSK7-9' : ('HSK' + hskDisplayNum(h));
-    return '<button class="legend-chip' + (on ? '' : ' off') + '" data-max="' + n + '">' +
-      '<span class="dot" style="background:' + HSK_COLORS[h] + '"></span>' + label +
-      '</button>';
-  }).join('') +
-    '<div class="legend-break"></div>' +
-    '<button class="legend-chip' + (gridFilter.pool ? '' : ' off') + '" id="btnFilterPool">' + esc(t('gridFilterPool')) + '</button>' +
-    '<button class="legend-chip' + (gridFilter.streak ? '' : ' off') + '" id="btnFilterStreak">' + esc(t('gridFilterStreak')) + '</button>' +
-    LVL_BUCKETS.map(function(b, i){
-      var on = gridFilter.lvl.indexOf(i) >= 0;
-      return '<button class="legend-chip' + (on ? '' : ' off') + '" data-lvl-bucket="' + i + '" title="' + esc(tf('gridFilterLvlTitle', b[0], b[1])) + '">' +
-        '<span class="dot" style="background:' + levelToColor((b[0] + b[1]) / 2) + '"></span>' + b[0] + '–' + b[1] + '</button>';
-    }).join('') +
-    '<div class="legend-break"></div>' +
-    '<button class="legend-chip pool-edit-chip' + (poolEditMode ? ' active' : '') + '" id="btnPoolEdit">' + esc(t('poolEditBtn')) + '</button>' +
-    '<button class="legend-chip pool-edit-chip' + (streakEditMode ? ' active' : '') + '" id="btnStreakEdit">' + esc(t('streakEditBtn')) + '</button>' +
-    (poolEditMode ? '<div class="pool-edit-hint">' + esc(t('poolEditHint')) + '</div>' : '') +
-    (streakEditMode ? '<div class="pool-edit-hint">' + esc(t('streakEditHint')) + '</div>' : '');
-  document.getElementById('btnStreakEdit').onclick = function(){
-    streakEditMode = !streakEditMode;
-    if (streakEditMode) poolEditMode = false;
-    buildPoolLegend();
-  };
-  document.getElementById('btnFilterStreak').onclick = function(){
-    gridFilter.streak = !gridFilter.streak;
-    saveGridFilter(gridFilter);
-    buildPoolLegend();
-    buildPoolPanel();
-  };
-  document.getElementById('btnFilterPool').onclick = function(){
-    gridFilter.pool = !gridFilter.pool;
-    saveGridFilter(gridFilter);
-    buildPoolLegend();
-    buildPoolPanel();
-  };
-  Array.prototype.forEach.call(legend.querySelectorAll('[data-lvl-bucket]'), function(btn){
-    btn.onclick = function(){
-      var i = parseInt(btn.getAttribute('data-lvl-bucket'), 10);
+    return '<button class="legend-chip' + (n === poolMaxHsk ? '' : ' off') + '" data-max="' + n + '">' +
+      '<span class="dot" style="background:' + HSK_COLORS[h] + '"></span>' + label + '</button>';
+  }).join('');
+  var lvlChips = LVL_BUCKETS.map(function(b, i){
+    var on = gridFilter.lvl.indexOf(i) >= 0;
+    return '<button class="legend-chip' + (on ? '' : ' off') + '" data-lvl-bucket="' + i + '" title="' + esc(tf('gridFilterLvlTitle', b[0], b[1])) + '">' +
+      '<span class="dot" style="background:' + levelToColor((b[0] + b[1]) / 2) + '"></span>' + b[0] + '–' + b[1] + '</button>';
+  }).join('');
+  var mode = streakEditMode ? 'streak' : poolEditMode ? 'pool' : 'info';
+  var seg = function(id, m, label){ return '<button class="seg-btn' + (mode === m ? ' active' : '') + '" id="' + id + '">' + esc(label) + '</button>'; };
+  var row = function(label, content){ return '<div class="gf-row"><span class="gf-label">' + esc(label) + '</span><div class="gf-items">' + content + '</div></div>'; };
+  legend.innerHTML =
+    '<div class="grid-filter-panel' + (gridFilterOpen ? ' open' : '') + '">' +
+      row(t('gfHsk'), hskChips) +
+      row(t('gfShow'),
+        '<button class="legend-chip' + (gridFilter.pool ? '' : ' off') + '" id="btnFilterPool">' + esc(t('gridFilterPool')) + '</button>' +
+        '<button class="legend-chip' + (gridFilter.streak ? '' : ' off') + '" id="btnFilterStreak">' + esc(t('gridFilterStreak')) + '</button>') +
+      row(t('gfProgress'), lvlChips) +
+      row(t('gfTap'), '<div class="seg">' + seg('btnTapInfo', 'info', t('gfTapInfo')) + seg('btnPoolEdit', 'pool', t('gfTapPool')) + seg('btnStreakEdit', 'streak', t('gfTapStreak')) + '</div>') +
+      (count ? '<button class="hint-btn gf-reset" id="btnGridFilterReset">' + esc(t('gfReset')) + '</button>' : '') +
+    '</div>' +
+    (mode === 'pool' ? '<div class="pool-edit-hint">' + esc(t('poolEditHint')) + '</div>' : '') +
+    (mode === 'streak' ? '<div class="pool-edit-hint">' + esc(t('streakEditHint')) + '</div>' : '');
+
+  function refresh(){ saveGridFilter(gridFilter); buildPoolLegend(); buildPoolPanel(); }
+  Array.prototype.forEach.call(legend.querySelectorAll('.legend-chip[data-max]'), function(b){
+    b.onclick = function(){ poolMaxHsk = parseInt(b.getAttribute('data-max'), 10); savePoolMaxHsk(poolMaxHsk); refresh(); };
+  });
+  Array.prototype.forEach.call(legend.querySelectorAll('[data-lvl-bucket]'), function(b){
+    b.onclick = function(){
+      var i = parseInt(b.getAttribute('data-lvl-bucket'), 10);
       var at = gridFilter.lvl.indexOf(i);
       if (at >= 0) gridFilter.lvl.splice(at, 1); else gridFilter.lvl.push(i);
-      saveGridFilter(gridFilter);
-      buildPoolLegend();
-      buildPoolPanel();
+      refresh();
     };
   });
-  document.getElementById('btnPoolEdit').onclick = function(){
-    poolEditMode = !poolEditMode;
-    if (poolEditMode) streakEditMode = false;
-    buildPoolLegend();
+  document.getElementById('btnFilterPool').onclick = function(){ gridFilter.pool = !gridFilter.pool; refresh(); };
+  document.getElementById('btnFilterStreak').onclick = function(){ gridFilter.streak = !gridFilter.streak; refresh(); };
+  // Tap mode: tapping the active mode again goes back to "Info".
+  document.getElementById('btnTapInfo').onclick = function(){ poolEditMode = streakEditMode = false; buildPoolLegend(); };
+  document.getElementById('btnPoolEdit').onclick = function(){ poolEditMode = mode !== 'pool'; streakEditMode = false; buildPoolLegend(); };
+  document.getElementById('btnStreakEdit').onclick = function(){ streakEditMode = mode !== 'streak'; poolEditMode = false; buildPoolLegend(); };
+  var reset = document.getElementById('btnGridFilterReset');
+  if (reset) reset.onclick = function(){
+    poolMaxHsk = HSK_ORDER.length;
+    savePoolMaxHsk(poolMaxHsk);
+    gridFilter = { pool: false, streak: false, lvl: [] };
+    refresh();
   };
-  Array.prototype.forEach.call(legend.querySelectorAll('.legend-chip[data-max]'), function(btn){
-    btn.onclick = function(){
-      poolMaxHsk = parseInt(btn.getAttribute('data-max'), 10);
-      savePoolMaxHsk(poolMaxHsk);
-      buildPoolLegend();
-      buildPoolPanel();
-    };
-  });
 }
 
 function levelToColor(lvl){

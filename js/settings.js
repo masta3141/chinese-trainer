@@ -89,6 +89,7 @@ document.getElementById('btnReset').onclick = function(){
   progress = empty;
   saveProgress(progress);
   session = null;
+  saveFreeSession(); // no paused round after a reset
   closeDrawer();
   buildPoolPanel();
   render();
