@@ -209,6 +209,21 @@ async function main(){
       await reload();
       check('welcome dialog stays hidden after "Nicht mehr anzeigen"', !(await exists('#welcomeBackdrop')));
       check('start screen shows free practice and streak cards', (await count('.mode-card')) === 2);
+      // the demo story with its narration is added once in the background
+      await waitFor('stories.some(function(s){ return s.demo; }) && recordings.some(function(r){ return r.demo; })', 15000);
+      check('demo story and its recording are seeded on the first start',
+        (await ev('stories.filter(function(s){ return s.demo; }).length')) === 1 &&
+        (await ev('recordings.filter(function(r){ return r.demo && r.done >= r.totalSteps; }).length')) === 1);
+      check('demo narration is decoded to PCM for every part',
+        await ev('(function(){ var r = recordings.filter(function(x){ return x.demo; })[0]; var keys = [r.id + ":title"]; ' +
+          'for (var i = 0; i < r.totalSteps - 1; i++) keys.push(r.id + ":" + i); ' +
+          'return Promise.all(keys.map(idbGet)).then(function(vs){ return vs.every(function(v){ return v && v.pcm && v.pcm.length > 10000 && v.fmt.sampleRate === 24000; }); }); })()'));
+      // seeding again (e.g. flag lost) must not duplicate the story or touch existing audio
+      await ev('(function(){ var r = recordings.filter(function(x){ return x.demo; })[0]; window.__demoKey = r.id + ":0"; localStorage.removeItem("hskflash_demo_seeded_v1"); ' +
+        'return idbSet(window.__demoKey, { fmt: { channels: 1, sampleRate: 24000, bitsPerSample: 16 }, pcm: new Uint8Array([9, 9, 9]) }).then(seedDemoStory).then(function(){ return true; }); })()');
+      check('re-seeding keeps existing audio and adds no duplicate',
+        JSON.stringify(await ev('idbGet(window.__demoKey).then(function(v){ return Array.from(v.pcm); })')) === '[9,9,9]' &&
+        (await ev('stories.filter(function(s){ return s.demo; }).length')) === 1);
     check('MP3 encoder (vendored lamejs) is loaded', await ev('typeof lamejs === "function"'));
     });
     await section('Gemini key and model detection', async () => {
@@ -306,6 +321,12 @@ async function main(){
       await click('#sentHanzi .sent-word');
       check('tapping a word shows its info', (await ev('document.getElementById("gridInfoToast").textContent')).indexOf('·') > 0);
       await click('#btnSentToPool');
+      await click('#btnBackToLibrary2');
+      check('demo story shows its badge in the library, the own story not', (await count('#storiesView .story-card .demo-badge')) === 1 && (await count('#storiesView .story-card')) === 2);
+      await ev('switchView("audio"); true'); await sleep(300);
+      check('demo recording shows its badge in the audio tab', (await count('#audioView .demo-badge')) === 1);
+      await ev('switchView("stories"); true');
+      await click('.story-card[data-id]:not(:has(.demo-badge)) [data-toprow-id]');
       check('"Satz in den Pool" reports a result', (await ev('document.getElementById("gridInfoToast").textContent')).length > 0);
     });
     await section('Sentence islands', async () => {
@@ -366,7 +387,7 @@ async function main(){
       await sleep(800);
       await waitFor('typeof render === "function" && document.readyState === "complete"', 10000);
       await sleep(600);
-      check('restore brings back streak, story and island', (await ev('powerStreak.level')) === before.level && (await ev('stories.length')) === 1 && (await ev('islands.length')) === 1);
+      check('restore brings back streak, story and island', (await ev('powerStreak.level')) === before.level && (await ev('stories.length')) === 2 && (await ev('islands.length')) === 1);
       check('restore brings back the example sentences', (await ev('Object.keys(generatedExamples).length')) === before.examples);
       check('restore brings back the audio bytes exactly', JSON.stringify(await ev('idbGet("smoke:0").then(function(v){ return Array.from(v.pcm); })')) === '[2,3,250]');
       check('API key survives a restore', (await ev('localStorage.getItem("hskflash_gemini_key_v1")')) === 'FAKE');
@@ -375,7 +396,7 @@ async function main(){
     await section('Persistence and offline cache', async () => {
       await reload();
       check('streak, story and island survive a reload',
-        (await ev('powerStreak.level')) === 1 && (await ev('stories.length')) === 1 && (await ev('islands.length')) === 1);
+        (await ev('powerStreak.level')) === 1 && (await ev('stories.length')) === 2 && (await ev('islands.length')) === 1);
       const shell = (fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8').match(/var APP_SHELL = \[([\s\S]*?)\];/) || ['', ''])[1].match(/'[^']+'/g) || [];
       await waitFor('caches.keys().then(function(k){ return k.length > 0; })', 8000);
       const cached = await ev('caches.keys().then(function(ks){ return caches.open(ks[0]); }).then(function(c){ return c.keys(); }).then(function(r){ return r.length; })');

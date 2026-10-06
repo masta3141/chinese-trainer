@@ -33,6 +33,7 @@ render();
 // Generated examples load asynchronously from IndexedDB; refresh what shows them.
 initExamplesStore().then(function(){
   if (session && !session.finished) render();
+  return seedDemoStory(); // example story + narration, once
 });
 detectGeminiModels(false); // background, at most weekly
 maybeShowWelcome();

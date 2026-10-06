@@ -204,6 +204,7 @@
   .island-hsk-select { padding: 5px 8px; border: 1px solid var(--hairline); border-radius: 7px; background: var(--paper-raised); color: var(--ink); font: inherit; font-size: 12.5px; }
   #inpNewIslandHsk { width: 100%; }
   .backup-all-row .export-row-label { font-weight: 600; }
+  .demo-badge { display: inline-block; font-size: 10.5px; font-weight: 600; color: var(--jade-deep); border: 1px solid var(--jade); border-radius: 10px; padding: 1px 7px; margin-top: 4px; white-space: nowrap; }
   .session-pause { padding: 4px 10px; font-size: 11.5px; margin: 0 8px; white-space: nowrap; flex: 0 0 auto; }
   @media (max-width: 600px) {
     /* narrow screens: text + pause on one line, the dots in their own row */

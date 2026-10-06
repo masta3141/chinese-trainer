@@ -272,6 +272,7 @@ function renderStories(){
           return '<div class="story-card" data-id="' + s.id + '">' +
             '<div class="story-card-toprow" data-toprow-id="' + s.id + '">' +
               '<div><div class="story-title">' + esc(s.title.h) + '</div><div class="story-title-en">' + esc(s.title.e) + '</div>' +
+                (s.demo ? demoBadgeHtml() : '') +
               '<div class="story-meta">' + esc(storyMeta(s)) + ' · ' + esc(storyProgressLabel(s)) + '</div></div>' +
               topRightHtml +
             '</div>' +
@@ -475,6 +476,7 @@ function renderStories(){
         '<div class="story-title-block" style="margin-bottom:14px;padding-bottom:12px;">' +
           '<div class="t-h" style="font-size:18px;">' + esc(story.title.h) + '</div>' +
           '<div class="t-e" style="margin-top:2px;">' + esc(story.title.e) + '</div>' +
+          (story.demo ? '<div style="margin-top:6px;">' + demoBadgeHtml() + '</div>' : '') +
         '</div>' +
         '<div class="session-bar"><span>' + esc(tf('storiesSentenceOf', idx + 1, story.sentences.length)) + (isCurrent ? '' : esc(t('storiesRepetition'))) + '</span>' +
           '<span class="dots">' + dotsHtml + '</span></div>' +

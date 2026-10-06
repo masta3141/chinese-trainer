@@ -88,6 +88,55 @@ function migrateLegacyStoryAudio(){
 }
 migrateLegacyStoryAudio();
 
+// ---------- demo story with narration (seeded once) ----------
+// data/demo-story.json (built with tools/build-demo-story.js) holds one example
+// story plus its narration as MP3, so users without a Gemini key can see what
+// stories and audio look like. On the first start it is added like a normal
+// story/recording (marked demo: true); the MP3 parts are decoded back to the
+// PCM format the app stores for its own recordings.
+var DEMO_STORY_URL = 'data/demo-story.json';
+var DEMO_SEEDED_KEY = 'hskflash_demo_seeded_v1';
+function demoBadgeHtml(){
+  return '<span class="demo-badge">' + esc(t('demoBadge')) + '</span>';
+}
+function decodeMp3ToPcm(b64, fmt){
+  var bytes = Uint8Array.from(atob(b64), function(c){ return c.charCodeAt(0); });
+  var Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  return new Ctx(1, 1, fmt.sampleRate).decodeAudioData(bytes.buffer).then(function(buf){
+    var f = buf.getChannelData(0);
+    var pcm = new Uint8Array(f.length * 2);
+    var view = new DataView(pcm.buffer);
+    for (var i = 0; i < f.length; i++) {
+      var v = Math.max(-1, Math.min(1, f[i]));
+      view.setInt16(i * 2, v < 0 ? v * 0x8000 : v * 0x7fff, true);
+    }
+    return { fmt: { channels: 1, sampleRate: fmt.sampleRate, bitsPerSample: 16 }, pcm: pcm };
+  });
+}
+function seedDemoStory(){
+  try { if (localStorage.getItem(DEMO_SEEDED_KEY)) return Promise.resolve(); } catch(e) { return Promise.resolve(); }
+  return fetch(DEMO_STORY_URL).then(function(res){
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }).then(function(demo){
+    var hasStory = stories.some(function(s){ return s.id === demo.story.id; });
+    var hasRec = recordings.some(function(r){ return r.id === demo.recording.id; });
+    // Never touch audio of a recording the user already has (it would be
+    // replaced by the lower-quality MP3 version).
+    var keys = hasRec ? [] : Object.keys(demo.audio || {});
+    // decode and store the audio first, so the recording is complete once it shows up
+    return keys.reduce(function(p, k){
+      return p.then(function(){ return decodeMp3ToPcm(demo.audio[k], demo.fmt); }).then(function(v){ return idbSet(k, v); });
+    }, Promise.resolve()).then(function(){
+      if (!hasStory) { stories.push(demo.story); saveStories(stories); }
+      if (!hasRec) { recordings.push(demo.recording); saveRecordings(recordings); }
+      try { localStorage.setItem(DEMO_SEEDED_KEY, '1'); } catch(e) {}
+      safeRenderStories();
+      safeRenderAudioTab();
+    });
+  }).catch(function(){ /* offline or unsupported: try again on the next start */ });
+}
+
 // Resolves the next missing IndexedDB step for a recording: the title clip
 // first (step 0), then each sentence in order (step 1..N).
 function findNextMissingRecordingStep(rec){
@@ -392,7 +441,7 @@ function renderAudioTab(){
         var isPlaying = isCurrentInQueue && audioPlayerEl && !audioPlayerEl.paused;
         var isPausedHere = isCurrentInQueue && audioPlayerEl && audioPlayerEl.paused;
         var dateLabel = new Date(rec.createdAt).toLocaleDateString(calLocale ? calLocale() : undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-        var subLine = esc(rec.titleH) + ' · ' + esc(recordingMeta(rec)) + '<br>' +
+        var subLine = (rec.demo ? demoBadgeHtml() + '<br>' : '') + esc(rec.titleH) + ' · ' + esc(recordingMeta(rec)) + '<br>' +
           esc(dateLabel + (rec.voiceId ? ' · ' : '')) + esc(rec.voiceId ? (function(){
             var v = voiceDisplayLabel(rec.voiceId);
             if (rec.funStyle) v += ' 🎭 ' + funStyleLabel(rec.funStyle);
