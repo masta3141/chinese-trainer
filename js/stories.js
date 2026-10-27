@@ -93,14 +93,14 @@ function segmentSentence(text){
   }
   return out;
 }
-// Sentence markup with every known word as a hoverable/tappable span, softly
-// tinted with the word's progress colour once it has been learned a bit.
+// Sentence markup with every known word as a hoverable/tappable span, with a
+// thin progress bar underneath (level colour, width = lvl %) once it has been learned a bit.
 function sentenceWordsHtml(text){
   return segmentSentence(text).map(function(tok){
     if (!tok.w) return esc(tok.s);
     var p = progress[tok.w.id];
     var tint = (p && p.seen && p.lvl > 0)
-      ? ' style="background:' + levelToColor(p.lvl).replace('rgb(', 'rgba(').replace(')', ',.22)') + '"' : '';
+      ? ' style="--lc:' + levelToColor(p.lvl) + ';--lp:' + Math.min(p.lvl, 100) + '%"' : '';
     return '<span class="sent-word" data-wid="' + tok.w.id + '"' + tint + ' title="' + esc(wordInfoText(tok.w)) + '">' + esc(tok.s) + '</span>';
   }).join('');
 }

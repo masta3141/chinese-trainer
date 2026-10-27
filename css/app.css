@@ -240,8 +240,14 @@
     opacity: .8;
   }
   .pool-edit-hint { flex-basis: 100%; font-size: 11.5px; color: var(--jade-deep); margin-top: 2px; }
-  .sent-word { border-radius: 4px; transition: background .12s; }
-  .sent-word:hover { background: var(--hairline); }
+  .sent-word { border-radius: 4px; transition: background-color .12s; }
+  .sent-word:hover { background-color: var(--hairline); }
+  .sent-word[style] {
+    background-image: linear-gradient(var(--lc), var(--lc)), linear-gradient(var(--hairline), var(--hairline));
+    background-size: var(--lp) 2px, 100% 2px;
+    background-position: left bottom;
+    background-repeat: no-repeat;
+  }
   .grid-info-toast {
     position: fixed;
     left: 50%;
