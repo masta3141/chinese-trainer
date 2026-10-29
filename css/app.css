@@ -243,8 +243,9 @@
   .sent-word { border-radius: 4px; transition: background-color .12s; }
   .sent-word:hover { background-color: var(--hairline); }
   .sent-word[style] {
-    background-image: linear-gradient(var(--lc), var(--lc)), linear-gradient(var(--hairline), var(--hairline));
-    background-size: var(--lp) 2px, 100% 2px;
+    border-radius: 0;
+    background-image: linear-gradient(var(--lc), var(--lc));
+    background-size: calc(100% - 1px) 4px;
     background-position: left bottom;
     background-repeat: no-repeat;
   }

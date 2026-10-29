@@ -31,6 +31,7 @@ python3 -m http.server 8000
 - `vendor/` — unmodified third-party files (`lamejs`).
 - `impressum.html` — legal notice (Impressum) and privacy policy (DE + EN summary), linked at the bottom of the settings drawer; also the privacy-policy URL for the Play Store.
 - `manifest.json`, icons, screenshots — PWA metadata.
+- **Android app:** a separate project in `../hsk-trainer-webview` bundles these files into a WebView APK (copied at build time: `index.html`, `impressum.html`, `manifest.json`, `*.png`, `css/`, `js/`, `data/`, `vendor/` — new top-level files must be added to `copyWebAssets` in its `app/build.gradle`). It shims `speechSynthesis`, `SpeechRecognition`, blob downloads and file inputs natively and disables the service worker; see its README.
 
 ## Working with the code
 
